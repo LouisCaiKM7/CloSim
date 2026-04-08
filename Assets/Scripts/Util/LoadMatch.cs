@@ -71,11 +71,9 @@ public class LoadMatch : MonoBehaviour
     [SerializeField] private TrackingType defaultTrackingType = TrackingType.TrackRobot;
 
     [Header("Driver Station Cameras")]
-    [Tooltip("Player 1 fixed driver station. Usually station 1.")]
-    [SerializeField] private StationNum player1DriverStation = (StationNum)0;
-
-    [Tooltip("Player 2 fixed driver station. Usually station 3.")]
-    [SerializeField] private StationNum player2DriverStation = (StationNum)2;
+    [SerializeField] private StationNum player1DriverStation = 0;
+    
+    [SerializeField] private StationNum player2DriverStation = (StationNum) 2;
 
     [Header("Input")]
     [SerializeField] private string robotActionMap = "Robot";
@@ -83,12 +81,12 @@ public class LoadMatch : MonoBehaviour
     [SerializeField] private string keyboardControlScheme = "Keyboard";
     [SerializeField] private InputActionAsset builderActions;
 
-    private int selectedRobotIndex1;
-    private int selectedRobotIndex2;
-    private string selectedName1;
-    private string selectedName2;
+    private int _selectedRobotIndex1;
+    private int _selectedRobotIndex2;
+    private string _selectedName1;
+    private string _selectedName2;
 
-    private readonly List<GameObject> availableRobots = new List<GameObject>();
+    private readonly List<GameObject> _availableRobots = new List<GameObject>();
 
     private GameObject _fieldHolder;
     private GameObject _activeRobot1;
@@ -97,7 +95,7 @@ public class LoadMatch : MonoBehaviour
     private GameObject _spawnedCamera1;
     private GameObject _spawnedCamera2;
 
-    private FMS fms;
+    private FMS _fms;
 
     private bool _isResettingField;
     private int _setupVersion;
@@ -135,18 +133,18 @@ public class LoadMatch : MonoBehaviour
         if (!Application.isPlaying)
             return;
 
-        selectedName1 = robotSelected1 != null ? robotSelected1.selectedName : string.Empty;
-        selectedName2 = robotSelected2 != null ? robotSelected2.selectedName : string.Empty;
+        _selectedName1 = robotSelected1 != null ? robotSelected1.selectedName : string.Empty;
+        _selectedName2 = robotSelected2 != null ? robotSelected2.selectedName : string.Empty;
 
-        selectedRobotIndex1 = robotSelected1 != null ? robotSelected1.selectedIndex : 0;
-        selectedRobotIndex2 = robotSelected2 != null ? robotSelected2.selectedIndex : 0;
+        _selectedRobotIndex1 = robotSelected1?.selectedIndex ?? 0;
+        _selectedRobotIndex2 = robotSelected2?.selectedIndex ?? 0;
 
         CheckRobots();
 
         _settings = new MatchSettings
         {
-            robotIndex1 = selectedRobotIndex1,
-            robotIndex2 = selectedRobotIndex2,
+            robotIndex1 = _selectedRobotIndex1,
+            robotIndex2 = _selectedRobotIndex2,
             blueSpawnIndex1 = 0,
             blueSpawnIndex2 = Mathf.Min(1, Mathf.Max(0, blueSideSpawns.Count - 1)),
             redSpawnIndex1 = 0,
@@ -171,20 +169,20 @@ public class LoadMatch : MonoBehaviour
 
         if (robotSelected1 != null)
         {
-            selectedName1 = robotSelected1.selectedName;
-            selectedRobotIndex1 = robotSelected1.selectedIndex;
+            _selectedName1 = robotSelected1.selectedName;
+            _selectedRobotIndex1 = robotSelected1.selectedIndex;
         }
 
         if (robotSelected2 != null)
         {
-            selectedName2 = robotSelected2.selectedName;
-            selectedRobotIndex2 = robotSelected2.selectedIndex;
+            _selectedName2 = robotSelected2.selectedName;
+            _selectedRobotIndex2 = robotSelected2.selectedIndex;
         }
     }
 
     private void RefreshInspectorDropdownData()
     {
-        var robotNames = availableRobots.Select(x => x.name).ToList();
+        var robotNames = _availableRobots.Select(x => x.name).ToList();
 
         if (robotSelected1 != null)
             robotSelected1.canBeSelected = robotNames;
@@ -198,41 +196,41 @@ public class LoadMatch : MonoBehaviour
         if (robotSelected1 != null)
         {
             robotSelected1.selectedIndex = _settings.robotIndex1;
-            robotSelected1.selectedName = selectedName1;
+            robotSelected1.selectedName = _selectedName1;
         }
 
         if (robotSelected2 != null)
         {
             robotSelected2.selectedIndex = _settings.robotIndex2;
-            robotSelected2.selectedName = selectedName2;
+            robotSelected2.selectedName = _selectedName2;
         }
     }
 
     private void SyncSelectionNamesFromSettings()
     {
-        selectedRobotIndex1 = _settings.robotIndex1;
-        selectedRobotIndex2 = _settings.robotIndex2;
+        _selectedRobotIndex1 = _settings.robotIndex1;
+        _selectedRobotIndex2 = _settings.robotIndex2;
 
-        selectedName1 = availableRobots.Count > selectedRobotIndex1
-            ? availableRobots[selectedRobotIndex1].name
+        _selectedName1 = _availableRobots.Count > _selectedRobotIndex1
+            ? _availableRobots[_selectedRobotIndex1].name
             : string.Empty;
 
-        selectedName2 = availableRobots.Count > selectedRobotIndex2
-            ? availableRobots[selectedRobotIndex2].name
+        _selectedName2 = _availableRobots.Count > _selectedRobotIndex2
+            ? _availableRobots[_selectedRobotIndex2].name
             : string.Empty;
     }
 
     private void SanitizeSettings()
     {
-        if (availableRobots.Count == 0)
+        if (_availableRobots.Count == 0)
         {
             _settings.robotIndex1 = 0;
             _settings.robotIndex2 = 0;
             return;
         }
 
-        _settings.robotIndex1 = Mathf.Clamp(_settings.robotIndex1, 0, availableRobots.Count - 1);
-        _settings.robotIndex2 = Mathf.Clamp(_settings.robotIndex2, 0, availableRobots.Count - 1);
+        _settings.robotIndex1 = Mathf.Clamp(_settings.robotIndex1, 0, _availableRobots.Count - 1);
+        _settings.robotIndex2 = Mathf.Clamp(_settings.robotIndex2, 0, _availableRobots.Count - 1);
     }
 
     private void SanitizeSpawnSettings()
@@ -291,36 +289,36 @@ public class LoadMatch : MonoBehaviour
     public List<string> GetAvailableRobotNames()
     {
         CheckRobots();
-        return availableRobots.Select(r => r.name).ToList();
+        return _availableRobots.Select(r => r.name).ToList();
     }
 
     public int GetAvailableRobotCount()
     {
         CheckRobots();
-        return availableRobots.Count;
+        return _availableRobots.Count;
     }
 
     public string GetRobotNameAt(int index)
     {
         CheckRobots();
 
-        if (availableRobots.Count == 0)
+        if (_availableRobots.Count == 0)
             return "No Robots";
 
-        index = Mathf.Clamp(index, 0, availableRobots.Count - 1);
-        return availableRobots[index].name;
+        index = Mathf.Clamp(index, 0, _availableRobots.Count - 1);
+        return _availableRobots[index].name;
     }
 
     public Sprite GetRobotPreviewSpriteAt(int index)
     {
         CheckRobots();
 
-        if (availableRobots.Count == 0)
+        if (_availableRobots.Count == 0)
             return null;
 
-        index = Mathf.Clamp(index, 0, availableRobots.Count - 1);
+        index = Mathf.Clamp(index, 0, _availableRobots.Count - 1);
 
-        string robotName = availableRobots[index].name;
+        string robotName = _availableRobots[index].name;
         Sprite sprite = Resources.Load<Sprite>($"RobotPreviews/{robotName}");
 
         if (sprite == null)
@@ -385,7 +383,7 @@ public class LoadMatch : MonoBehaviour
             transform = { position = Vector3.zero, rotation = Quaternion.identity, parent = transform }
         };
 
-        if (fieldPrefab != null && fieldPrefab.Length > 0 && fieldPrefab[0] != null)
+        if (fieldPrefab is { Length: > 0 } && fieldPrefab[0] != null)
         {
             Instantiate(fieldPrefab[0], Vector3.zero, Quaternion.identity, _fieldHolder.transform);
         }
@@ -450,9 +448,9 @@ public class LoadMatch : MonoBehaviour
 
         _inputSetupCoroutine = StartCoroutine(SetupInputsWhenReady(_setupVersion));
 
-        if (fms)
+        if (_fms)
         {
-            fms.Restart();
+            _fms.Restart();
         }
 
         StartCoroutine(ClearResetLockNextFrame());
@@ -500,12 +498,12 @@ public class LoadMatch : MonoBehaviour
         _inputSetupCoroutine = null;
     }
 
-    public void setFMS(FMS fmsInstance)
+    public void SetFms(FMS fmsInstance)
     {
-        fms = fmsInstance;
+        _fms = fmsInstance;
     }
 
-    public GameObject getFieldHolder()
+    public GameObject GetFieldHolder()
     {
         return _fieldHolder;
     }
@@ -515,7 +513,7 @@ public class LoadMatch : MonoBehaviour
         _activeRobot1 = null;
         _activeRobot2 = null;
 
-        if (availableRobots.Count == 0)
+        if (_availableRobots.Count == 0)
         {
             Debug.LogWarning("No robots found in Resources/Robots.");
             return;
@@ -595,11 +593,11 @@ public class LoadMatch : MonoBehaviour
 
     private GameObject GetRobotPrefabBySelection(int selectedIndex)
     {
-        if (availableRobots.Count == 0)
+        if (_availableRobots.Count == 0)
             return null;
 
-        selectedIndex = Mathf.Clamp(selectedIndex, 0, availableRobots.Count - 1);
-        return availableRobots[selectedIndex];
+        selectedIndex = Mathf.Clamp(selectedIndex, 0, _availableRobots.Count - 1);
+        return _availableRobots[selectedIndex];
     }
 
     private void PairInputs()
@@ -889,23 +887,23 @@ public class LoadMatch : MonoBehaviour
     {
         GameObject[] loadedRobots = Resources.LoadAll<GameObject>("Robots");
 
-        availableRobots.Clear();
+        _availableRobots.Clear();
         foreach (var robot in loadedRobots)
         {
-            availableRobots.Add(robot);
+            _availableRobots.Add(robot);
         }
 
-        if (availableRobots.Count == 0)
+        if (_availableRobots.Count == 0)
         {
-            selectedRobotIndex1 = 0;
-            selectedRobotIndex2 = 0;
-            selectedName1 = string.Empty;
-            selectedName2 = string.Empty;
+            _selectedRobotIndex1 = 0;
+            _selectedRobotIndex2 = 0;
+            _selectedName1 = string.Empty;
+            _selectedName2 = string.Empty;
             return;
         }
 
-        selectedRobotIndex1 = Mathf.Clamp(selectedRobotIndex1, 0, availableRobots.Count - 1);
-        selectedRobotIndex2 = Mathf.Clamp(selectedRobotIndex2, 0, availableRobots.Count - 1);
+        _selectedRobotIndex1 = Mathf.Clamp(_selectedRobotIndex1, 0, _availableRobots.Count - 1);
+        _selectedRobotIndex2 = Mathf.Clamp(_selectedRobotIndex2, 0, _availableRobots.Count - 1);
 
         SanitizeSettings();
     }
@@ -991,14 +989,14 @@ public class LoadMatch : MonoBehaviour
         var parent = robot;
         var spawnRotation = spawnPoint != null ? spawnPoint.gameObject : robot;
 
-        if (fms && _settings.view == Cameras.DriverStation)
+        if (_fms && _settings.view == Cameras.DriverStation)
         {
             StationNum station = GetStationNumberForRobot(robotSlot);
             bool useBlueSide = _settings.playMode == Util.PlayMode.TwoVsZero || robotSlot == 0;
 
             var stationCam = useBlueSide
-                ? fms.blueStationCams[(int)station]
-                : fms.redStationCams[(int)station];
+                ? _fms.blueStationCams[(int)station]
+                : _fms.redStationCams[(int)station];
 
             parent = stationCam;
             spawnRotation = stationCam.gameObject;

@@ -2,100 +2,103 @@ using System;
 using System.Collections;
 using UnityEngine;
 
-[RequireComponent(typeof(CanvasGroup))]
-public class ScreenFader : MonoBehaviour
+namespace Util
 {
-    [SerializeField] private float fadeDuration = 1.5f;
-    [SerializeField] private bool startTransparent = true;
-
-    private CanvasGroup _canvasGroup;
-    private Coroutine _transitionCoroutine;
-
-    private void Awake()
+    [RequireComponent(typeof(CanvasGroup))]
+    public class ScreenFader : MonoBehaviour
     {
-        _canvasGroup = GetComponent<CanvasGroup>();
+        [SerializeField] private float fadeDuration = 1.5f;
+        [SerializeField] private bool startTransparent = true;
 
-        _canvasGroup.alpha = startTransparent ? 0f : 1f;
-        _canvasGroup.interactable = false;
-        _canvasGroup.blocksRaycasts = false;
-    }
+        private CanvasGroup _canvasGroup;
+        private Coroutine _transitionCoroutine;
 
-    public void SetBlackImmediate(bool black)
-    {
-        if (_transitionCoroutine != null)
-            StopCoroutine(_transitionCoroutine);
+        private void Awake()
+        {
+            _canvasGroup = GetComponent<CanvasGroup>();
 
-        _canvasGroup.alpha = black ? 1f : 0f;
-        _canvasGroup.blocksRaycasts = black;
-    }
+            _canvasGroup.alpha = startTransparent ? 0f : 1f;
+            _canvasGroup.interactable = false;
+            _canvasGroup.blocksRaycasts = false;
+        }
 
-    public void FadeToBlack(Action onBlackReached)
-    {
-        StartTransition(FadeToBlackRoutine(onBlackReached));
-    }
+        public void SetBlackImmediate(bool black)
+        {
+            if (_transitionCoroutine != null)
+                StopCoroutine(_transitionCoroutine);
 
-    public void FadeFromBlack(Action onFinished = null)
-    {
-        StartTransition(FadeFromBlackRoutine(onFinished));
-    }
+            _canvasGroup.alpha = black ? 1f : 0f;
+            _canvasGroup.blocksRaycasts = black;
+        }
 
-    public void FadeToBlackThen(Action onBlackReached, bool fadeBackAfter = false, Action onFinished = null)
-    {
-        StartTransition(FadeToBlackThenRoutine(onBlackReached, fadeBackAfter, onFinished));
-    }
+        public void FadeToBlack(Action onBlackReached)
+        {
+            StartTransition(FadeToBlackRoutine(onBlackReached));
+        }
 
-    private void StartTransition(IEnumerator routine)
-    {
-        if (_transitionCoroutine != null)
-            StopCoroutine(_transitionCoroutine);
+        public void FadeFromBlack(Action onFinished = null)
+        {
+            StartTransition(FadeFromBlackRoutine(onFinished));
+        }
 
-        _transitionCoroutine = StartCoroutine(routine);
-    }
+        public void FadeToBlackThen(Action onBlackReached, bool fadeBackAfter = false, Action onFinished = null)
+        {
+            StartTransition(FadeToBlackThenRoutine(onBlackReached, fadeBackAfter, onFinished));
+        }
 
-    private IEnumerator FadeToBlackRoutine(Action onBlackReached)
-    {
-        yield return FadeRoutine(_canvasGroup.alpha, 1f);
-        onBlackReached?.Invoke();
-        _transitionCoroutine = null;
-    }
+        private void StartTransition(IEnumerator routine)
+        {
+            if (_transitionCoroutine != null)
+                StopCoroutine(_transitionCoroutine);
 
-    private IEnumerator FadeFromBlackRoutine(Action onFinished)
-    {
-        yield return FadeRoutine(_canvasGroup.alpha, 0f);
-        onFinished?.Invoke();
-        _transitionCoroutine = null;
-    }
+            _transitionCoroutine = StartCoroutine(routine);
+        }
 
-    private IEnumerator FadeToBlackThenRoutine(Action onBlackReached, bool fadeBackAfter, Action onFinished)
-    {
-        yield return FadeRoutine(_canvasGroup.alpha, 1f);
+        private IEnumerator FadeToBlackRoutine(Action onBlackReached)
+        {
+            yield return FadeRoutine(_canvasGroup.alpha, 1f);
+            onBlackReached?.Invoke();
+            _transitionCoroutine = null;
+        }
 
-        onBlackReached?.Invoke();
-
-        if (fadeBackAfter)
+        private IEnumerator FadeFromBlackRoutine(Action onFinished)
         {
             yield return FadeRoutine(_canvasGroup.alpha, 0f);
+            onFinished?.Invoke();
+            _transitionCoroutine = null;
         }
 
-        onFinished?.Invoke();
-        _transitionCoroutine = null;
-    }
-
-    private IEnumerator FadeRoutine(float startAlpha, float endAlpha)
-    {
-        float elapsed = 0f;
-
-        _canvasGroup.blocksRaycasts = true;
-
-        while (elapsed < fadeDuration)
+        private IEnumerator FadeToBlackThenRoutine(Action onBlackReached, bool fadeBackAfter, Action onFinished)
         {
-            elapsed += Time.unscaledDeltaTime;
-            float t = Mathf.Clamp01(elapsed / fadeDuration);
-            _canvasGroup.alpha = Mathf.Lerp(startAlpha, endAlpha, t);
-            yield return null;
+            yield return FadeRoutine(_canvasGroup.alpha, 1f);
+
+            onBlackReached?.Invoke();
+
+            if (fadeBackAfter)
+            {
+                yield return FadeRoutine(_canvasGroup.alpha, 0f);
+            }
+
+            onFinished?.Invoke();
+            _transitionCoroutine = null;
         }
 
-        _canvasGroup.alpha = endAlpha;
-        _canvasGroup.blocksRaycasts = endAlpha > 0f;
+        private IEnumerator FadeRoutine(float startAlpha, float endAlpha)
+        {
+            float elapsed = 0f;
+
+            _canvasGroup.blocksRaycasts = true;
+
+            while (elapsed < fadeDuration)
+            {
+                elapsed += Time.unscaledDeltaTime;
+                float t = Mathf.Clamp01(elapsed / fadeDuration);
+                _canvasGroup.alpha = Mathf.Lerp(startAlpha, endAlpha, t);
+                yield return null;
+            }
+
+            _canvasGroup.alpha = endAlpha;
+            _canvasGroup.blocksRaycasts = endAlpha > 0f;
+        }
     }
 }

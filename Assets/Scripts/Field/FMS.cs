@@ -102,7 +102,7 @@ public class FMS : MonoBehaviour
         }
 
         matchLoader = Utils.FindParentObjectComponent<LoadMatch>(gameObject);
-        matchLoader.setFMS(this);
+        matchLoader.SetFms(this);
         MatchTimer = matchTime;
         previousMatchState = MatchState.auto;
         MatchState = MatchState.auto;

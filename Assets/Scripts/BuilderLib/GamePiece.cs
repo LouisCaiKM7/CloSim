@@ -26,7 +26,7 @@ public class GamePiece: MonoBehaviour
         if (hasId) return;
         if (!rb) rb = GetComponent<Rigidbody>();
         var core = Utils.FindParentObjectComponent<LoadMatch>(gameObject);
-        var returnTo = core.getFieldHolder().transform.GetChild(0);
+        var returnTo = core.GetFieldHolder().transform.GetChild(0);
         originalParent = returnTo;
         hasId = true;
     }

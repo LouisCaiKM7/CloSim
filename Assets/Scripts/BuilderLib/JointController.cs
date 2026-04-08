@@ -41,11 +41,9 @@ public class JointController : MonoBehaviour
     private PIDController _pidController;
     
     private Dictionary<SetPoint, float> originalPositions = new Dictionary<SetPoint, float>();
-
-    private string _sequencePoint;
+    
     private bool _sequenceInterrupted, _isSequenceUsingDelay;
     private float _sequenceTime;
-    private bool _delayType;
     private string _activeSequenceName;
     private SetPoint _nextSequencePoint;
     private bool OverideActive;
@@ -73,8 +71,6 @@ public class JointController : MonoBehaviour
         _targetPosition = 0;
         _activeSequenceName = null;
         _sequenceInterrupted = false;
-        _delayType = false;
-        _sequencePoint = "";
         _playerInput = Utils.FindParentObjectComponent<PlayerInput>(gameObject);
         
         _inputMap = _playerInput.actions.FindActionMap("Robot");
@@ -138,8 +134,7 @@ public class JointController : MonoBehaviour
         }
         
         if (follower) return;
-
-        bool buttonPushed = false;
+        
         for (int i = 0; i < setPoints.Length; i++)
         {
 
@@ -161,8 +156,6 @@ public class JointController : MonoBehaviour
                     buttonPressed = true;
                 }
             }
-            
-            if (buttonPressed) buttonPushed = true;
             
             var controllerHeld = controllerAction.IsPressed() && 
                                  (controllerAction.activeControl?.device is Gamepad);
