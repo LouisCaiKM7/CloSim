@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
@@ -16,8 +17,18 @@ namespace Util
         [Header("Top Controls")]
         [SerializeField] private TMP_Dropdown gameModeDropdown;
         [SerializeField] private TMP_Dropdown cameraDropdown;
+        [SerializeField] private TMP_Dropdown frameRateDropdown;
+        [SerializeField] private TMP_Dropdown windowModeDropdown;
         [SerializeField] private Button allianceButton;
         [SerializeField] private TMP_Text allianceButtonText;
+
+        [Header("Human Player")]
+        [SerializeField] private TMP_Dropdown humanPlayerDropdown;
+
+        [SerializeField] private GameObject blueBucket;
+        [SerializeField] private GameObject blueDumper;
+        [SerializeField] private GameObject redBucket;
+        [SerializeField] private GameObject redDumper;
 
         [Header("Robot Panels")]
         [SerializeField] private RobotPanelUI robotPanel1;
@@ -25,7 +36,17 @@ namespace Util
 
         [Header("Bottom Buttons")]
         [SerializeField] private Button applyButton;
-        [SerializeField] private Button cancelButton;
+        [SerializeField] private Button quitButton;
+
+        [Header("Credits")]
+        [SerializeField] private GameObject creditsRoot;
+        [SerializeField] private Button creditsButton;
+        [SerializeField] private Button creditsBackButton;
+
+        [Header("Controls")]
+        [SerializeField] private GameObject controlsRoot;
+        [SerializeField] private Button controlsButton;
+        [SerializeField] private Button controlsBackButton;
 
         [Header("Input System")]
         [SerializeField] private InputActionReference toggleMenuAction;
@@ -33,17 +54,40 @@ namespace Util
         [SerializeField] private string fallbackToggleActionName = "ToggleMenu";
 
         [Header("Behavior")]
-        [SerializeField] private bool openMenuOnStart = true;
-        [SerializeField] private bool resetOnCancel;
+        [SerializeField] private float startMenuBlackHoldTime = 0.35f;
+        [SerializeField] private float startMenuFadeDuration = 3.5f;
         [SerializeField] private bool unlockCursorWhenOpen = true;
         [SerializeField] private bool relockCursorOnClose;
-        [SerializeField] private bool debugLogs = true;
+
+        private const string FrameRatePrefKey = "FrameRateMode";
+        private const string WindowModePrefKey = "WindowMode";
+
+        private readonly List<(Utils.FrameRateMode value, string label)> _frameRateModes = new()
+        {
+            (Utils.FrameRateMode.FPS30, "30 FPS"),
+            (Utils.FrameRateMode.FPS60, "60 FPS"),
+            (Utils.FrameRateMode.FPS120, "120 FPS"),
+            (Utils.FrameRateMode.VSync, "VSync")
+        };
+
+        private readonly List<(Utils.WindowMode value, string label)> _windowModes = new()
+        {
+            (Utils.WindowMode.Windowed, "Windowed"),
+            (Utils.WindowMode.BorderlessFullscreen, "Borderless"),
+            (Utils.WindowMode.ExclusiveFullscreen, "Fullscreen")
+        };
 
         private readonly List<(PlayMode value, string label)> _gameModes = new()
         {
             (PlayMode.OneVsZero, "Singleplayer"),
-            (PlayMode.TwoVsZero, "2v0"),
-            (PlayMode.OneVsOne, "1v1")
+            (PlayMode.TwoVsZero, "Multiplayer: 2v0"),
+            (PlayMode.OneVsOne, "Multiplayer: 1v1")
+        };
+
+        private readonly List<(HumanPlayerType value, string label)> _humanPlayerModes = new()
+        {
+            (HumanPlayerType.Bucket, "Certified Bucket"),
+            (HumanPlayerType.Dumper, "Certified Dumper")
         };
 
         private readonly List<(Cameras value, string label)> _cameraModes = new()
@@ -65,18 +109,33 @@ namespace Util
         private List<string> _blueSpawnNames = new();
         private List<string> _redSpawnNames = new();
 
+        private HumanPlayerType _workingHumanPlayer = HumanPlayerType.Bucket;
+
+        private OutpostRelease[] _cachedOutpostReleases;
+
         private void Awake()
         {
             if (loadMatch == null)
                 loadMatch = FindFirstObjectByType<LoadMatch>();
 
+            CacheOutpostReleases();
+
             if (menuRoot != null)
                 menuRoot.SetActive(false);
+
+            if (creditsRoot != null)
+                creditsRoot.SetActive(false);
+
+            if (controlsRoot != null)
+                controlsRoot.SetActive(false);
 
             WireButtons();
             WirePanels();
             PopulateStaticDropdowns();
             ResolveToggleAction();
+
+            ApplySavedFrameRate();
+            ApplySavedWindowMode();
         }
 
         private void OnEnable()
@@ -87,10 +146,6 @@ namespace Util
             {
                 _resolvedToggleAction.Enable();
                 _resolvedToggleAction.performed += OnToggleMenuPerformed;
-            }
-            else if (debugLogs)
-            {
-                Debug.LogError("OptionsMenuController: no toggle action could be resolved.");
             }
         }
 
@@ -105,44 +160,31 @@ namespace Util
 
         private void Start()
         {
-            if (loadMatch == null)
+            if (loadMatch == null || menuRoot == null)
             {
-                Debug.LogError("OptionsMenuController: LoadMatch reference is missing.");
                 enabled = false;
                 return;
             }
 
-            if (menuRoot == null)
-            {
-                Debug.LogError("OptionsMenuController: menuRoot is missing.");
-                enabled = false;
-                return;
-            }
-
-            if (openMenuOnStart)
-            {
-                OpenMenuImmediate();
-            }
-            else
-            {
-                ForceClosedState();
-            }
+            StartCoroutine(OpenMenuOnStartWithFadeRoutine());
         }
 
         private void Update()
         {
-            if (_isOpen)
-                RefreshVisibleState();
-
             if (_resolvedToggleAction == null &&
                 Keyboard.current != null &&
                 Keyboard.current.escapeKey.wasPressedThisFrame)
             {
-                if (debugLogs)
-                    Debug.LogWarning("OptionsMenuController: using emergency Escape fallback because no InputAction resolved.");
-
                 ToggleMenu();
             }
+        }
+
+        private void CacheOutpostReleases()
+        {
+            _cachedOutpostReleases = FindObjectsByType<OutpostRelease>(
+                FindObjectsInactive.Include,
+                FindObjectsSortMode.None
+            );
         }
 
         private void ResolveToggleAction()
@@ -174,7 +216,7 @@ namespace Util
                 return;
 
             if (_isOpen)
-                CloseMenuWithoutApply(resetOnCancel);
+                CloseMenuWithoutApply();
             else
                 OpenMenu();
         }
@@ -184,17 +226,38 @@ namespace Util
             if (applyButton != null)
                 applyButton.onClick.AddListener(ApplyAndClose);
 
-            if (cancelButton != null)
-                cancelButton.onClick.AddListener(() => CloseMenuWithoutApply(resetOnCancel));
+            if (quitButton != null)
+                quitButton.onClick.AddListener(Application.Quit);
 
             if (allianceButton != null)
                 allianceButton.onClick.AddListener(ToggleAlliance);
+
+            if (creditsButton != null)
+                creditsButton.onClick.AddListener(OpenCredits);
+
+            if (creditsBackButton != null)
+                creditsBackButton.onClick.AddListener(CloseCredits);
 
             if (gameModeDropdown != null)
                 gameModeDropdown.onValueChanged.AddListener(OnGameModeChanged);
 
             if (cameraDropdown != null)
                 cameraDropdown.onValueChanged.AddListener(OnCameraChanged);
+
+            if (frameRateDropdown != null)
+                frameRateDropdown.onValueChanged.AddListener(OnFrameRateChanged);
+
+            if (windowModeDropdown != null)
+                windowModeDropdown.onValueChanged.AddListener(OnWindowModeChanged);
+
+            if (humanPlayerDropdown != null)
+                humanPlayerDropdown.onValueChanged.AddListener(OnHumanPlayerChanged);
+
+            if (controlsButton != null)
+                controlsButton.onClick.AddListener(OpenControls);
+
+            if (controlsBackButton != null)
+                controlsBackButton.onClick.AddListener(CloseControls);
         }
 
         private void WirePanels()
@@ -227,12 +290,66 @@ namespace Util
                 cameraDropdown.ClearOptions();
                 cameraDropdown.AddOptions(_cameraModes.ConvertAll(x => x.label));
             }
+
+            if (frameRateDropdown != null)
+            {
+                frameRateDropdown.ClearOptions();
+                frameRateDropdown.AddOptions(_frameRateModes.ConvertAll(x => x.label));
+
+                int savedIndex = PlayerPrefs.GetInt(FrameRatePrefKey, FindFrameRateIndex(Utils.FrameRateMode.VSync));
+                savedIndex = Mathf.Clamp(savedIndex, 0, _frameRateModes.Count - 1);
+
+                frameRateDropdown.SetValueWithoutNotify(savedIndex);
+                frameRateDropdown.RefreshShownValue();
+            }
+
+            if (windowModeDropdown != null)
+            {
+                windowModeDropdown.ClearOptions();
+                windowModeDropdown.AddOptions(_windowModes.ConvertAll(x => x.label));
+
+                int savedIndex = PlayerPrefs.GetInt(WindowModePrefKey, FindWindowModeIndex(Utils.WindowMode.Windowed));
+                savedIndex = Mathf.Clamp(savedIndex, 0, _windowModes.Count - 1);
+
+                windowModeDropdown.SetValueWithoutNotify(savedIndex);
+                windowModeDropdown.RefreshShownValue();
+            }
+
+            if (humanPlayerDropdown != null)
+            {
+                humanPlayerDropdown.ClearOptions();
+                humanPlayerDropdown.AddOptions(_humanPlayerModes.ConvertAll(x => x.label));
+            }
         }
 
         private void LoadDynamicData()
         {
             _blueSpawnNames = loadMatch.GetBlueSpawnNames();
             _redSpawnNames = loadMatch.GetRedSpawnNames();
+        }
+
+        private IEnumerator OpenMenuOnStartWithFadeRoutine()
+        {
+            if (screenFader == null)
+            {
+                OpenMenuImmediate();
+                yield break;
+            }
+
+            _isTransitioning = true;
+
+            screenFader.SetBlackImmediate(true);
+            OpenMenuImmediate();
+
+            yield return null;
+
+            if (startMenuBlackHoldTime > 0f)
+                yield return new WaitForSecondsRealtime(startMenuBlackHoldTime);
+
+            screenFader.FadeFromBlack(startMenuFadeDuration, () =>
+            {
+                _isTransitioning = false;
+            });
         }
 
         private void OpenMenu()
@@ -247,7 +364,7 @@ namespace Util
                 LoadDynamicData();
 
                 _workingSettings = loadMatch.GetSettingsCopy();
-                ApplySettingsToUI();
+                ApplySettingsToUI(true);
 
                 _isOpen = true;
                 menuRoot.SetActive(true);
@@ -261,8 +378,6 @@ namespace Util
                 }
 
                 SetRobotInputsEnabled(false);
-
-                if (debugLogs) Debug.Log("OptionsMenuController: menu opened.");
             }
 
             void Done()
@@ -271,22 +386,20 @@ namespace Util
             }
 
             if (screenFader != null)
-            {
                 screenFader.FadeToBlackThen(ShowMenu, true, Done);
-            }
             else
             {
                 ShowMenu();
                 Done();
             }
         }
-    
+
         private void OpenMenuImmediate()
         {
             LoadDynamicData();
 
             _workingSettings = loadMatch.GetSettingsCopy();
-            ApplySettingsToUI();
+            ApplySettingsToUI(true);
 
             _isOpen = true;
             menuRoot.SetActive(true);
@@ -315,12 +428,17 @@ namespace Util
 
                 ResumeRuntimeState();
 
-                if (menuRoot != null) menuRoot.SetActive(false);
+                if (controlsRoot != null)
+                    controlsRoot.SetActive(false);
+
+                if (creditsRoot != null)
+                    creditsRoot.SetActive(false);
+
+                if (menuRoot != null)
+                    menuRoot.SetActive(false);
 
                 _isOpen = false;
                 loadMatch.ResetField();
-
-                if (debugLogs) Debug.Log("OptionsMenuController: applied settings and reset field.");
             }
 
             void Done()
@@ -329,9 +447,7 @@ namespace Util
             }
 
             if (screenFader != null)
-            {
                 screenFader.FadeToBlackThen(ApplyAndReset, true, Done);
-            }
             else
             {
                 ApplyAndReset();
@@ -339,7 +455,7 @@ namespace Util
             }
         }
 
-        private void CloseMenuWithoutApply(bool resetField)
+        private void CloseMenuWithoutApply()
         {
             if (_isTransitioning)
                 return;
@@ -350,20 +466,21 @@ namespace Util
             {
                 ResumeRuntimeState();
 
-                if (menuRoot != null) menuRoot.SetActive(false);
+                if (controlsRoot != null)
+                    controlsRoot.SetActive(false);
+
+                if (creditsRoot != null)
+                    creditsRoot.SetActive(false);
+
+                if (menuRoot != null)
+                    menuRoot.SetActive(false);
 
                 _isOpen = false;
 
-                if (resetField && loadMatch != null)
-                {
+                if (loadMatch != null)
                     loadMatch.ResetField();
-                }
                 else
-                {
                     SetRobotInputsEnabled(true);
-                }
-
-                if (debugLogs) Debug.Log("OptionsMenuController: closed without apply.");
             }
 
             void Done()
@@ -372,9 +489,7 @@ namespace Util
             }
 
             if (screenFader != null)
-            {
                 screenFader.FadeToBlackThen(CloseAction, true, Done);
-            }
             else
             {
                 CloseAction();
@@ -382,15 +497,140 @@ namespace Util
             }
         }
 
-        private void ForceClosedState()
+        private void OpenCredits()
         {
-            _isOpen = false;
-            _isTransitioning = false;
+            if (_isTransitioning)
+                return;
 
-            if (menuRoot != null)
-                menuRoot.SetActive(false);
+            _isTransitioning = true;
 
-            Time.timeScale = 1f;
+            void ShowCredits()
+            {
+                if (menuRoot != null)
+                    menuRoot.SetActive(false);
+
+                if (creditsRoot != null)
+                    creditsRoot.SetActive(true);
+
+                if (controlsRoot != null)
+                    controlsRoot.SetActive(false);
+            }
+
+            void Done()
+            {
+                _isTransitioning = false;
+            }
+
+            if (screenFader != null)
+                screenFader.FadeToBlackThen(ShowCredits, true, Done);
+            else
+            {
+                ShowCredits();
+                Done();
+            }
+        }
+
+        private void CloseCredits()
+        {
+            if (_isTransitioning)
+                return;
+
+            _isTransitioning = true;
+
+            void ShowMenu()
+            {
+                if (creditsRoot != null)
+                    creditsRoot.SetActive(false);
+
+                if (menuRoot != null)
+                    menuRoot.SetActive(true);
+
+                if (controlsRoot != null)
+                    controlsRoot.SetActive(false);
+
+                RefreshVisibleState(false);
+            }
+
+            void Done()
+            {
+                _isTransitioning = false;
+            }
+
+            if (screenFader != null)
+                screenFader.FadeToBlackThen(ShowMenu, true, Done);
+            else
+            {
+                ShowMenu();
+                Done();
+            }
+        }
+
+        private void OpenControls()
+        {
+            if (_isTransitioning)
+                return;
+
+            _isTransitioning = true;
+
+            void ShowControls()
+            {
+                if (menuRoot != null)
+                    menuRoot.SetActive(false);
+
+                if (creditsRoot != null)
+                    creditsRoot.SetActive(false);
+
+                if (controlsRoot != null)
+                    controlsRoot.SetActive(true);
+            }
+
+            void Done()
+            {
+                _isTransitioning = false;
+            }
+
+            if (screenFader != null)
+                screenFader.FadeToBlackThen(ShowControls, true, Done);
+            else
+            {
+                ShowControls();
+                Done();
+            }
+        }
+
+        private void CloseControls()
+        {
+            if (_isTransitioning)
+                return;
+
+            _isTransitioning = true;
+
+            void ShowMenu()
+            {
+                if (controlsRoot != null)
+                    controlsRoot.SetActive(false);
+
+                if (creditsRoot != null)
+                    creditsRoot.SetActive(false);
+
+                if (menuRoot != null)
+                    menuRoot.SetActive(true);
+
+                RefreshVisibleState(false);
+            }
+
+            void Done()
+            {
+                _isTransitioning = false;
+            }
+
+            if (screenFader != null)
+                screenFader.FadeToBlackThen(ShowMenu, true, Done);
+            else
+            {
+                ShowMenu();
+                Done();
+            }
         }
 
         private void ResumeRuntimeState()
@@ -404,7 +644,7 @@ namespace Util
             }
         }
 
-        private void ApplySettingsToUI()
+        private void ApplySettingsToUI(bool configureOwnership)
         {
             if (gameModeDropdown != null)
             {
@@ -418,10 +658,34 @@ namespace Util
                 cameraDropdown.RefreshShownValue();
             }
 
-            RefreshVisibleState();
+            if (frameRateDropdown != null)
+            {
+                int savedIndex = PlayerPrefs.GetInt(FrameRatePrefKey, FindFrameRateIndex(Utils.FrameRateMode.VSync));
+                savedIndex = Mathf.Clamp(savedIndex, 0, _frameRateModes.Count - 1);
+
+                frameRateDropdown.SetValueWithoutNotify(savedIndex);
+                frameRateDropdown.RefreshShownValue();
+            }
+
+            if (windowModeDropdown != null)
+            {
+                int savedIndex = PlayerPrefs.GetInt(WindowModePrefKey, FindWindowModeIndex(Utils.WindowMode.BorderlessFullscreen));
+                savedIndex = Mathf.Clamp(savedIndex, 0, _windowModes.Count - 1);
+
+                windowModeDropdown.SetValueWithoutNotify(savedIndex);
+                windowModeDropdown.RefreshShownValue();
+            }
+
+            if (humanPlayerDropdown != null)
+            {
+                humanPlayerDropdown.SetValueWithoutNotify(FindHumanPlayerIndex(_workingHumanPlayer));
+                humanPlayerDropdown.RefreshShownValue();
+            }
+
+            RefreshVisibleState(configureOwnership);
         }
 
-        private void RefreshVisibleState()
+        private void RefreshVisibleState(bool configureOwnership)
         {
             if (_isRefreshingUi)
                 return;
@@ -453,6 +717,8 @@ namespace Util
 
                 if (secondRobotVisible)
                     RefreshPanel(1);
+
+                RefreshHumanPlayerObjects(configureOwnership);
             }
             finally
             {
@@ -482,7 +748,7 @@ namespace Util
                 {
                     sideLabel = "Red Alliance";
                     spawnNames = _redSpawnNames;
-                    selectedSpawnIndex = _workingSettings.redSpawnIndex2;
+                    selectedSpawnIndex = _workingSettings.redSpawnIndex1;
                 }
             }
             else
@@ -493,12 +759,16 @@ namespace Util
                 if (useBlue)
                 {
                     spawnNames = _blueSpawnNames;
-                    selectedSpawnIndex = panelIndex == 0 ? _workingSettings.blueSpawnIndex1 : _workingSettings.blueSpawnIndex2;
+                    selectedSpawnIndex = panelIndex == 0
+                        ? _workingSettings.blueSpawnIndex1
+                        : _workingSettings.blueSpawnIndex2;
                 }
                 else
                 {
                     spawnNames = _redSpawnNames;
-                    selectedSpawnIndex = panelIndex == 0 ? _workingSettings.redSpawnIndex1 : _workingSettings.redSpawnIndex2;
+                    selectedSpawnIndex = panelIndex == 0
+                        ? _workingSettings.redSpawnIndex1
+                        : _workingSettings.redSpawnIndex2;
                 }
             }
 
@@ -516,7 +786,7 @@ namespace Util
                 return;
 
             _workingSettings.useBlueAlliance = !_workingSettings.useBlueAlliance;
-            RefreshVisibleState();
+            RefreshVisibleState(true);
         }
 
         private void OnGameModeChanged(int dropdownIndex)
@@ -525,7 +795,7 @@ namespace Util
                 return;
 
             _workingSettings.playMode = _gameModes[Mathf.Clamp(dropdownIndex, 0, _gameModes.Count - 1)].value;
-            RefreshVisibleState();
+            RefreshVisibleState(true);
         }
 
         private void OnCameraChanged(int dropdownIndex)
@@ -534,7 +804,162 @@ namespace Util
                 return;
 
             _workingSettings.view = _cameraModes[Mathf.Clamp(dropdownIndex, 0, _cameraModes.Count - 1)].value;
-            RefreshVisibleState();
+            RefreshVisibleState(false);
+        }
+
+        private void OnFrameRateChanged(int dropdownIndex)
+        {
+            dropdownIndex = Mathf.Clamp(dropdownIndex, 0, _frameRateModes.Count - 1);
+
+            PlayerPrefs.SetInt(FrameRatePrefKey, dropdownIndex);
+            PlayerPrefs.Save();
+
+            ApplyFrameRate(_frameRateModes[dropdownIndex].value);
+        }
+
+        private void OnWindowModeChanged(int dropdownIndex)
+        {
+            dropdownIndex = Mathf.Clamp(dropdownIndex, 0, _windowModes.Count - 1);
+
+            PlayerPrefs.SetInt(WindowModePrefKey, dropdownIndex);
+            PlayerPrefs.Save();
+
+            ApplyWindowMode(_windowModes[dropdownIndex].value);
+        }
+
+        private void ApplySavedWindowMode()
+        {
+            int savedIndex = PlayerPrefs.GetInt(WindowModePrefKey, FindWindowModeIndex(Utils.WindowMode.BorderlessFullscreen));
+            savedIndex = Mathf.Clamp(savedIndex, 0, _windowModes.Count - 1);
+
+            ApplyWindowMode(_windowModes[savedIndex].value);
+        }
+
+        private void ApplyWindowMode(Utils.WindowMode mode)
+        {
+            switch (mode)
+            {
+                case Utils.WindowMode.Windowed:
+                    ApplyWindowedMode();
+                    break;
+
+                case Utils.WindowMode.BorderlessFullscreen:
+                    ApplyBorderlessFullscreenMode();
+                    break;
+
+                case Utils.WindowMode.ExclusiveFullscreen:
+                    ApplyExclusiveFullscreenMode();
+                    break;
+            }
+        }
+
+        private void ApplyWindowedMode()
+        {
+            int width = Screen.width;
+            int height = Screen.height;
+
+            if (Screen.fullScreenMode != FullScreenMode.Windowed)
+            {
+                width = Mathf.Min(1600, Screen.currentResolution.width);
+                height = Mathf.Min(900, Screen.currentResolution.height);
+            }
+
+            Screen.SetResolution(width, height, FullScreenMode.Windowed);
+        }
+
+        private void ApplyBorderlessFullscreenMode()
+        {
+            Resolution nativeResolution = Screen.currentResolution;
+
+            Screen.SetResolution(
+                nativeResolution.width,
+                nativeResolution.height,
+                FullScreenMode.FullScreenWindow
+            );
+        }
+
+        private void ApplyExclusiveFullscreenMode()
+        {
+            Resolution nativeResolution = Screen.currentResolution;
+
+#if UNITY_STANDALONE_WIN
+            Screen.SetResolution(
+                nativeResolution.width,
+                nativeResolution.height,
+                FullScreenMode.ExclusiveFullScreen
+            );
+#else
+            Screen.SetResolution(
+                nativeResolution.width,
+                nativeResolution.height,
+                FullScreenMode.FullScreenWindow
+            );
+#endif
+        }
+
+        private int FindWindowModeIndex(Utils.WindowMode value)
+        {
+            for (int i = 0; i < _windowModes.Count; i++)
+            {
+                if (_windowModes[i].value == value)
+                    return i;
+            }
+
+            return 0;
+        }
+
+        private void ApplySavedFrameRate()
+        {
+            int savedIndex = PlayerPrefs.GetInt(FrameRatePrefKey, FindFrameRateIndex(Utils.FrameRateMode.VSync));
+            savedIndex = Mathf.Clamp(savedIndex, 0, _frameRateModes.Count - 1);
+
+            ApplyFrameRate(_frameRateModes[savedIndex].value);
+        }
+
+        private void ApplyFrameRate(Utils.FrameRateMode mode)
+        {
+            switch (mode)
+            {
+                case Utils.FrameRateMode.FPS30:
+                    SetManualFrameRate(30);
+                    break;
+
+                case Utils.FrameRateMode.FPS60:
+                    SetManualFrameRate(60);
+                    break;
+
+                case Utils.FrameRateMode.FPS120:
+                    SetManualFrameRate(120);
+                    break;
+
+                case Utils.FrameRateMode.VSync:
+                    SetVSync();
+                    break;
+            }
+        }
+
+        private void SetManualFrameRate(int fps)
+        {
+            QualitySettings.vSyncCount = 0;
+            Application.targetFrameRate = fps;
+        }
+
+        private void SetVSync()
+        {
+            QualitySettings.vSyncCount = 1;
+            Application.targetFrameRate = -1;
+        }
+
+        private void OnHumanPlayerChanged(int dropdownIndex)
+        {
+            if (_isRefreshingUi)
+                return;
+
+            _workingHumanPlayer = _humanPlayerModes[
+                Mathf.Clamp(dropdownIndex, 0, _humanPlayerModes.Count - 1)
+            ].value;
+
+            RefreshHumanPlayerObjects(true);
         }
 
         private void CycleRobotIndex(int panelIndex, int delta)
@@ -553,9 +978,14 @@ namespace Util
 
         private int WrapIndex(int value, int count)
         {
-            if (count <= 0) return 0;
+            if (count <= 0)
+                return 0;
+
             value %= count;
-            if (value < 0) value += count;
+
+            if (value < 0)
+                value += count;
+
             return value;
         }
 
@@ -569,9 +999,9 @@ namespace Util
                 if (panelIndex == 0)
                     _workingSettings.blueSpawnIndex1 = value;
                 else
-                    _workingSettings.redSpawnIndex2 = value;
+                    _workingSettings.redSpawnIndex1 = value;
 
-                RefreshVisibleState();
+                RefreshVisibleState(false);
                 return;
             }
 
@@ -582,7 +1012,7 @@ namespace Util
                 else
                     _workingSettings.redSpawnIndex1 = value;
 
-                RefreshVisibleState();
+                RefreshVisibleState(false);
                 return;
             }
 
@@ -591,14 +1021,22 @@ namespace Util
                 if (panelIndex == 0)
                 {
                     _workingSettings.blueSpawnIndex1 = value;
+
                     if (_workingSettings.blueSpawnIndex1 == _workingSettings.blueSpawnIndex2)
-                        _workingSettings.blueSpawnIndex2 = FindDifferentIndex(_workingSettings.blueSpawnIndex1, _blueSpawnNames.Count);
+                        _workingSettings.blueSpawnIndex2 = FindDifferentIndex(
+                            _workingSettings.blueSpawnIndex1,
+                            _blueSpawnNames.Count
+                        );
                 }
                 else
                 {
                     _workingSettings.blueSpawnIndex2 = value;
+
                     if (_workingSettings.blueSpawnIndex2 == _workingSettings.blueSpawnIndex1)
-                        _workingSettings.blueSpawnIndex1 = FindDifferentIndex(_workingSettings.blueSpawnIndex2, _blueSpawnNames.Count);
+                        _workingSettings.blueSpawnIndex1 = FindDifferentIndex(
+                            _workingSettings.blueSpawnIndex2,
+                            _blueSpawnNames.Count
+                        );
                 }
             }
             else
@@ -606,18 +1044,26 @@ namespace Util
                 if (panelIndex == 0)
                 {
                     _workingSettings.redSpawnIndex1 = value;
+
                     if (_workingSettings.redSpawnIndex1 == _workingSettings.redSpawnIndex2)
-                        _workingSettings.redSpawnIndex2 = FindDifferentIndex(_workingSettings.redSpawnIndex1, _redSpawnNames.Count);
+                        _workingSettings.redSpawnIndex2 = FindDifferentIndex(
+                            _workingSettings.redSpawnIndex1,
+                            _redSpawnNames.Count
+                        );
                 }
                 else
                 {
                     _workingSettings.redSpawnIndex2 = value;
+
                     if (_workingSettings.redSpawnIndex2 == _workingSettings.redSpawnIndex1)
-                        _workingSettings.redSpawnIndex1 = FindDifferentIndex(_workingSettings.redSpawnIndex2, _redSpawnNames.Count);
+                        _workingSettings.redSpawnIndex1 = FindDifferentIndex(
+                            _workingSettings.redSpawnIndex2,
+                            _redSpawnNames.Count
+                        );
                 }
             }
 
-            RefreshVisibleState();
+            RefreshVisibleState(false);
         }
 
         private int FindDifferentIndex(int currentIndex, int count)
@@ -656,6 +1102,28 @@ namespace Util
             return 0;
         }
 
+        private int FindFrameRateIndex(Utils.FrameRateMode value)
+        {
+            for (int i = 0; i < _frameRateModes.Count; i++)
+            {
+                if (_frameRateModes[i].value == value)
+                    return i;
+            }
+
+            return 0;
+        }
+
+        private int FindHumanPlayerIndex(HumanPlayerType value)
+        {
+            for (int i = 0; i < _humanPlayerModes.Count; i++)
+            {
+                if (_humanPlayerModes[i].value == value)
+                    return i;
+            }
+
+            return 0;
+        }
+
         private void SetRobotInputsEnabled(bool enabledBool)
         {
             if (loadMatch == null)
@@ -684,6 +1152,65 @@ namespace Util
         public bool IsOpen()
         {
             return _isOpen;
+        }
+
+        private void RefreshHumanPlayerObjects(bool configureOwnership)
+        {
+            bool blueAllianceUsed = IsBlueAllianceUsed();
+            bool redAllianceUsed = IsRedAllianceUsed();
+
+            bool bucketSelected = _workingHumanPlayer == HumanPlayerType.Bucket;
+            bool dumperSelected = _workingHumanPlayer == HumanPlayerType.Dumper;
+
+            SetActiveSafe(blueBucket, blueAllianceUsed && bucketSelected);
+            SetActiveSafe(blueDumper, blueAllianceUsed && dumperSelected);
+
+            SetActiveSafe(redBucket, redAllianceUsed && bucketSelected);
+            SetActiveSafe(redDumper, redAllianceUsed && dumperSelected);
+
+            HumanPlayerRuntimeState.SetState(
+                _workingHumanPlayer,
+                blueAllianceUsed,
+                redAllianceUsed
+            );
+
+            if (configureOwnership)
+                ConfigureAllDumperOwnership();
+        }
+
+        private void ConfigureAllDumperOwnership()
+        {
+            if (loadMatch == null || _cachedOutpostReleases == null)
+                return;
+
+            foreach (var release in _cachedOutpostReleases)
+            {
+                if (release == null)
+                    continue;
+
+                bool releaseIsBlue = release.IsBlue();
+                int ownerSlot = loadMatch.GetHumanPlayerOwnerSlotForAlliance(releaseIsBlue);
+
+                release.ConfigureOwnership(ownerSlot);
+            }
+        }
+
+        private bool IsBlueAllianceUsed()
+        {
+            return _workingSettings.playMode == PlayMode.OneVsOne ||
+                   _workingSettings.useBlueAlliance;
+        }
+
+        private bool IsRedAllianceUsed()
+        {
+            return _workingSettings.playMode == PlayMode.OneVsOne ||
+                   !_workingSettings.useBlueAlliance;
+        }
+
+        private void SetActiveSafe(GameObject target, bool active)
+        {
+            if (target != null && target.activeSelf != active)
+                target.SetActive(active);
         }
     }
 }

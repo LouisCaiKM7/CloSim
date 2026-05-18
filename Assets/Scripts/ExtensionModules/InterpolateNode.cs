@@ -114,8 +114,8 @@ public class InterpolateNode: MonoBehaviour
         float currentDistance = Vector3.Distance(originPos, target);
         speed = Interpolate(currentDistance);
 
-        actionLookup.TryGetValue(targetOuttake.selectedName, out var nodeAction);
-         nodeAction.overideSpeed = (speed);
+        actionLookup.TryGetValue(targetOuttake.selectedName, out var nodeAction); 
+        nodeAction.overideSpeed = (speed);
     }
     
     private void OnValidate()

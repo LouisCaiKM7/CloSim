@@ -73,3 +73,7 @@ crashlytics-build.properties
 # Temporary auto-generated Android Assets
 /[Aa]ssets/[Ss]treamingAssets/aa.meta
 /[Aa]ssets/[Ss]treamingAssets/aa/*
+
+Assets/Imports/Robots/robotAssembly.obj
+Assets/Imports/Robots/robotAssembly.obj.meta
+/Assets/Resources/Parts/Assembly

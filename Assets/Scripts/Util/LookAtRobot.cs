@@ -1,9 +1,11 @@
 using UnityEngine;
+using UnityEngine.Serialization;
 using Util;
 
 public class LookAtRobot : MonoBehaviour
 {
-    [SerializeField] private Transform cameraTransform;
+    [SerializeField, FormerlySerializedAs("camera")]
+    private Transform cameraTransform;
 
     [Tooltip("0 = Robot A, 1 = Robot B")]
     [SerializeField] private int robotSlot = 0;
@@ -11,51 +13,73 @@ public class LookAtRobot : MonoBehaviour
     private LoadMatch loadMatch;
     private Transform target;
 
-    void Start()
+    private void Awake()
     {
-        if (cameraTransform == null)
-            cameraTransform = transform;
-
-        loadMatch = FindFirstObjectByType<LoadMatch>();
-        RefreshTarget();
+        ResolveCameraTransform();
     }
 
-    void Update()
+    private void Start()
     {
-        if (cameraTransform == null)
-            cameraTransform = transform;
-
         if (loadMatch == null)
             loadMatch = FindFirstObjectByType<LoadMatch>();
 
+        RefreshTarget();
+    }
+
+    private void LateUpdate()
+    {
         if (loadMatch == null)
+        {
+            loadMatch = FindFirstObjectByType<LoadMatch>();
+            if (loadMatch == null)
+                return;
+        }
+
+        if (loadMatch.GetTrackingType() != TrackingType.TrackRobot)
             return;
 
-        // Always refresh tracking state and reacquire target if needed
         if (target == null)
             RefreshTarget();
 
-        bool lookTo = loadMatch.GetTrackingType() == TrackingType.TrackRobot;
+        if (cameraTransform == null)
+            ResolveCameraTransform();
 
-        if (!lookTo)
+        if (target != null && cameraTransform != null)
+            cameraTransform.LookAt(target);
+    }
+
+    private void ResolveCameraTransform()
+    {
+        if (cameraTransform != null)
             return;
 
-        if (target == null)
+        Camera cam = GetComponentInChildren<Camera>(true);
+        if (cam != null)
         {
-            var robot = loadMatch.GetRobotLoaded(robotSlot);
-            target = robot != null ? robot.transform : null;
+            cameraTransform = cam.transform;
+            return;
         }
 
-        if (target != null)
-            cameraTransform.LookAt(target);
+        cameraTransform = transform;
     }
 
     private void RefreshTarget()
     {
-        if (loadMatch == null) return;
+        if (loadMatch == null)
+        {
+            target = null;
+            return;
+        }
 
-        var robot = loadMatch.GetRobotLoaded(robotSlot);
+        GameObject robot = loadMatch.GetRobotLoaded(robotSlot);
         target = robot != null ? robot.transform : null;
+    }
+
+    public void Initialize(LoadMatch match, int slot)
+    {
+        loadMatch = match;
+        robotSlot = slot;
+        RefreshTarget();
     }
 
     public void SetRobotSlot(int slot)

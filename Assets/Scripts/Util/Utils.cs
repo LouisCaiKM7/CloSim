@@ -276,5 +276,20 @@ namespace Util
 
             return objectsOnLayer;
         }
+        
+        public enum FrameRateMode
+        {
+            FPS30 = 0,
+            FPS60 = 1,
+            FPS120 = 2,
+            VSync = 3
+        }
+        
+        public enum WindowMode
+        {
+            Windowed = 0,
+            BorderlessFullscreen = 1,
+            ExclusiveFullscreen = 2
+        }
     }
 }

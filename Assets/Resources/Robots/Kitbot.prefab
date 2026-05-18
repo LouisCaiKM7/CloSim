@@ -314,7 +314,7 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 0.2032, y: 0.1524, z: 0.1016}
+  m_Size: {x: 0.2032, y: 0.1524, z: 0.1524}
   m_Center: {x: 0, y: 0, z: 0}
 --- !u!1 &241223122999982754
 GameObject:
@@ -2343,6 +2343,9 @@ MonoBehaviour:
     i: 0
     d: 0
     max: 0
+  requireInsideRegion: 1
+  positionReference: {fileID: 3976846010761174341}
+  allowedRegions: 0000000001000000
   Distance: 0
   Output: 0
   CurrentAngle: 0
@@ -7418,6 +7421,7 @@ MonoBehaviour:
     Type: 2
     Animate: 0
     Speed: 280
+    HpRandomizer: 25
     AngularSpeed: 0
     MoveTo: {fileID: 0}
     Direction: 2
@@ -7426,6 +7430,7 @@ MonoBehaviour:
     PieceType: 2
     ControlType: 2
     performTimer: 0
+    InputRequired: 1
     ControllerButton: 9
     KeyboardButton: 33
 --- !u!1 &4296155703566875345
@@ -8393,6 +8398,7 @@ MonoBehaviour:
     Type: 1
     Animate: 1
     Speed: 120
+    HpRandomizer: 25
     AngularSpeed: 0
     MoveTo: {fileID: 63453340848260433}
     Direction: 2
@@ -8401,12 +8407,14 @@ MonoBehaviour:
     PieceType: 2
     ControlType: 2
     performTimer: 0
+    InputRequired: 1
     ControllerButton: 9
     KeyboardButton: 33
   - Name: Acquire
     Type: 0
     Animate: 1
     Speed: 120
+    HpRandomizer: 25
     AngularSpeed: 0
     MoveTo: {fileID: 63453340848260433}
     Direction: 2
@@ -8415,6 +8423,7 @@ MonoBehaviour:
     PieceType: 2
     ControlType: 0
     performTimer: 0
+    InputRequired: 1
     ControllerButton: 9
     KeyboardButton: 33
 --- !u!1 &4835998077898510218
@@ -9809,7 +9818,7 @@ Transform:
   m_GameObject: {fileID: 5219725551699565816}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -0.6552, y: -0.0494, z: 0.4711}
+  m_LocalPosition: {x: -0.655, y: -0.0494, z: 0.495}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -9830,7 +9839,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   currentGamePiece: {fileID: 0}
   Preload: 0
-  intakeSize: {x: 8, y: 6, z: 4}
+  intakeSize: {x: 8, y: 6, z: 6}
   pieceName: 0
   currentState: 1
   Actions:
@@ -9838,6 +9847,7 @@ MonoBehaviour:
     Type: 0
     Animate: 1
     Speed: 120
+    HpRandomizer: 25
     AngularSpeed: 0
     MoveTo: {fileID: 0}
     Direction: 0
@@ -9846,12 +9856,14 @@ MonoBehaviour:
     PieceType: 2
     ControlType: 0
     performTimer: 0
+    InputRequired: 1
     ControllerButton: 8
     KeyboardButton: 29
   - Name: Handoff
     Type: 1
     Animate: 1
     Speed: 120
+    HpRandomizer: 25
     AngularSpeed: 0
     MoveTo: {fileID: 4801464524043560724}
     Direction: 0
@@ -9860,6 +9872,7 @@ MonoBehaviour:
     PieceType: 2
     ControlType: 2
     performTimer: 0
+    InputRequired: 1
     ControllerButton: 4
     KeyboardButton: 0
 --- !u!1 &5232151736349062579
@@ -11618,7 +11631,7 @@ Transform:
   m_GameObject: {fileID: 5958103535088953202}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -0.8588, y: -0.0494, z: 0.4711}
+  m_LocalPosition: {x: -0.859, y: -0.0494, z: 0.495}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -11639,7 +11652,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   currentGamePiece: {fileID: 0}
   Preload: 0
-  intakeSize: {x: 8, y: 6, z: 4}
+  intakeSize: {x: 8, y: 6, z: 6}
   pieceName: 0
   currentState: 1
   Actions:
@@ -11647,6 +11660,7 @@ MonoBehaviour:
     Type: 0
     Animate: 1
     Speed: 120
+    HpRandomizer: 25
     AngularSpeed: 0
     MoveTo: {fileID: 0}
     Direction: 0
@@ -11655,12 +11669,14 @@ MonoBehaviour:
     PieceType: 2
     ControlType: 0
     performTimer: 0
+    InputRequired: 1
     ControllerButton: 8
     KeyboardButton: 29
   - Name: Handoff
     Type: 1
     Animate: 1
     Speed: 120
+    HpRandomizer: 25
     AngularSpeed: 0
     MoveTo: {fileID: 4801464524043560724}
     Direction: 0
@@ -11669,6 +11685,7 @@ MonoBehaviour:
     PieceType: 2
     ControlType: 2
     performTimer: 0
+    InputRequired: 1
     ControllerButton: 4
     KeyboardButton: 0
 --- !u!1 &5960248766971876011
@@ -13014,7 +13031,7 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 0.2032, y: 0.1524, z: 0.1016}
+  m_Size: {x: 0.2032, y: 0.1524, z: 0.1524}
   m_Center: {x: 0, y: 0, z: 0}
 --- !u!1 &6553039003012807948
 GameObject:
@@ -13950,7 +13967,7 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 0.2032, y: 0.1524, z: 0.1016}
+  m_Size: {x: 0.2032, y: 0.1524, z: 0.1524}
   m_Center: {x: 0, y: 0, z: 0}
 --- !u!1 &7030890275977998861
 GameObject:
@@ -17369,7 +17386,7 @@ Transform:
   m_GameObject: {fileID: 8282301793799695938}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -0.7419, y: -0.0494, z: 0.4711}
+  m_LocalPosition: {x: -0.742, y: -0.0494, z: 0.495}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -17390,7 +17407,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   currentGamePiece: {fileID: 0}
   Preload: 0
-  intakeSize: {x: 8, y: 6, z: 4}
+  intakeSize: {x: 8, y: 6, z: 6}
   pieceName: 0
   currentState: 1
   Actions:
@@ -17398,6 +17415,7 @@ MonoBehaviour:
     Type: 0
     Animate: 1
     Speed: 120
+    HpRandomizer: 25
     AngularSpeed: 0
     MoveTo: {fileID: 0}
     Direction: 0
@@ -17406,12 +17424,14 @@ MonoBehaviour:
     PieceType: 2
     ControlType: 0
     performTimer: 0
+    InputRequired: 1
     ControllerButton: 8
     KeyboardButton: 29
   - Name: Handoff
     Type: 1
     Animate: 1
     Speed: 120
+    HpRandomizer: 25
     AngularSpeed: 0
     MoveTo: {fileID: 4801464524043560724}
     Direction: 0
@@ -17420,6 +17440,7 @@ MonoBehaviour:
     PieceType: 2
     ControlType: 2
     performTimer: 0
+    InputRequired: 1
     ControllerButton: 4
     KeyboardButton: 0
 --- !u!1 &8286895820832940657
@@ -18261,6 +18282,7 @@ MonoBehaviour:
     Type: 2
     Animate: 0
     Speed: 10
+    HpRandomizer: 25
     AngularSpeed: 0
     MoveTo: {fileID: 0}
     Direction: 2
@@ -18269,6 +18291,7 @@ MonoBehaviour:
     PieceType: 2
     ControlType: 2
     performTimer: 0
+    InputRequired: 1
     ControllerButton: 8
     KeyboardButton: 29
 --- !u!1 &8636411406592825142

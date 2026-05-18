@@ -223,7 +223,8 @@ namespace Util
     {
         Intake,
         Transfer,
-        Outake
+        Outake,
+        HP
     }
 
     public enum NodeControlType
@@ -238,7 +239,7 @@ namespace Util
         Stowing,
         Intakeing,
         Transfering,
-        Outaking
+        Outaking,
     }
 
     public enum Direction
@@ -319,5 +320,11 @@ namespace Util
         OneVsZero,   
         TwoVsZero,  
         OneVsOne
+    }
+    
+    public enum HumanPlayerType
+    {
+        Bucket,
+        Dumper
     }
 }

@@ -121,11 +121,13 @@ public class LoadMatch : MonoBehaviour
 
     private void LateUpdate()
     {
+#if UNITY_EDITOR
         if (!Application.isPlaying) return;
 
         CheckRobots();
         RefreshInspectorDropdownData();
         SyncInspectorDropdownSelection();
+#endif
     }
 
     private void Start()
@@ -136,8 +138,8 @@ public class LoadMatch : MonoBehaviour
         _selectedName1 = robotSelected1 != null ? robotSelected1.selectedName : string.Empty;
         _selectedName2 = robotSelected2 != null ? robotSelected2.selectedName : string.Empty;
 
-        _selectedRobotIndex1 = robotSelected1?.selectedIndex ?? 0;
-        _selectedRobotIndex2 = robotSelected2?.selectedIndex ?? 0;
+        _selectedRobotIndex1 = 3;
+        _selectedRobotIndex2 = 3;
 
         CheckRobots();
 
@@ -231,6 +233,12 @@ public class LoadMatch : MonoBehaviour
 
         _settings.robotIndex1 = Mathf.Clamp(_settings.robotIndex1, 0, _availableRobots.Count - 1);
         _settings.robotIndex2 = Mathf.Clamp(_settings.robotIndex2, 0, _availableRobots.Count - 1);
+
+        if (IsRedAllianceDriverStationForbidden())
+        {
+            Debug.LogWarning("1v0 and 2v0 cannot use Red alliance with Driver Station camera. Forcing Blue alliance.");
+            _settings.useBlueAlliance = true;
+        }
     }
 
     private void SanitizeSpawnSettings()
@@ -543,6 +551,7 @@ public class LoadMatch : MonoBehaviour
         _activeRobot1.name = robotPrefab1.name + "_P1";
         EnsurePlayerInputConfigured(_activeRobot1);
         ConfigureRobotDriveMode(_activeRobot1, false);
+        ConfigureOutpostReleaseOwnership(_activeRobot1, false);
 
         bool spawnSecondRobot =
             _settings.playMode == Util.PlayMode.TwoVsZero ||
@@ -569,6 +578,7 @@ public class LoadMatch : MonoBehaviour
         _activeRobot2.name = robotPrefab2.name + "_P2";
         EnsurePlayerInputConfigured(_activeRobot2);
         ConfigureRobotDriveMode(_activeRobot2, true);
+        ConfigureOutpostReleaseOwnership(_activeRobot2, true);
     }
 
     private Transform GetSpawnPointForRobot(int robotSlot)
@@ -585,10 +595,28 @@ public class LoadMatch : MonoBehaviour
 
             Util.PlayMode.OneVsOne => robotSlot == 0
                 ? GetBlueSpawnPoint(0)
-                : GetRedSpawnPoint(1),
+                : GetRedSpawnPoint(0),
 
             _ => null
         };
+    }
+    
+    public int GetHumanPlayerOwnerSlotForAlliance(bool blueAlliance)
+    {
+        switch (_settings.playMode)
+        {
+            case Util.PlayMode.OneVsZero:
+                return 0;
+
+            case Util.PlayMode.TwoVsZero:
+                return 0;
+
+            case Util.PlayMode.OneVsOne:
+                return blueAlliance ? 0 : 1;
+
+            default:
+                return 0;
+        }
     }
 
     private GameObject GetRobotPrefabBySelection(int selectedIndex)
@@ -783,6 +811,14 @@ public class LoadMatch : MonoBehaviour
             _ => false
         };
     }
+    
+    private bool IsRedAllianceDriverStationForbidden()
+    {
+        return _settings.view == Cameras.DriverStation &&
+               !_settings.useBlueAlliance &&
+               (_settings.playMode == Util.PlayMode.OneVsZero ||
+                _settings.playMode == Util.PlayMode.TwoVsZero);
+    }
 
     private void ConfigureRobotDriveMode(GameObject robot, bool isPlayer2)
     {
@@ -798,34 +834,72 @@ public class LoadMatch : MonoBehaviour
             return;
 
         bool robotIsRedSide = IsRobotOnRedAllianceSide(isPlayer2);
+
         controller.isRed = robotIsRedSide;
+        controller.reversed = false;
 
         switch (_settings.view)
         {
             case Cameras.FirstPerson:
                 controller.fieldCentric = false;
+                controller.reversed = false;
                 break;
 
             case Cameras.FirstPersonReversed:
-                controller.reversed = !robotIsRedSide;
                 controller.fieldCentric = false;
+                controller.reversed = true;
                 break;
 
             case Cameras.ThirdPerson:
                 controller.fieldCentric = true;
+                controller.reversed = false;
                 break;
 
             case Cameras.ReversedThirdPerson:
-                controller.reversed = !robotIsRedSide;
                 controller.fieldCentric = true;
+                controller.reversed = true;
                 break;
 
             case Cameras.DriverStation:
                 controller.fieldCentric = true;
+                controller.reversed = false;
                 break;
         }
     }
+    
+    private void ConfigureOutpostReleaseOwnership(GameObject robot, bool isPlayer2)
+    {
+        if (robot == null)
+            return;
 
+        StartCoroutine(ConfigureOutpostReleaseOwnershipWhenReady(robot, isPlayer2));
+    }
+
+    private IEnumerator ConfigureOutpostReleaseOwnershipWhenReady(GameObject robot, bool isPlayer2)
+    {
+        int playerSlot = isPlayer2 ? 1 : 0;
+
+        const float timeout = 2f;
+        float startTime = Time.time;
+
+        while (robot != null && Time.time - startTime < timeout)
+        {
+            var outpostReleases = robot.GetComponentsInChildren<OutpostRelease>(true);
+
+            if (outpostReleases.Length > 0)
+            {
+                foreach (var release in outpostReleases)
+                {
+                    release.ConfigureOwnership(playerSlot);
+                }
+
+                yield break;
+            }
+
+            yield return null;
+        }
+    }
+    
     public bool RobotLoaded()
     {
         return _activeRobot1 != null || _activeRobot2 != null;
@@ -1012,7 +1086,7 @@ public class LoadMatch : MonoBehaviour
         spawnedCamera.transform.localPosition = Vector3.zero;
 
         var lookAt = spawnedCamera.GetComponentInChildren<LookAtRobot>(true);
-        if (lookAt != null)
+        if (lookAt != null) 
             lookAt.SetRobotSlot(robotSlot);
 
         return spawnedCamera;

@@ -48,6 +48,11 @@ public class AutoAim : MonoBehaviour
 
     [ConditionalField(nameof(advanced))]
     [SerializeField] private PID steeringPID;
+    
+    [Header("Region Filtering")]
+    [SerializeField] private bool requireInsideRegion = false;
+    [SerializeField] private Transform positionReference;
+    [SerializeField] private AimRegionId[] allowedRegions;
 
     [Header("Debug Info")]
     [ConditionalField(true, nameof(IsPlaying))]
@@ -73,6 +78,8 @@ public class AutoAim : MonoBehaviour
     private PlayerInput _playerInput;
     private InputActionMap _inputMap;
     private List<Vector3> _allTargets = new List<Vector3>();
+    
+    private readonly List<AimRegion> _regions = new List<AimRegion>();
 
     private void Start()
     {
@@ -113,6 +120,11 @@ public class AutoAim : MonoBehaviour
                 integralSaturation = 1
             };
         }
+        
+        if (positionReference == null)
+            positionReference = transform;
+
+        FindAimRegions();
     }
 
     private void FixedUpdate()
@@ -134,8 +146,13 @@ public class AutoAim : MonoBehaviour
         }
         
         bool shouldTarget = ShouldActivateAiming();
-        
+
         if (!shouldTarget)
+        {
+            return;
+        }
+
+        if (!IsInsideAllowedRegion())
         {
             return;
         }
@@ -321,5 +338,72 @@ public class AutoAim : MonoBehaviour
         }
     
         return furthestTarget;
+    }
+    
+    private void FindAimRegions()
+    {
+        _regions.Clear();
+
+        var found = FindObjectsByType<AimRegion>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+        for (int i = 0; i < found.Length; i++)
+        {
+            if (found[i] != null)
+            {
+                _regions.Add(found[i]);
+            }
+        }
+    }
+    
+    private bool IsInsideAllowedRegion()
+    {
+        if (!requireInsideRegion)
+            return true;
+
+        if (positionReference == null)
+            positionReference = transform;
+
+        if (_regions.Count == 0)
+            return true;
+
+        Vector3 point = positionReference.position;
+
+        for (int i = 0; i < _regions.Count; i++)
+        {
+            var region = _regions[i];
+            if (region == null || region.RegionBox == null)
+                continue;
+
+            if (!IsRegionAllowed(region.RegionId))
+                continue;
+
+            if (IsPointInsideBox(region.RegionBox, point))
+                return true;
+        }
+
+        return false;
+    }
+
+    private bool IsRegionAllowed(AimRegionId regionId)
+    {
+        if (allowedRegions == null || allowedRegions.Length == 0)
+            return false;
+
+        for (int i = 0; i < allowedRegions.Length; i++)
+        {
+            if (allowedRegions[i] == regionId)
+                return true;
+        }
+
+        return false;
+    }
+
+    private bool IsPointInsideBox(BoxCollider box, Vector3 worldPoint)
+    {
+        Vector3 localPoint = box.transform.InverseTransformPoint(worldPoint) - box.center;
+        Vector3 halfSize = box.size * 0.5f;
+
+        return Mathf.Abs(localPoint.x) <= halfSize.x &&
+               Mathf.Abs(localPoint.y) <= halfSize.y &&
+               Mathf.Abs(localPoint.z) <= halfSize.z;
     }
 }
