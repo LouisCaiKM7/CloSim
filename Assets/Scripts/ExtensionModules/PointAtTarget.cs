@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using BuilderLib;
 using MyBox;
 using UnityEngine;
 using Util;
@@ -12,10 +13,11 @@ public class PointAtTarget : MonoBehaviour
 
     [Header("Targeting Settings")]
     [ConditionalField(true, nameof(IsPreset))]
-    [SerializeField] private bool useAlliancePreset;
-
-    [ConditionalField(true, nameof(IsPreset))]
     [SerializeField] private Vector3 targetPosition;
+    
+    [Header("Alliance Passing Targets")]
+    [ConditionalField(true, nameof(IsPreset))]
+    [SerializeField] private bool useAlliancePreset;
 
     [ConditionalField(true, nameof(IsPreset))]
     [SerializeField] private Vector3 blueTargetPosition;
@@ -44,8 +46,14 @@ public class PointAtTarget : MonoBehaviour
 
     [Header("Region Filtering")]
     [SerializeField] private bool requireInsideRegion = false;
-    [SerializeField] private Transform positionReference;
+
+    [ConditionalField(nameof(requireInsideRegion))]
+    [SerializeField] private Transform bumperRoot;
+
+    [ConditionalField(nameof(requireInsideRegion))]
     [SerializeField] private AimRegionId[] allowedRegions;
+
+    [ConditionalField(nameof(requireInsideRegion))]
     [SerializeField] private bool goToHome = false;
 
     private bool IsPreset() => targetType == TargetType.Preset;
@@ -57,6 +65,7 @@ public class PointAtTarget : MonoBehaviour
 
     private JointController _controller;
     private SwerveController _swerveController;
+    private Collider[] _bumperColliders = System.Array.Empty<Collider>();
     private readonly List<AimRegion> _regions = new List<AimRegion>();
 
     private bool _lateStartup;
@@ -78,15 +87,8 @@ public class PointAtTarget : MonoBehaviour
         {
             _allTargets.Add(target);
         }
-
-        if (positionReference == null)
-        {
-            if (robotPosition != null)
-                positionReference = robotPosition.transform;
-            else
-                positionReference = transform;
-        }
-
+        
+        CacheBumperColliders();
         FindAimRegions();
 
         _lateStartup = true;
@@ -163,6 +165,17 @@ public class PointAtTarget : MonoBehaviour
         {
             UpdateTable(interpolationTable);
         }
+    }
+    
+    private void CacheBumperColliders()
+    {
+        if (bumperRoot == null)
+        {
+            _bumperColliders = System.Array.Empty<Collider>();
+            return;
+        }
+
+        _bumperColliders = bumperRoot.GetComponentsInChildren<Collider>(true);
     }
 
     private Vector3 GetTargetValue()
@@ -345,30 +358,37 @@ public class PointAtTarget : MonoBehaviour
         if (!requireInsideRegion)
             return true;
 
-        if (positionReference == null)
-        {
-            if (robotPosition != null)
-                positionReference = robotPosition.transform;
-            else
-                positionReference = transform;
-        }
-
         if (_regions.Count == 0)
             return false;
 
-        Vector3 point = positionReference.position;
-
-        for (int i = 0; i < _regions.Count; i++)
+        if (_bumperColliders == null || _bumperColliders.Length == 0)
         {
-            var region = _regions[i];
+            CacheBumperColliders();
+
+            if (_bumperColliders == null || _bumperColliders.Length == 0)
+                return false;
+        }
+
+        for (int r = 0; r < _regions.Count; r++)
+        {
+            var region = _regions[r];
+
             if (region == null || region.RegionBox == null)
                 continue;
 
             if (!IsRegionAllowed(region.RegionId))
                 continue;
 
-            if (IsPointInsideBox(region.RegionBox, point))
-                return true;
+            for (int c = 0; c < _bumperColliders.Length; c++)
+            {
+                var bumperCollider = _bumperColliders[c];
+
+                if (bumperCollider == null || !bumperCollider.enabled)
+                    continue;
+
+                if (IsColliderOverlappingRegion(region.RegionBox, bumperCollider))
+                    return true;
+            }
         }
 
         return false;
@@ -388,14 +408,21 @@ public class PointAtTarget : MonoBehaviour
         return false;
     }
 
-    private bool IsPointInsideBox(BoxCollider box, Vector3 worldPoint)
+    private bool IsColliderOverlappingRegion(BoxCollider regionBox, Collider bumperCollider)
     {
-        Vector3 localPoint = box.transform.InverseTransformPoint(worldPoint) - box.center;
-        Vector3 halfSize = box.size * 0.5f;
+        if (regionBox == null || bumperCollider == null)
+            return false;
 
-        return Mathf.Abs(localPoint.x) <= halfSize.x &&
-               Mathf.Abs(localPoint.y) <= halfSize.y &&
-               Mathf.Abs(localPoint.z) <= halfSize.z;
+        return Physics.ComputePenetration(
+            regionBox,
+            regionBox.transform.position,
+            regionBox.transform.rotation,
+            bumperCollider,
+            bumperCollider.transform.position,
+            bumperCollider.transform.rotation,
+            out _,
+            out _
+        );
     }
 
     [Serializable]

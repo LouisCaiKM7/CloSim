@@ -463,6 +463,24 @@
                     "processors": "",
                     "interactions": "",
                     "initialStateCheck": false
+                },
+                {
+                    "name": "LeftStickButton",
+                    "type": "Button",
+                    "id": "ae49d48a-9aae-49b5-b650-678654b95c5a",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "RightStickButton",
+                    "type": "Button",
+                    "id": "84014b2a-c5a0-49cc-98c8-5da221478f9a",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
                 }
             ],
             "bindings": [
@@ -1167,6 +1185,28 @@
                     "processors": "",
                     "groups": "Keyboard",
                     "action": "UpArrow",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "7cb27d06-c93f-40e9-83f1-edb9b35f6ca4",
+                    "path": "<Gamepad>/leftStickPress",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "Gamepad",
+                    "action": "LeftStickButton",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "010864bc-bb49-4f62-ad5d-0d3188142404",
+                    "path": "<Gamepad>/rightStickPress",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "Gamepad",
+                    "action": "RightStickButton",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }

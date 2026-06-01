@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using BuilderLib;
 using MyBox;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -15,9 +16,13 @@ public class AutoAim : MonoBehaviour
     [SerializeField] private Vector3 targetPosition;
     
     [Header("Alliance Passing Targets")]
+    [ConditionalField(true, nameof(IsPreset))]
     [SerializeField] private bool useAllianceTargets;
 
+    [ConditionalField(true, nameof(UseAllianceTargets))]
     [SerializeField] private Vector3 blueTargetPosition;
+
+    [ConditionalField(true, nameof(UseAllianceTargets))]
     [SerializeField] private Vector3 redTargetPosition;
 
     [ConditionalField(true, nameof(WhenAtSetpoint))] 
@@ -51,7 +56,11 @@ public class AutoAim : MonoBehaviour
     
     [Header("Region Filtering")]
     [SerializeField] private bool requireInsideRegion = false;
-    [SerializeField] private Transform positionReference;
+
+    [ConditionalField(nameof(requireInsideRegion))]
+    [SerializeField] private Transform bumperRoot;
+
+    [ConditionalField(nameof(requireInsideRegion))]
     [SerializeField] private AimRegionId[] allowedRegions;
 
     [Header("Debug Info")]
@@ -72,12 +81,14 @@ public class AutoAim : MonoBehaviour
     private bool WhenButton() => targetWhen == AimAtWhen.WhenPressing;
     private bool WhenWithinRange() => targetWhen == AimAtWhen.WithinRange;
     private bool IsPlaying() => Application.isPlaying;
+    private bool UseAllianceTargets() => targetType == TargetType.Preset && useAllianceTargets;
 
     private SwerveController controller;
     private PIDController _steeringPIDController;
     private PlayerInput _playerInput;
     private InputActionMap _inputMap;
     private List<Vector3> _allTargets = new List<Vector3>();
+    private Collider[] _bumperColliders = System.Array.Empty<Collider>();
     
     private readonly List<AimRegion> _regions = new List<AimRegion>();
 
@@ -121,9 +132,7 @@ public class AutoAim : MonoBehaviour
             };
         }
         
-        if (positionReference == null)
-            positionReference = transform;
-
+        CacheBumperColliders();
         FindAimRegions();
     }
 
@@ -175,6 +184,17 @@ public class AutoAim : MonoBehaviour
         Output = pidOutput;
 
         controller.OverideSteer(pidOutput, true);
+    }
+    
+    private void CacheBumperColliders()
+    {
+        if (bumperRoot == null)
+        {
+            _bumperColliders = System.Array.Empty<Collider>();
+            return;
+        }
+
+        _bumperColliders = bumperRoot.GetComponentsInChildren<Collider>(true);
     }
 
     private bool ShouldActivateAiming()
@@ -359,25 +379,37 @@ public class AutoAim : MonoBehaviour
         if (!requireInsideRegion)
             return true;
 
-        if (positionReference == null)
-            positionReference = transform;
-
         if (_regions.Count == 0)
-            return true;
+            return false;
 
-        Vector3 point = positionReference.position;
-
-        for (int i = 0; i < _regions.Count; i++)
+        if (_bumperColliders == null || _bumperColliders.Length == 0)
         {
-            var region = _regions[i];
+            CacheBumperColliders();
+
+            if (_bumperColliders == null || _bumperColliders.Length == 0)
+                return false;
+        }
+
+        for (int r = 0; r < _regions.Count; r++)
+        {
+            var region = _regions[r];
+
             if (region == null || region.RegionBox == null)
                 continue;
 
             if (!IsRegionAllowed(region.RegionId))
                 continue;
 
-            if (IsPointInsideBox(region.RegionBox, point))
-                return true;
+            for (int c = 0; c < _bumperColliders.Length; c++)
+            {
+                var bumperCollider = _bumperColliders[c];
+
+                if (bumperCollider == null || !bumperCollider.enabled)
+                    continue;
+
+                if (IsColliderOverlappingRegion(region.RegionBox, bumperCollider))
+                    return true;
+            }
         }
 
         return false;
@@ -397,13 +429,20 @@ public class AutoAim : MonoBehaviour
         return false;
     }
 
-    private bool IsPointInsideBox(BoxCollider box, Vector3 worldPoint)
+    private bool IsColliderOverlappingRegion(BoxCollider regionBox, Collider bumperCollider)
     {
-        Vector3 localPoint = box.transform.InverseTransformPoint(worldPoint) - box.center;
-        Vector3 halfSize = box.size * 0.5f;
+        if (regionBox == null || bumperCollider == null)
+            return false;
 
-        return Mathf.Abs(localPoint.x) <= halfSize.x &&
-               Mathf.Abs(localPoint.y) <= halfSize.y &&
-               Mathf.Abs(localPoint.z) <= halfSize.z;
+        return Physics.ComputePenetration(
+            regionBox,
+            regionBox.transform.position,
+            regionBox.transform.rotation,
+            bumperCollider,
+            bumperCollider.transform.position,
+            bumperCollider.transform.rotation,
+            out _,
+            out _
+        );
     }
 }

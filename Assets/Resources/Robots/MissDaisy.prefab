@@ -2555,9 +2555,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   currentGamePiece: {fileID: 0}
-  Preload: 1
+  Preload: 0
   intakeSize: {x: 3, y: 3, z: 3}
-  pieceName: 2
+  pieceName: 0
   currentState: 0
   Actions:
   - Name: Shoot
@@ -2569,9 +2569,9 @@ MonoBehaviour:
     MoveTo: {fileID: 0}
     Direction: 0
     Spin: {x: 0, y: 0, z: 0}
-    DelayTimer: 0.1
+    DelayTimer: 0
     PieceType: 2
-    ControlType: 0
+    ControlType: 2
     performTimer: 0
     InputRequired: 1
     ControllerButton: 9
@@ -2596,6 +2596,9 @@ MonoBehaviour:
     selectedIndex: 0
     selectedName: Shoot
   targetPosition: {x: 0, y: 0, z: 0}
+  useAllianceTargets: 0
+  blueTargetPosition: {x: 0, y: 0, z: 0}
+  redTargetPosition: {x: 0, y: 0, z: 0}
   SetpointName: 
   connectedTo: Hood
   extraTargets: []
@@ -2627,17 +2630,20 @@ MonoBehaviour:
     - Shoot
     selectedIndex: 0
     selectedName: Shoot
-  targetPosition: {x: -7, y: 2, z: -2.5}
+  targetPosition: {x: 0, y: 0, z: 0}
+  useAllianceTargets: 1
+  blueTargetPosition: {x: -8, y: 6, z: -2.54}
+  redTargetPosition: {x: 8, y: 6, z: -2.54}
   SetpointName: PassLeft
   connectedTo: Hood
   extraTargets: []
   interpolationTable:
-  - distance: 7
-    value: 200
-  - distance: 10
+  - distance: 3.5
+    value: 225
+  - distance: 9.4
     value: 350
-  - distance: 13
-    value: 600
+  - distance: 0
+    value: 50
   Distance: 0
   Output: 0
 --- !u!114 &9072834996576472414
@@ -2659,17 +2665,20 @@ MonoBehaviour:
     - Shoot
     selectedIndex: 0
     selectedName: Shoot
-  targetPosition: {x: -7, y: 2, z: 2.5}
+  targetPosition: {x: 0, y: 0, z: 0}
+  useAllianceTargets: 1
+  blueTargetPosition: {x: -8, y: 6, z: 2.54}
+  redTargetPosition: {x: 8, y: 6, z: 2.54}
   SetpointName: PassRight
   connectedTo: Hood
   extraTargets: []
   interpolationTable:
-  - distance: 7
-    value: 250
-  - distance: 10
+  - distance: 3.5
+    value: 225
+  - distance: 9.4
     value: 350
-  - distance: 13
-    value: 600
+  - distance: 0
+    value: 50
   Distance: 0
   Output: 0
 --- !u!1 &347775528305566455
@@ -6994,10 +7003,10 @@ MonoBehaviour:
     Speed: 0
     HpRandomizer: 25
     AngularSpeed: 0
-    MoveTo: {fileID: 7386918026894189503}
+    MoveTo: {fileID: 2042312860031171429}
     Direction: 0
     Spin: {x: 0, y: 0, z: 0}
-    DelayTimer: 0
+    DelayTimer: 0.05
     PieceType: 2
     ControlType: 2
     performTimer: 0
@@ -7846,6 +7855,7 @@ MonoBehaviour:
   targetVelocity: 0
   targetModuleAngle: 0
   lateralFrictionMultiplier: 1
+  tractionCoefficient: 1.1
   _rb: {fileID: 0}
 --- !u!1 &937411540442407536
 GameObject:
@@ -34778,13 +34788,13 @@ MonoBehaviour:
     MoveTo: {fileID: 1530698549242233935}
     Direction: 0
     Spin: {x: 0, y: 0, z: 0}
-    DelayTimer: 0
+    DelayTimer: 0.1
     PieceType: 2
-    ControlType: 2
+    ControlType: 0
     performTimer: 0
     InputRequired: 1
-    ControllerButton: 0
-    KeyboardButton: 0
+    ControllerButton: 9
+    KeyboardButton: 33
 --- !u!1 &3829873916913317602
 GameObject:
   m_ObjectHideFlags: 0
@@ -39563,6 +39573,7 @@ MonoBehaviour:
   targetVelocity: 0
   targetModuleAngle: 0
   lateralFrictionMultiplier: 1
+  tractionCoefficient: 1.1
   _rb: {fileID: 0}
 --- !u!1 &4252117440788549371
 GameObject:
@@ -40900,7 +40911,7 @@ MonoBehaviour:
     Speed: 200
     HpRandomizer: 25
     AngularSpeed: 200
-    MoveTo: {fileID: 8156088692629531608}
+    MoveTo: {fileID: 7386918026894189503}
     Direction: 0
     Spin: {x: 0, y: 0, z: 0}
     DelayTimer: 0.1
@@ -41567,7 +41578,7 @@ MonoBehaviour:
     MoveTo: {fileID: 2042312860031171429}
     Direction: 0
     Spin: {x: 0, y: 0, z: 0}
-    DelayTimer: 0
+    DelayTimer: 0.05
     PieceType: 2
     ControlType: 2
     performTimer: 0
@@ -45909,7 +45920,7 @@ MonoBehaviour:
     Speed: 200
     HpRandomizer: 25
     AngularSpeed: 200
-    MoveTo: {fileID: 2374295349440548511}
+    MoveTo: {fileID: 7975212491148021885}
     Direction: 0
     Spin: {x: 0, y: 0, z: 0}
     DelayTimer: 0.1
@@ -56467,6 +56478,7 @@ MonoBehaviour:
   targetVelocity: 0
   targetModuleAngle: 0
   lateralFrictionMultiplier: 1
+  tractionCoefficient: 1.1
   _rb: {fileID: 0}
 --- !u!1 &6031017588637903448
 GameObject:
@@ -62851,8 +62863,8 @@ MonoBehaviour:
   targetType: 0
   targetWhen: 1
   targetingMethod: 0
-  useAlliancePreset: 0
   targetPosition: {x: 0, y: 0, z: 0}
+  useAlliancePreset: 0
   blueTargetPosition: {x: 0, y: 0, z: 0}
   redTargetPosition: {x: 0, y: 0, z: 0}
   SetpointName: 
@@ -62862,7 +62874,7 @@ MonoBehaviour:
   angleOffset: -55
   interpolationTable: []
   requireInsideRegion: 1
-  positionReference: {fileID: 2977496964953234381}
+  bumperRoot: {fileID: 6283507550477834793}
   allowedRegions: 0000000001000000
   goToHome: 1
 --- !u!114 &6414788243695544553
@@ -62880,10 +62892,10 @@ MonoBehaviour:
   targetType: 2
   targetWhen: 1
   targetingMethod: 0
-  useAlliancePreset: 1
   targetPosition: {x: 0, y: 0, z: 0}
-  blueTargetPosition: {x: -8, y: 5, z: -2.54}
-  redTargetPosition: {x: 8, y: 5, z: 2.54}
+  useAlliancePreset: 1
+  blueTargetPosition: {x: -6, y: 3, z: -2.54}
+  redTargetPosition: {x: 6, y: 3, z: 2.54}
   SetpointName: PassLeft
   extraTargets: []
   robotPosition: {fileID: 0}
@@ -62891,7 +62903,7 @@ MonoBehaviour:
   angleOffset: -55
   interpolationTable: []
   requireInsideRegion: 0
-  positionReference: {fileID: 0}
+  bumperRoot: {fileID: 0}
   allowedRegions: 
   goToHome: 0
 --- !u!114 &1400240793325185579
@@ -62909,10 +62921,10 @@ MonoBehaviour:
   targetType: 2
   targetWhen: 1
   targetingMethod: 0
-  useAlliancePreset: 1
   targetPosition: {x: 0, y: 0, z: 0}
-  blueTargetPosition: {x: -8, y: 5, z: -2.54}
-  redTargetPosition: {x: 8, y: 5, z: 2.54}
+  useAlliancePreset: 1
+  blueTargetPosition: {x: -6, y: 3, z: -2.54}
+  redTargetPosition: {x: 6, y: 3, z: 2.54}
   SetpointName: PassRight
   extraTargets: []
   robotPosition: {fileID: 0}
@@ -62920,7 +62932,7 @@ MonoBehaviour:
   angleOffset: -55
   interpolationTable: []
   requireInsideRegion: 0
-  positionReference: {fileID: 0}
+  bumperRoot: {fileID: 0}
   allowedRegions: 
   goToHome: 0
 --- !u!1 &6678510347946513092
@@ -71916,8 +71928,8 @@ MonoBehaviour:
   targetType: 0
   targetWhen: 1
   targetingMethod: 0
-  useAlliancePreset: 0
   targetPosition: {x: 0, y: 0, z: 0}
+  useAlliancePreset: 0
   blueTargetPosition: {x: 0, y: 0, z: 0}
   redTargetPosition: {x: 0, y: 0, z: 0}
   SetpointName: 
@@ -71927,7 +71939,7 @@ MonoBehaviour:
   angleOffset: 0
   interpolationTable: []
   requireInsideRegion: 1
-  positionReference: {fileID: 0}
+  bumperRoot: {fileID: 6283507550477834793}
   allowedRegions: 0000000001000000
   goToHome: 1
 --- !u!114 &7190287840830002100
@@ -71945,8 +71957,8 @@ MonoBehaviour:
   targetType: 2
   targetWhen: 1
   targetingMethod: 0
-  useAlliancePreset: 1
   targetPosition: {x: -5.34, y: 9, z: -2.304}
+  useAlliancePreset: 1
   blueTargetPosition: {x: -8, y: 0, z: -2.54}
   redTargetPosition: {x: 8, y: 0, z: 2.54}
   SetpointName: PassRight
@@ -71956,7 +71968,7 @@ MonoBehaviour:
   angleOffset: 0
   interpolationTable: []
   requireInsideRegion: 0
-  positionReference: {fileID: 0}
+  bumperRoot: {fileID: 0}
   allowedRegions: 
   goToHome: 0
 --- !u!114 &8658102983570597219
@@ -71974,8 +71986,8 @@ MonoBehaviour:
   targetType: 2
   targetWhen: 1
   targetingMethod: 0
-  useAlliancePreset: 1
   targetPosition: {x: -5.34, y: 9, z: -2.304}
+  useAlliancePreset: 1
   blueTargetPosition: {x: -8, y: 0, z: 2.54}
   redTargetPosition: {x: 8, y: 0, z: -2.54}
   SetpointName: PassLeft
@@ -71985,7 +71997,7 @@ MonoBehaviour:
   angleOffset: 0
   interpolationTable: []
   requireInsideRegion: 0
-  positionReference: {fileID: 0}
+  bumperRoot: {fileID: 0}
   allowedRegions: 
   goToHome: 0
 --- !u!1 &7738900140559608187
@@ -72834,6 +72846,7 @@ MonoBehaviour:
   targetVelocity: 0
   targetModuleAngle: 0
   lateralFrictionMultiplier: 1
+  tractionCoefficient: 1.1
   _rb: {fileID: 0}
 --- !u!1 &7829834484758222853
 GameObject:
@@ -78830,6 +78843,8 @@ GameObject:
   m_Component:
   - component: {fileID: 2977496964953234381}
   - component: {fileID: 1416948913563064868}
+  - component: {fileID: 5750229656909270254}
+  - component: {fileID: -8190775921715228312}
   m_Layer: 0
   m_Name: MissDaisy
   m_TagString: Untagged
@@ -78873,13 +78888,44 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   units: 0
   frameSize: {x: 26.5, y: 26.5}
-  robotWeight: 70
+  robotWeight: 105
   gearRatio: 7.67
   moduleType: 0
   generateBumpers: 1
   bumperStyle: 0
   useFrameModel: 1
   playerNumber: Player1
+--- !u!114 &5750229656909270254
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8647351365238705607}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0cde580fb7bc8074696700cb48d073fd, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  bumperRoot: {fileID: 6283507550477834793}
+  blueAimRegion: 0
+  redAimRegion: 1
+  penalizedPieces: 02000000
+--- !u!114 &-8190775921715228312
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8647351365238705607}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 616fae521da3a5f458801865231ddd5a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  teamNumber: 341
+  displayNameOverride: MissDaisy
+  teamIcon: {fileID: 21300000, guid: bb2df32ed8c17034399caa7fde5bc8ad, type: 3}
 --- !u!1 &8657491231475451355
 GameObject:
   m_ObjectHideFlags: 0

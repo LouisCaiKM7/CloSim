@@ -233,4 +233,9 @@ public class SpawnGamePiece : MonoBehaviour
             SpawnPiece(peiceType, velocity, transform.position);
         }
     }
+    
+    public static void ClearTargets()
+    {
+        Targets.Clear();
+    }
 }

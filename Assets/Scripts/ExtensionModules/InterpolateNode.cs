@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using BuilderLib;
 using MyBox;
 using UnityEngine;
 using Util;
@@ -16,6 +17,16 @@ public class InterpolateNode: MonoBehaviour
     [Header("Targeting Settings")]
     [ConditionalField(true, nameof(IsPreset))]
     [SerializeField] private Vector3 targetPosition;
+
+    [Header("Alliance Passing Targets")]
+    [ConditionalField(true, nameof(IsPreset))]
+    [SerializeField] private bool useAllianceTargets;
+
+    [ConditionalField(true, nameof(UseAllianceTargets))]
+    [SerializeField] private Vector3 blueTargetPosition;
+
+    [ConditionalField(true, nameof(UseAllianceTargets))]
+    [SerializeField] private Vector3 redTargetPosition;
 
     [ConditionalField(true, nameof(WhenAtSetpoint))] [SerializeField]
     private string SetpointName;
@@ -34,11 +45,13 @@ public class InterpolateNode: MonoBehaviour
     [SerializeField] private float Output;
     private bool IsPreset() => targetType == TargetType.Preset;
     private bool WhenAtSetpoint() => targetWhen == TargetWhen.AtSetpoint;
+    private bool UseAllianceTargets() => targetType == TargetType.Preset && useAllianceTargets;
     
     private bool IsPlaying() => Application.isPlaying;
 
     private BuildMechanism targetMechanism;
     private BuildNode targetNode;
+    private SwerveController _swerveController;
     private List<Vector3> _allTargets = new List<Vector3>();
     private PointAtTarget.DistanceValue[] _sortedCache;
 
@@ -63,6 +76,7 @@ public class InterpolateNode: MonoBehaviour
         
         _allTargets.AddRange(extraTargets);
         targetMechanism = Utils.FindParentObjectComponent<BuildMechanism>(gameObject);
+        _swerveController = GetComponentInParent<SwerveController>();
         
     }
 
@@ -132,6 +146,19 @@ public class InterpolateNode: MonoBehaviour
         switch (targetType)
         {
             case TargetType.Preset:
+                if (useAllianceTargets)
+                {
+                    if (_swerveController == null)
+                    {
+                        _swerveController = GetComponentInParent<SwerveController>();
+                    }
+
+                    if (_swerveController != null)
+                    {
+                        return _swerveController.isRed ? redTargetPosition : blueTargetPosition;
+                    }
+                }
+
                 return targetPosition;
             case TargetType.Closest:
                 return getClosestTarget();

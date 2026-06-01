@@ -13,8 +13,14 @@ public class GamePiece : MonoBehaviour
     [HideInInspector] public Transform originalParent;
     [HideInInspector] public float startingDistance;
 
-    private bool hasId;
+    [HideInInspector] public LaunchSource launchSource = LaunchSource.None;
 
+    [HideInInspector] public bool g407IllegalLaunch;
+    [HideInInspector] public bool g407PenaltyAssessed;
+    [HideInInspector] public AllianceColor g407PenalizedAlliance = AllianceColor.None;
+
+    private bool hasId;
+    
     private void Start()
     {
         hasId = false;
@@ -47,5 +53,13 @@ public class GamePiece : MonoBehaviour
 
         originalParent = returnTo;
         hasId = true;
+    }
+    
+    public void ClearG407PenaltyState()
+    {
+        launchSource = LaunchSource.None;
+        g407IllegalLaunch = false;
+        g407PenaltyAssessed = false;
+        g407PenalizedAlliance = AllianceColor.None;
     }
 }

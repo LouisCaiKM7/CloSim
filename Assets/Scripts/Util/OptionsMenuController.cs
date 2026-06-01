@@ -16,23 +16,20 @@ namespace Util
 
         [Header("Top Controls")]
         [SerializeField] private TMP_Dropdown gameModeDropdown;
-        [SerializeField] private TMP_Dropdown cameraDropdown;
         [SerializeField] private TMP_Dropdown frameRateDropdown;
+        [SerializeField] private TMP_Dropdown resolutionDropdown;
         [SerializeField] private TMP_Dropdown windowModeDropdown;
         [SerializeField] private Button allianceButton;
-        [SerializeField] private TMP_Text allianceButtonText;
 
         [Header("Human Player")]
         [SerializeField] private TMP_Dropdown humanPlayerDropdown;
 
-        [SerializeField] private GameObject blueBucket;
-        [SerializeField] private GameObject blueDumper;
-        [SerializeField] private GameObject redBucket;
-        [SerializeField] private GameObject redDumper;
+        [Header("Robot Panel")]
+        [SerializeField] private RobotPanelUI robotPanel;
 
-        [Header("Robot Panels")]
-        [SerializeField] private RobotPanelUI robotPanel1;
-        [SerializeField] private RobotPanelUI robotPanel2;
+        [Header("Player Selection")] 
+        [SerializeField] private GameObject playerNumberRoot;
+        [SerializeField] private TMP_Dropdown playerDropdown;
 
         [Header("Bottom Buttons")]
         [SerializeField] private Button applyButton;
@@ -61,29 +58,39 @@ namespace Util
 
         private const string FrameRatePrefKey = "FrameRateMode";
         private const string WindowModePrefKey = "WindowMode";
+        private const string ResolutionPrefKey = "ResolutionMode";
 
-        private readonly List<(Utils.FrameRateMode value, string label)> _frameRateModes = new()
+        private readonly List<(int width, int height, string label)> _resolutionModes = new();
+
+        private readonly List<(FrameRateMode value, string label)> _frameRateModes = new()
         {
-            (Utils.FrameRateMode.FPS30, "30 FPS"),
-            (Utils.FrameRateMode.FPS60, "60 FPS"),
-            (Utils.FrameRateMode.FPS120, "120 FPS"),
-            (Utils.FrameRateMode.VSync, "VSync")
+            (FrameRateMode.FPS30, "30 FPS"),
+            (FrameRateMode.FPS60, "60 FPS"),
+            (FrameRateMode.FPS75, "75 FPS"),
+            (FrameRateMode.FPS90, "90 FPS"),
+            (FrameRateMode.FPS120, "120 FPS"),
+            (FrameRateMode.FPS144, "144 FPS"),
+            (FrameRateMode.FPS165, "165 FPS"),
+            (FrameRateMode.FPS240, "240 FPS"),
+            (FrameRateMode.Unlimited, "Unlimited"),
+            (FrameRateMode.VSync, "VSync")
         };
 
-        private readonly List<(Utils.WindowMode value, string label)> _windowModes = new()
+        private readonly List<(WindowMode value, string label)> _windowModes = new()
         {
-            (Utils.WindowMode.Windowed, "Windowed"),
-            (Utils.WindowMode.BorderlessFullscreen, "Borderless"),
-            (Utils.WindowMode.ExclusiveFullscreen, "Fullscreen")
+            (WindowMode.Windowed, "Windowed"),
+            (WindowMode.BorderlessFullscreen, "Borderless"),
+            (WindowMode.ExclusiveFullscreen, "Fullscreen")
         };
 
         private readonly List<(PlayMode value, string label)> _gameModes = new()
         {
             (PlayMode.OneVsZero, "Singleplayer"),
             (PlayMode.TwoVsZero, "Multiplayer: 2v0"),
-            (PlayMode.OneVsOne, "Multiplayer: 1v1")
+            (PlayMode.OneVsOne, "Multiplayer: 1v1"),
+            (PlayMode.ThreeVsZero, "Multiplayer: 3v0"),
+            (PlayMode.TwoVsTwo, "Multiplayer: 2v2")
         };
-
         private readonly List<(HumanPlayerType value, string label)> _humanPlayerModes = new()
         {
             (HumanPlayerType.Bucket, "Certified Bucket"),
@@ -93,15 +100,21 @@ namespace Util
         private readonly List<(Cameras value, string label)> _cameraModes = new()
         {
             (Cameras.ThirdPerson, "Third Person"),
-            (Cameras.ReversedThirdPerson, "Reverse Third Person"),
             (Cameras.FirstPerson, "First Person"),
-            (Cameras.FirstPersonReversed, "Reverse First Person"),
             (Cameras.DriverStation, "Driver Station")
+        };
+        
+        private readonly List<(StationNum value, string label)> _driverStationModes = new()
+        {
+            (StationNum.One, "Station 1"),
+            (StationNum.Two, "Station 2"),
+            (StationNum.Three, "Station 3")
         };
 
         private bool _isOpen;
         private bool _isTransitioning;
         private bool _isRefreshingUi;
+        private int _selectedPlayerIndex;
 
         private MatchSettings _workingSettings;
         private InputAction _resolvedToggleAction;
@@ -128,6 +141,8 @@ namespace Util
 
             if (controlsRoot != null)
                 controlsRoot.SetActive(false);
+            
+            BuildResolutionModes();
 
             WireButtons();
             WirePanels();
@@ -136,6 +151,7 @@ namespace Util
 
             ApplySavedFrameRate();
             ApplySavedWindowMode();
+            ApplySavedResolution();
         }
 
         private void OnEnable()
@@ -240,10 +256,7 @@ namespace Util
 
             if (gameModeDropdown != null)
                 gameModeDropdown.onValueChanged.AddListener(OnGameModeChanged);
-
-            if (cameraDropdown != null)
-                cameraDropdown.onValueChanged.AddListener(OnCameraChanged);
-
+            
             if (frameRateDropdown != null)
                 frameRateDropdown.onValueChanged.AddListener(OnFrameRateChanged);
 
@@ -258,23 +271,25 @@ namespace Util
 
             if (controlsBackButton != null)
                 controlsBackButton.onClick.AddListener(CloseControls);
+            
+            if (playerDropdown != null)
+                playerDropdown.onValueChanged.AddListener(OnPlayerSelectionChanged);
+            
+            if (resolutionDropdown != null)
+                resolutionDropdown.onValueChanged.AddListener(OnResolutionChanged);
         }
 
         private void WirePanels()
         {
-            if (robotPanel1 != null)
-            {
-                robotPanel1.OnPreviousRobot += () => CycleRobotIndex(0, -1);
-                robotPanel1.OnNextRobot += () => CycleRobotIndex(0, 1);
-                robotPanel1.OnSpawnChanged += value => SetSpawnIndexForPanel(0, value);
-            }
+            if (robotPanel == null)
+                return;
 
-            if (robotPanel2 != null)
-            {
-                robotPanel2.OnPreviousRobot += () => CycleRobotIndex(1, -1);
-                robotPanel2.OnNextRobot += () => CycleRobotIndex(1, 1);
-                robotPanel2.OnSpawnChanged += value => SetSpawnIndexForPanel(1, value);
-            }
+            robotPanel.OnPreviousRobot += () => CycleRobotIndex(_selectedPlayerIndex, -1);
+            robotPanel.OnNextRobot += () => CycleRobotIndex(_selectedPlayerIndex, 1);
+            robotPanel.OnSpawnChanged += value => SetSpawnIndexForPanel(_selectedPlayerIndex, value);
+            robotPanel.OnVanityBumperChanged += value => SetVanityBumpersForPanel(_selectedPlayerIndex, value);
+            robotPanel.OnDriverStationChanged += value => SetDriverStationForPanel(_selectedPlayerIndex, value);
+            robotPanel.OnCameraChanged += value => SetCameraForPanel(_selectedPlayerIndex, value);
         }
 
         private void PopulateStaticDropdowns()
@@ -285,22 +300,28 @@ namespace Util
                 gameModeDropdown.AddOptions(_gameModes.ConvertAll(x => x.label));
             }
 
-            if (cameraDropdown != null)
-            {
-                cameraDropdown.ClearOptions();
-                cameraDropdown.AddOptions(_cameraModes.ConvertAll(x => x.label));
-            }
-
             if (frameRateDropdown != null)
             {
                 frameRateDropdown.ClearOptions();
                 frameRateDropdown.AddOptions(_frameRateModes.ConvertAll(x => x.label));
 
-                int savedIndex = PlayerPrefs.GetInt(FrameRatePrefKey, FindFrameRateIndex(Utils.FrameRateMode.VSync));
+                int savedIndex = PlayerPrefs.GetInt(FrameRatePrefKey, FindFrameRateIndex(FrameRateMode.VSync));
                 savedIndex = Mathf.Clamp(savedIndex, 0, _frameRateModes.Count - 1);
 
                 frameRateDropdown.SetValueWithoutNotify(savedIndex);
                 frameRateDropdown.RefreshShownValue();
+            }
+            
+            if (resolutionDropdown != null)
+            {
+                resolutionDropdown.ClearOptions();
+                resolutionDropdown.AddOptions(_resolutionModes.ConvertAll(x => x.label));
+
+                int savedIndex = PlayerPrefs.GetInt(ResolutionPrefKey, FindCurrentResolutionIndex());
+                savedIndex = Mathf.Clamp(savedIndex, 0, _resolutionModes.Count - 1);
+
+                resolutionDropdown.SetValueWithoutNotify(savedIndex);
+                resolutionDropdown.RefreshShownValue();
             }
 
             if (windowModeDropdown != null)
@@ -308,7 +329,7 @@ namespace Util
                 windowModeDropdown.ClearOptions();
                 windowModeDropdown.AddOptions(_windowModes.ConvertAll(x => x.label));
 
-                int savedIndex = PlayerPrefs.GetInt(WindowModePrefKey, FindWindowModeIndex(Utils.WindowMode.Windowed));
+                int savedIndex = PlayerPrefs.GetInt(WindowModePrefKey, FindWindowModeIndex(WindowMode.Windowed));
                 savedIndex = Mathf.Clamp(savedIndex, 0, _windowModes.Count - 1);
 
                 windowModeDropdown.SetValueWithoutNotify(savedIndex);
@@ -425,6 +446,7 @@ namespace Util
             void ApplyAndReset()
             {
                 loadMatch.ApplySettings(_workingSettings);
+                loadMatch.SetHumanPlayerType(_workingHumanPlayer);
 
                 ResumeRuntimeState();
 
@@ -652,15 +674,9 @@ namespace Util
                 gameModeDropdown.RefreshShownValue();
             }
 
-            if (cameraDropdown != null)
-            {
-                cameraDropdown.SetValueWithoutNotify(FindCameraModeIndex(_workingSettings.view));
-                cameraDropdown.RefreshShownValue();
-            }
-
             if (frameRateDropdown != null)
             {
-                int savedIndex = PlayerPrefs.GetInt(FrameRatePrefKey, FindFrameRateIndex(Utils.FrameRateMode.VSync));
+                int savedIndex = PlayerPrefs.GetInt(FrameRatePrefKey, FindFrameRateIndex(FrameRateMode.VSync));
                 savedIndex = Mathf.Clamp(savedIndex, 0, _frameRateModes.Count - 1);
 
                 frameRateDropdown.SetValueWithoutNotify(savedIndex);
@@ -669,7 +685,7 @@ namespace Util
 
             if (windowModeDropdown != null)
             {
-                int savedIndex = PlayerPrefs.GetInt(WindowModePrefKey, FindWindowModeIndex(Utils.WindowMode.BorderlessFullscreen));
+                int savedIndex = PlayerPrefs.GetInt(WindowModePrefKey, FindWindowModeIndex(WindowMode.BorderlessFullscreen));
                 savedIndex = Mathf.Clamp(savedIndex, 0, _windowModes.Count - 1);
 
                 windowModeDropdown.SetValueWithoutNotify(savedIndex);
@@ -694,30 +710,26 @@ namespace Util
 
             try
             {
-                bool secondRobotVisible = _workingSettings.playMode != PlayMode.OneVsZero;
-                bool isOneVsOne = _workingSettings.playMode == PlayMode.OneVsOne;
+                int playerCount = GetPlayerCountForMode(_workingSettings.playMode);
+                bool isVersusMode =
+                    _workingSettings.playMode == PlayMode.OneVsOne ||
+                    _workingSettings.playMode == PlayMode.TwoVsTwo;
 
-                if (robotPanel1 != null)
-                    robotPanel1.SetVisible(true);
+                _selectedPlayerIndex = Mathf.Clamp(
+                    _selectedPlayerIndex,
+                    0,
+                    Mathf.Max(0, playerCount - 1)
+                );
 
-                if (robotPanel2 != null)
-                    robotPanel2.SetVisible(secondRobotVisible);
+                RefreshPlayerDropdown(playerCount);
+
+                if (robotPanel != null)
+                    robotPanel.SetVisible(playerCount > 0);
 
                 if (allianceButton != null)
-                    allianceButton.interactable = !isOneVsOne;
-
-                if (allianceButtonText != null)
-                {
-                    allianceButtonText.text = isOneVsOne
-                        ? "Alliance Locked"
-                        : (_workingSettings.useBlueAlliance ? "Blue Alliance" : "Red Alliance");
-                }
-
-                RefreshPanel(0);
-
-                if (secondRobotVisible)
-                    RefreshPanel(1);
-
+                    allianceButton.interactable = !isVersusMode;
+                
+                RefreshPanel(_selectedPlayerIndex);
                 RefreshHumanPlayerObjects(configureOwnership);
             }
             finally
@@ -725,65 +737,89 @@ namespace Util
                 _isRefreshingUi = false;
             }
         }
-
-        private void RefreshPanel(int panelIndex)
+        
+        private void RefreshPlayerDropdown(int playerCount)
         {
-            RobotPanelUI panel = panelIndex == 0 ? robotPanel1 : robotPanel2;
-            if (panel == null)
+            bool visible = playerCount > 1;
+
+            if (playerNumberRoot != null)
+                playerNumberRoot.SetActive(visible);
+            else if (playerDropdown != null)
+                playerDropdown.gameObject.SetActive(visible);
+
+            if (playerDropdown == null)
                 return;
 
-            string sideLabel;
-            List<string> spawnNames;
-            int selectedSpawnIndex;
-
-            if (_workingSettings.playMode == PlayMode.OneVsOne)
+            if (!visible)
             {
-                if (panelIndex == 0)
-                {
-                    sideLabel = "Blue Alliance";
-                    spawnNames = _blueSpawnNames;
-                    selectedSpawnIndex = _workingSettings.blueSpawnIndex1;
-                }
-                else
-                {
-                    sideLabel = "Red Alliance";
-                    spawnNames = _redSpawnNames;
-                    selectedSpawnIndex = _workingSettings.redSpawnIndex1;
-                }
-            }
-            else
-            {
-                bool useBlue = _workingSettings.useBlueAlliance;
-                sideLabel = useBlue ? "Blue Alliance" : "Red Alliance";
-
-                if (useBlue)
-                {
-                    spawnNames = _blueSpawnNames;
-                    selectedSpawnIndex = panelIndex == 0
-                        ? _workingSettings.blueSpawnIndex1
-                        : _workingSettings.blueSpawnIndex2;
-                }
-                else
-                {
-                    spawnNames = _redSpawnNames;
-                    selectedSpawnIndex = panelIndex == 0
-                        ? _workingSettings.redSpawnIndex1
-                        : _workingSettings.redSpawnIndex2;
-                }
+                playerDropdown.ClearOptions();
+                playerDropdown.SetValueWithoutNotify(0);
+                return;
             }
 
-            int robotIndex = panelIndex == 0 ? _workingSettings.robotIndex1 : _workingSettings.robotIndex2;
+            playerDropdown.ClearOptions();
 
-            panel.SetSideLabel(sideLabel);
-            panel.SetRobotName(loadMatch.GetRobotNameAt(robotIndex));
-            panel.SetRobotPreview(loadMatch.GetRobotPreviewSpriteAt(robotIndex));
-            panel.SetSpawnOptions(spawnNames, selectedSpawnIndex);
+            List<string> options = new();
+
+            for (int i = 0; i < playerCount; i++)
+            {
+                string alliance = IsPlayerBlue(i) ? "Blue" : "Red";
+                options.Add($"Player {i + 1} ({alliance})");
+            }
+
+            playerDropdown.AddOptions(options);
+
+            int selectedIndex = Mathf.Clamp(_selectedPlayerIndex, 0, playerCount - 1);
+            playerDropdown.SetValueWithoutNotify(selectedIndex);
+            playerDropdown.RefreshShownValue();
+        }
+
+        private void RefreshPanel(int playerIndex)
+        {
+            if (robotPanel == null)
+                return;
+
+            PlayerMatchSettings player = _workingSettings.GetPlayer(playerIndex);
+
+            bool multiplayer = GetPlayerCountForMode(_workingSettings.playMode) > 1;
+            bool playerIsBlue = IsPlayerBlue(playerIndex);
+
+            List<string> spawnNames = playerIsBlue ? _blueSpawnNames : _redSpawnNames;
+            int selectedSpawnIndex = playerIsBlue
+                ? player.blueSpawnIndex
+                : player.redSpawnIndex;
+
+            string sideLabel = playerIsBlue ? "Blue Alliance" : "Red Alliance";
+
+            robotPanel.SetPlayerNumber(playerIndex + 1, multiplayer);
+            robotPanel.SetSideLabel(sideLabel);
+            robotPanel.SetRobotName(loadMatch.GetRobotNameAt(player.robotIndex));
+            robotPanel.SetRobotPreview(loadMatch.GetRobotPreviewSpriteAt(player.robotIndex));
+            robotPanel.SetSpawnOptions(spawnNames, selectedSpawnIndex);
+
+            robotPanel.SetCameraOptions(
+                _cameraModes.ConvertAll(x => x.label),
+                FindCameraModeIndex(player.view),
+                true
+            );
+
+            robotPanel.SetDriverStationOptions(
+                _driverStationModes.ConvertAll(x => x.label),
+                FindDriverStationIndex(player.driverStation),
+                player.view == Cameras.DriverStation
+            );
+
+            bool hasVanityMaterial = loadMatch.HasVanityBumperMaterialAt(player.robotIndex);
+            robotPanel.SetVanityBumperToggle(player.useVanityBumpers, hasVanityMaterial);
         }
 
         private void ToggleAlliance()
         {
-            if (_workingSettings.playMode == PlayMode.OneVsOne)
+            if (_workingSettings.playMode == PlayMode.OneVsOne ||
+                _workingSettings.playMode == PlayMode.TwoVsTwo)
+            {
                 return;
+            }
 
             _workingSettings.useBlueAlliance = !_workingSettings.useBlueAlliance;
             RefreshVisibleState(true);
@@ -794,17 +830,14 @@ namespace Util
             if (_isRefreshingUi)
                 return;
 
-            _workingSettings.playMode = _gameModes[Mathf.Clamp(dropdownIndex, 0, _gameModes.Count - 1)].value;
+            _workingSettings.playMode = _gameModes[
+                Mathf.Clamp(dropdownIndex, 0, _gameModes.Count - 1)
+            ].value;
+
+            int playerCount = GetPlayerCountForMode(_workingSettings.playMode);
+            _selectedPlayerIndex = Mathf.Clamp(_selectedPlayerIndex, 0, Mathf.Max(0, playerCount - 1));
+
             RefreshVisibleState(true);
-        }
-
-        private void OnCameraChanged(int dropdownIndex)
-        {
-            if (_isRefreshingUi)
-                return;
-
-            _workingSettings.view = _cameraModes[Mathf.Clamp(dropdownIndex, 0, _cameraModes.Count - 1)].value;
-            RefreshVisibleState(false);
         }
 
         private void OnFrameRateChanged(int dropdownIndex)
@@ -826,28 +859,124 @@ namespace Util
 
             ApplyWindowMode(_windowModes[dropdownIndex].value);
         }
+        
+        private void OnPlayerSelectionChanged(int dropdownIndex)
+        {
+            if (_isRefreshingUi)
+                return;
+
+            int playerCount = GetPlayerCountForMode(_workingSettings.playMode);
+            _selectedPlayerIndex = Mathf.Clamp(dropdownIndex, 0, Mathf.Max(0, playerCount - 1));
+
+            RefreshVisibleState(false);
+        }
+        
+        private void OnResolutionChanged(int dropdownIndex)
+        {
+            dropdownIndex = Mathf.Clamp(dropdownIndex, 0, _resolutionModes.Count - 1);
+
+            PlayerPrefs.SetInt(ResolutionPrefKey, dropdownIndex);
+            PlayerPrefs.Save();
+
+            ApplyResolution(_resolutionModes[dropdownIndex].width, _resolutionModes[dropdownIndex].height);
+        }
+
+        private void ApplySavedResolution()
+        {
+            int savedIndex = PlayerPrefs.GetInt(ResolutionPrefKey, FindCurrentResolutionIndex());
+            savedIndex = Mathf.Clamp(savedIndex, 0, _resolutionModes.Count - 1);
+
+            ApplyResolution(_resolutionModes[savedIndex].width, _resolutionModes[savedIndex].height);
+        }
+
+        private void ApplyResolution(int width, int height)
+        {
+            FullScreenMode mode = Screen.fullScreenMode;
+
+            Screen.SetResolution(width, height, mode);
+        }
+
+        private int FindCurrentResolutionIndex()
+        {
+            int currentWidth = Screen.width;
+            int currentHeight = Screen.height;
+
+            for (int i = 0; i < _resolutionModes.Count; i++)
+            {
+                if (_resolutionModes[i].width == currentWidth &&
+                    _resolutionModes[i].height == currentHeight)
+                {
+                    return i;
+                }
+            }
+
+            return FindResolutionIndex(1920, 1080);
+        }
+
+        private int FindResolutionIndex(int width, int height)
+        {
+            for (int i = 0; i < _resolutionModes.Count; i++)
+            {
+                if (_resolutionModes[i].width == width &&
+                    _resolutionModes[i].height == height)
+                    return i;
+            }
+
+            return 0;
+        }
+        
+        private void BuildResolutionModes()
+        {
+            _resolutionModes.Clear();
+
+            HashSet<string> seen = new();
+
+            foreach (Resolution resolution in Screen.resolutions)
+            {
+                if (resolution.width < 1280 || resolution.height < 720)
+                    continue;
+
+                string key = $"{resolution.width}x{resolution.height}";
+
+                if (seen.Contains(key))
+                    continue;
+
+                seen.Add(key);
+                _resolutionModes.Add((
+                    resolution.width,
+                    resolution.height,
+                    $"{resolution.width} x {resolution.height}"
+                ));
+            }
+
+            if (_resolutionModes.Count == 0)
+            {
+                _resolutionModes.Add((1280, 720, "1280 x 720"));
+                _resolutionModes.Add((1920, 1080, "1920 x 1080"));
+            }
+        }
 
         private void ApplySavedWindowMode()
         {
-            int savedIndex = PlayerPrefs.GetInt(WindowModePrefKey, FindWindowModeIndex(Utils.WindowMode.BorderlessFullscreen));
+            int savedIndex = PlayerPrefs.GetInt(WindowModePrefKey, FindWindowModeIndex(WindowMode.BorderlessFullscreen));
             savedIndex = Mathf.Clamp(savedIndex, 0, _windowModes.Count - 1);
 
             ApplyWindowMode(_windowModes[savedIndex].value);
         }
 
-        private void ApplyWindowMode(Utils.WindowMode mode)
+        private void ApplyWindowMode(WindowMode mode)
         {
             switch (mode)
             {
-                case Utils.WindowMode.Windowed:
+                case WindowMode.Windowed:
                     ApplyWindowedMode();
                     break;
 
-                case Utils.WindowMode.BorderlessFullscreen:
+                case WindowMode.BorderlessFullscreen:
                     ApplyBorderlessFullscreenMode();
                     break;
 
-                case Utils.WindowMode.ExclusiveFullscreen:
+                case WindowMode.ExclusiveFullscreen:
                     ApplyExclusiveFullscreenMode();
                     break;
             }
@@ -855,49 +984,46 @@ namespace Util
 
         private void ApplyWindowedMode()
         {
-            int width = Screen.width;
-            int height = Screen.height;
-
-            if (Screen.fullScreenMode != FullScreenMode.Windowed)
-            {
-                width = Mathf.Min(1600, Screen.currentResolution.width);
-                height = Mathf.Min(900, Screen.currentResolution.height);
-            }
-
-            Screen.SetResolution(width, height, FullScreenMode.Windowed);
+            var resolution = GetSelectedResolution();
+            Screen.SetResolution(resolution.width, resolution.height, FullScreenMode.Windowed);
         }
 
         private void ApplyBorderlessFullscreenMode()
         {
-            Resolution nativeResolution = Screen.currentResolution;
-
-            Screen.SetResolution(
-                nativeResolution.width,
-                nativeResolution.height,
-                FullScreenMode.FullScreenWindow
-            );
+            var resolution = GetSelectedResolution();
+            Screen.SetResolution(resolution.width, resolution.height, FullScreenMode.FullScreenWindow);
         }
 
         private void ApplyExclusiveFullscreenMode()
         {
-            Resolution nativeResolution = Screen.currentResolution;
+            var resolution = GetSelectedResolution();
 
 #if UNITY_STANDALONE_WIN
             Screen.SetResolution(
-                nativeResolution.width,
-                nativeResolution.height,
+                resolution.width,
+                resolution.height,
                 FullScreenMode.ExclusiveFullScreen
             );
 #else
-            Screen.SetResolution(
-                nativeResolution.width,
-                nativeResolution.height,
-                FullScreenMode.FullScreenWindow
-            );
+    Screen.SetResolution(
+        resolution.width,
+        resolution.height,
+        FullScreenMode.FullScreenWindow
+    );
 #endif
         }
+        
+        private (int width, int height) GetSelectedResolution()
+        {
+            int index = resolutionDropdown != null
+                ? resolutionDropdown.value
+                : PlayerPrefs.GetInt(ResolutionPrefKey, FindCurrentResolutionIndex());
 
-        private int FindWindowModeIndex(Utils.WindowMode value)
+            index = Mathf.Clamp(index, 0, _resolutionModes.Count - 1);
+            return (_resolutionModes[index].width, _resolutionModes[index].height);
+        }
+
+        private int FindWindowModeIndex(WindowMode value)
         {
             for (int i = 0; i < _windowModes.Count; i++)
             {
@@ -910,32 +1036,62 @@ namespace Util
 
         private void ApplySavedFrameRate()
         {
-            int savedIndex = PlayerPrefs.GetInt(FrameRatePrefKey, FindFrameRateIndex(Utils.FrameRateMode.VSync));
+            int savedIndex = PlayerPrefs.GetInt(FrameRatePrefKey, FindFrameRateIndex(FrameRateMode.VSync));
             savedIndex = Mathf.Clamp(savedIndex, 0, _frameRateModes.Count - 1);
 
             ApplyFrameRate(_frameRateModes[savedIndex].value);
         }
 
-        private void ApplyFrameRate(Utils.FrameRateMode mode)
+        private void ApplyFrameRate(FrameRateMode mode)
         {
             switch (mode)
             {
-                case Utils.FrameRateMode.FPS30:
+                case FrameRateMode.FPS30:
                     SetManualFrameRate(30);
                     break;
 
-                case Utils.FrameRateMode.FPS60:
+                case FrameRateMode.FPS60:
                     SetManualFrameRate(60);
                     break;
 
-                case Utils.FrameRateMode.FPS120:
+                case FrameRateMode.FPS75:
+                    SetManualFrameRate(75);
+                    break;
+
+                case FrameRateMode.FPS90:
+                    SetManualFrameRate(90);
+                    break;
+
+                case FrameRateMode.FPS120:
                     SetManualFrameRate(120);
                     break;
 
-                case Utils.FrameRateMode.VSync:
+                case FrameRateMode.FPS144:
+                    SetManualFrameRate(144);
+                    break;
+
+                case FrameRateMode.FPS165:
+                    SetManualFrameRate(165);
+                    break;
+
+                case FrameRateMode.FPS240:
+                    SetManualFrameRate(240);
+                    break;
+
+                case FrameRateMode.Unlimited:
+                    SetUnlimitedFrameRate();
+                    break;
+
+                case FrameRateMode.VSync:
                     SetVSync();
                     break;
             }
+        }
+        
+        private void SetUnlimitedFrameRate()
+        {
+            QualitySettings.vSyncCount = 0;
+            Application.targetFrameRate = -1;
         }
 
         private void SetManualFrameRate(int fps)
@@ -948,6 +1104,45 @@ namespace Util
         {
             QualitySettings.vSyncCount = 1;
             Application.targetFrameRate = -1;
+        }
+        
+        private void SetVanityBumpersForPanel(int playerIndex, bool enabled)
+        {
+            if (_isRefreshingUi)
+                return;
+
+            _workingSettings.GetPlayer(playerIndex).useVanityBumpers = enabled;
+        }
+        
+        private void SetDriverStationForPanel(int playerIndex, int dropdownIndex)
+        {
+            if (_isRefreshingUi)
+                return;
+
+            dropdownIndex = Mathf.Clamp(dropdownIndex, 0, _driverStationModes.Count - 1);
+            _workingSettings.GetPlayer(playerIndex).driverStation = _driverStationModes[dropdownIndex].value;
+        }
+        
+        private void SetCameraForPanel(int playerIndex, int dropdownIndex)
+        {
+            if (_isRefreshingUi)
+                return;
+
+            dropdownIndex = Mathf.Clamp(dropdownIndex, 0, _cameraModes.Count - 1);
+            _workingSettings.GetPlayer(playerIndex).view = _cameraModes[dropdownIndex].value;
+
+            RefreshPanel(playerIndex);
+        }
+        
+        private int FindDriverStationIndex(StationNum value)
+        {
+            for (int i = 0; i < _driverStationModes.Count; i++)
+            {
+                if (_driverStationModes[i].value == value)
+                    return i;
+            }
+
+            return 0;
         }
 
         private void OnHumanPlayerChanged(int dropdownIndex)
@@ -962,18 +1157,16 @@ namespace Util
             RefreshHumanPlayerObjects(true);
         }
 
-        private void CycleRobotIndex(int panelIndex, int delta)
+        private void CycleRobotIndex(int playerIndex, int delta)
         {
             int count = loadMatch.GetAvailableRobotCount();
             if (count <= 0)
                 return;
 
-            if (panelIndex == 0)
-                _workingSettings.robotIndex1 = WrapIndex(_workingSettings.robotIndex1 + delta, count);
-            else
-                _workingSettings.robotIndex2 = WrapIndex(_workingSettings.robotIndex2 + delta, count);
+            PlayerMatchSettings player = _workingSettings.GetPlayer(playerIndex);
+            player.robotIndex = WrapIndex(player.robotIndex + delta, count);
 
-            RefreshPanel(panelIndex);
+            RefreshPanel(playerIndex);
         }
 
         private int WrapIndex(int value, int count)
@@ -989,95 +1182,71 @@ namespace Util
             return value;
         }
 
-        private void SetSpawnIndexForPanel(int panelIndex, int value)
+        private void SetSpawnIndexForPanel(int playerIndex, int value)
         {
             if (_isRefreshingUi)
                 return;
 
-            if (_workingSettings.playMode == PlayMode.OneVsOne)
+            PlayerMatchSettings player = _workingSettings.GetPlayer(playerIndex);
+
+            if (IsPlayerBlue(playerIndex))
             {
-                if (panelIndex == 0)
-                    _workingSettings.blueSpawnIndex1 = value;
-                else
-                    _workingSettings.redSpawnIndex1 = value;
-
-                RefreshVisibleState(false);
-                return;
-            }
-
-            if (_workingSettings.playMode == PlayMode.OneVsZero)
-            {
-                if (_workingSettings.useBlueAlliance)
-                    _workingSettings.blueSpawnIndex1 = value;
-                else
-                    _workingSettings.redSpawnIndex1 = value;
-
-                RefreshVisibleState(false);
-                return;
-            }
-
-            if (_workingSettings.useBlueAlliance)
-            {
-                if (panelIndex == 0)
-                {
-                    _workingSettings.blueSpawnIndex1 = value;
-
-                    if (_workingSettings.blueSpawnIndex1 == _workingSettings.blueSpawnIndex2)
-                        _workingSettings.blueSpawnIndex2 = FindDifferentIndex(
-                            _workingSettings.blueSpawnIndex1,
-                            _blueSpawnNames.Count
-                        );
-                }
-                else
-                {
-                    _workingSettings.blueSpawnIndex2 = value;
-
-                    if (_workingSettings.blueSpawnIndex2 == _workingSettings.blueSpawnIndex1)
-                        _workingSettings.blueSpawnIndex1 = FindDifferentIndex(
-                            _workingSettings.blueSpawnIndex2,
-                            _blueSpawnNames.Count
-                        );
-                }
+                player.blueSpawnIndex = value;
+                EnforceUniqueSpawnForAlliance(true, playerIndex);
             }
             else
             {
-                if (panelIndex == 0)
-                {
-                    _workingSettings.redSpawnIndex1 = value;
-
-                    if (_workingSettings.redSpawnIndex1 == _workingSettings.redSpawnIndex2)
-                        _workingSettings.redSpawnIndex2 = FindDifferentIndex(
-                            _workingSettings.redSpawnIndex1,
-                            _redSpawnNames.Count
-                        );
-                }
-                else
-                {
-                    _workingSettings.redSpawnIndex2 = value;
-
-                    if (_workingSettings.redSpawnIndex2 == _workingSettings.redSpawnIndex1)
-                        _workingSettings.redSpawnIndex1 = FindDifferentIndex(
-                            _workingSettings.redSpawnIndex2,
-                            _redSpawnNames.Count
-                        );
-                }
+                player.redSpawnIndex = value;
+                EnforceUniqueSpawnForAlliance(false, playerIndex);
             }
 
             RefreshVisibleState(false);
         }
-
-        private int FindDifferentIndex(int currentIndex, int count)
+        
+        private void EnforceUniqueSpawnForAlliance(bool blueAlliance, int changedPlayerIndex)
         {
-            if (count <= 1)
-                return currentIndex;
+            int spawnCount = blueAlliance ? _blueSpawnNames.Count : _redSpawnNames.Count;
 
-            for (int i = 0; i < count; i++)
+            if (spawnCount <= 1)
+                return;
+
+            HashSet<int> used = new();
+
+            int playerCount = GetPlayerCountForMode(_workingSettings.playMode);
+
+            for (int i = 0; i < playerCount; i++)
             {
-                if (i != currentIndex)
-                    return i;
+                if (i == changedPlayerIndex)
+                    continue;
+
+                if (IsPlayerBlue(i) != blueAlliance)
+                    continue;
+
+                PlayerMatchSettings player = _workingSettings.GetPlayer(i);
+                int spawnIndex = blueAlliance ? player.blueSpawnIndex : player.redSpawnIndex;
+                used.Add(spawnIndex);
             }
 
-            return currentIndex;
+            PlayerMatchSettings changedPlayer = _workingSettings.GetPlayer(changedPlayerIndex);
+            int changedSpawnIndex = blueAlliance
+                ? changedPlayer.blueSpawnIndex
+                : changedPlayer.redSpawnIndex;
+
+            if (!used.Contains(changedSpawnIndex))
+                return;
+
+            for (int i = 0; i < spawnCount; i++)
+            {
+                if (used.Contains(i))
+                    continue;
+
+                if (blueAlliance)
+                    changedPlayer.blueSpawnIndex = i;
+                else
+                    changedPlayer.redSpawnIndex = i;
+
+                return;
+            }
         }
 
         private int FindGameModeIndex(PlayMode value)
@@ -1102,7 +1271,7 @@ namespace Util
             return 0;
         }
 
-        private int FindFrameRateIndex(Utils.FrameRateMode value)
+        private int FindFrameRateIndex(FrameRateMode value)
         {
             for (int i = 0; i < _frameRateModes.Count; i++)
             {
@@ -1156,34 +1325,18 @@ namespace Util
 
         private void RefreshHumanPlayerObjects(bool configureOwnership)
         {
-            bool blueAllianceUsed = IsBlueAllianceUsed();
-            bool redAllianceUsed = IsRedAllianceUsed();
+            if (loadMatch == null)
+                return;
 
-            bool bucketSelected = _workingHumanPlayer == HumanPlayerType.Bucket;
-            bool dumperSelected = _workingHumanPlayer == HumanPlayerType.Dumper;
-
-            SetActiveSafe(blueBucket, blueAllianceUsed && bucketSelected);
-            SetActiveSafe(blueDumper, blueAllianceUsed && dumperSelected);
-
-            SetActiveSafe(redBucket, redAllianceUsed && bucketSelected);
-            SetActiveSafe(redDumper, redAllianceUsed && dumperSelected);
-
-            HumanPlayerRuntimeState.SetState(
-                _workingHumanPlayer,
-                blueAllianceUsed,
-                redAllianceUsed
-            );
-
-            if (configureOwnership)
-                ConfigureAllDumperOwnership();
+            loadMatch.SetHumanPlayerType(_workingHumanPlayer);
         }
 
         private void ConfigureAllDumperOwnership()
         {
-            if (loadMatch == null || _cachedOutpostReleases == null)
+            if (loadMatch == null)
                 return;
 
-            foreach (var release in _cachedOutpostReleases)
+            foreach (var release in loadMatch.GetOutpostReleases())
             {
                 if (release == null)
                     continue;
@@ -1198,12 +1351,14 @@ namespace Util
         private bool IsBlueAllianceUsed()
         {
             return _workingSettings.playMode == PlayMode.OneVsOne ||
+                   _workingSettings.playMode == PlayMode.TwoVsTwo ||
                    _workingSettings.useBlueAlliance;
         }
 
         private bool IsRedAllianceUsed()
         {
             return _workingSettings.playMode == PlayMode.OneVsOne ||
+                   _workingSettings.playMode == PlayMode.TwoVsTwo ||
                    !_workingSettings.useBlueAlliance;
         }
 
@@ -1211,6 +1366,34 @@ namespace Util
         {
             if (target != null && target.activeSelf != active)
                 target.SetActive(active);
+        }
+        
+        private int GetPlayerCountForMode(PlayMode mode)
+        {
+            return mode switch
+            {
+                PlayMode.OneVsZero => 1,
+                PlayMode.TwoVsZero => 2,
+                PlayMode.OneVsOne => 2,
+                PlayMode.ThreeVsZero => 3,
+                PlayMode.TwoVsTwo => 4,
+                _ => 1
+            };
+        }
+        
+        private bool IsPlayerBlue(int playerIndex)
+        {
+            return _workingSettings.playMode switch
+            {
+                PlayMode.OneVsZero => _workingSettings.useBlueAlliance,
+                PlayMode.TwoVsZero => _workingSettings.useBlueAlliance,
+                PlayMode.ThreeVsZero => _workingSettings.useBlueAlliance,
+
+                PlayMode.OneVsOne => playerIndex == 0,
+                PlayMode.TwoVsTwo => playerIndex < 2,
+
+                _ => true
+            };
         }
     }
 }

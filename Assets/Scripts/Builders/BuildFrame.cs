@@ -111,12 +111,26 @@ public class BuildFrame : MonoBehaviour
     {
         if (_swerve == null)
         {
-            _inputAsset = Resources.Load("Controls/Builder") as InputActionAsset;
             var playerInput = Utils.TryGetAddComponent<PlayerInput>(gameObject);
-            playerInput.actions = _inputAsset;
+
+            if (playerInput.actions == null)
+            {
+                _inputAsset = Resources.Load("Controls/Builder") as InputActionAsset;
+
+                if (_inputAsset != null)
+                {
+                    playerInput.actions = Instantiate(_inputAsset);
+                }
+                else
+                {
+                    Debug.LogError($"{gameObject.name} could not load Controls/Builder InputActionAsset.");
+                }
+            }
+
             playerInput.neverAutoSwitchControlSchemes = true;
-            playerInput.defaultControlScheme = playerNumber;
+            playerInput.defaultActionMap = "Robot";
             playerInput.notificationBehavior = PlayerNotifications.InvokeUnityEvents;
+
             _swerve = Utils.TryGetAddComponent<SwerveController>(gameObject);
             var rb = Utils.TryGetAddComponent<Rigidbody>(gameObject);
             rb.collisionDetectionMode = CollisionDetectionMode.Discrete;

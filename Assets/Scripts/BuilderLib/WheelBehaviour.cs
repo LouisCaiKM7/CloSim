@@ -1,51 +1,33 @@
-using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
 
 public class WheelBehaviour : MonoBehaviour
 {
     [HideInInspector] public float wheelDiameter;
-    
-    [HideInInspector] public List<Vector3> collisionPoints = new List<Vector3>();
+
+    [HideInInspector] public List<Vector3> collisionPoints  = new List<Vector3>();
     [HideInInspector] public List<Vector3> collisionNormals = new List<Vector3>();
-    
-    private List<Vector3> directions = new List<Vector3>();
-    
 
-    // Start is called before the first frame update
-    private void Start()
-    {
-        directions.Add(-transform.up);                                          
-        directions.Add((-transform.up * 2 + transform.forward).normalized);     
-        directions.Add((-transform.up * 2 - transform.forward).normalized);     
-        directions.Add((-transform.up + transform.forward).normalized);         
-        directions.Add((-transform.up - transform.forward).normalized);         
-        directions.Add((-transform.up + transform.forward * 2).normalized);    
-        directions.Add((-transform.up - transform.forward * 2).normalized);     
-        directions.Add(transform.forward);
-        directions.Add(-transform.forward);
-    }
+    [SerializeField] private float wheelWidth = 0.2f;
 
-    // Fixed Update is called every Physics Tick
     private void FixedUpdate()
     {
         collisionPoints.Clear();
         collisionNormals.Clear();
 
-        Vector3 axle = transform.right;
+        Vector3 axle       = transform.right;
+        float   radius     = wheelDiameter / 2f;
 
-        for (int i = 0; i < directions.Count; i++)
+        Vector3 point1 = transform.position + axle * (wheelWidth / 2f);
+        Vector3 point2 = transform.position - axle * (wheelWidth / 2f);
+
+        if (Physics.CapsuleCast(point1, point2, radius * 0.3f,
+                -transform.up, out RaycastHit hit, radius * 1.1f))
         {
-            Vector3 worldDir = transform.TransformDirection(directions[i]);
+            collisionPoints.Add(hit.point);
 
-            if (Physics.Raycast(transform.position, worldDir, out RaycastHit hit, wheelDiameter/2))
-            {
-                collisionPoints.Add(hit.point);
-                Vector3 tangentNormal = Vector3.Cross(axle, -worldDir);
-                
-                collisionNormals.Add(tangentNormal.normalized);
-            }
+            Vector3 tangentNormal = Vector3.Cross(axle, transform.up);
+            collisionNormals.Add(tangentNormal.normalized);
         }
     }
 }

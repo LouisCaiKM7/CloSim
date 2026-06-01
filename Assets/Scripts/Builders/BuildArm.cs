@@ -1,4 +1,5 @@
 using System;
+using BuilderLib;
 using MyBox;
 using UnityEngine;
 using Util;
@@ -60,6 +61,8 @@ public class BuildArm : BuildMechanism
     private ArmModel _oldModel;
 
     private float scaleModifier;
+
+    private bool _armFrozenForDisable;
     // Start is called before the first frame update
     void Start()
     {
@@ -115,6 +118,9 @@ public class BuildArm : BuildMechanism
         }
         else
         {
+            bool disabled = FMS.RobotState == RobotState.disabled;
+            SetArmDisabledHold(disabled);
+
             var targetAxis = Vector3.right;
 
             Quaternion deltaRotation = transform.localRotation;
@@ -399,6 +405,43 @@ public class BuildArm : BuildMechanism
         _controller.joint = _joint;
         _controller.useNoWrap = useNoWrapPoint;
         _controller.noWrapAngle = noWrapAngle;
+    }
+
+    private void SetArmDisabledHold(bool disabled)
+    {
+        if (_rigidbody == null)
+            return;
+
+        if (disabled)
+        {
+            _rigidbody.velocity = Vector3.zero;
+            _rigidbody.angularVelocity = Vector3.zero;
+            _rigidbody.isKinematic = false;
+            _rigidbody.useGravity = false;
+
+            if (_joint != null)
+                _joint.targetAngularVelocity = Vector3.zero;
+
+            if (_controller != null && _controller.enabled)
+                _controller.enabled = false;
+
+            _armFrozenForDisable = true;
+            return;
+        }
+
+        if (!_armFrozenForDisable)
+            return;
+
+        _armFrozenForDisable = false;
+        _rigidbody.velocity = Vector3.zero;
+        _rigidbody.angularVelocity = Vector3.zero;
+        _rigidbody.useGravity = true;
+
+        if (_joint != null)
+            _joint.targetAngularVelocity = Vector3.zero;
+
+        if (_controller != null && !_controller.enabled)
+            _controller.enabled = true;
     }
 
     private void GenJoint()

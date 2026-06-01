@@ -8,13 +8,15 @@ namespace Util
 {
     public class RobotPanelUI : MonoBehaviour
     {
-        [Header("Panel Visuals")]
-        [SerializeField] private Image panelBackground;
-        [SerializeField] private Image previewBackground;
-        [SerializeField] private Image glowBorder;
-
         [Header("Header")]
         [SerializeField] private TMP_Text sideLabelText;
+        
+        [Header("Player Header")]
+        [SerializeField] private TMP_Text playerNumberText;
+
+        [Header("Camera Controls")]
+        [SerializeField] private GameObject cameraRoot;
+        [SerializeField] private TMP_Dropdown cameraDropdown;
 
         [Header("Robot Controls")]
         [SerializeField] private Button previousRobotButton;
@@ -25,10 +27,21 @@ namespace Util
 
         [Header("Spawn Controls")]
         [SerializeField] private TMP_Dropdown spawnDropdown;
+        
+        [Header("Bumper Controls")]
+        [SerializeField] private GameObject vanityBumperRoot;
+        [SerializeField] private Toggle vanityBumperToggle;
+        
+        [Header("Driver Station Controls")]
+        [SerializeField] private GameObject driverStationRoot;
+        [SerializeField] private TMP_Dropdown driverStationDropdown;
 
         public event Action OnPreviousRobot;
         public event Action OnNextRobot;
         public event Action<int> OnSpawnChanged;
+        public event Action<bool> OnVanityBumperChanged;
+        public event Action<int> OnDriverStationChanged;
+        public event Action<int> OnCameraChanged;
         
         private static readonly Color BlueAlliance = Hex("#00B7FF");
         private static readonly Color RedAlliance = Hex("#FF3131");
@@ -43,6 +56,15 @@ namespace Util
 
             if (spawnDropdown != null)
                 spawnDropdown.onValueChanged.AddListener(value => OnSpawnChanged?.Invoke(value));
+            
+            if (vanityBumperToggle != null)
+                vanityBumperToggle.onValueChanged.AddListener(value => OnVanityBumperChanged?.Invoke(value));
+            
+            if (driverStationDropdown != null)
+                driverStationDropdown.onValueChanged.AddListener(value => OnDriverStationChanged?.Invoke(value));
+            
+            if (cameraDropdown != null)
+                cameraDropdown.onValueChanged.AddListener(value => OnCameraChanged?.Invoke(value));
         }
 
         public void SetVisible(bool visible)
@@ -93,6 +115,85 @@ namespace Util
             spawnDropdown.interactable = interactable;
             spawnDropdown.RefreshShownValue();
         }
+        
+        public void SetVanityBumperToggle(bool enabled, bool interactable = true)
+        {
+            GameObject targetRoot = vanityBumperRoot != null
+                ? vanityBumperRoot
+                : vanityBumperToggle != null
+                    ? vanityBumperToggle.gameObject
+                    : null;
+
+            if (targetRoot != null)
+                targetRoot.SetActive(interactable);
+
+            if (vanityBumperToggle == null)
+                return;
+
+            vanityBumperToggle.SetIsOnWithoutNotify(enabled && interactable);
+            vanityBumperToggle.interactable = interactable;
+        }
+        
+        public void SetDriverStationOptions(List<string> options, int selectedIndex, bool visible, bool interactable = true)
+        {
+            GameObject targetRoot = driverStationRoot != null
+                ? driverStationRoot
+                : driverStationDropdown != null
+                    ? driverStationDropdown.gameObject
+                    : null;
+
+            if (targetRoot != null)
+                targetRoot.SetActive(visible);
+
+            if (driverStationDropdown == null)
+                return;
+
+            driverStationDropdown.ClearOptions();
+            driverStationDropdown.AddOptions(options ?? new List<string>());
+
+            int clampedValue = driverStationDropdown.options.Count > 0
+                ? Mathf.Clamp(selectedIndex, 0, driverStationDropdown.options.Count - 1)
+                : 0;
+
+            driverStationDropdown.SetValueWithoutNotify(clampedValue);
+            driverStationDropdown.interactable = visible && interactable;
+            driverStationDropdown.RefreshShownValue();
+        }
+        
+        public void SetPlayerNumber(int playerNumber, bool visible)
+        {
+            if (playerNumberText == null)
+                return;
+
+            playerNumberText.gameObject.SetActive(visible);
+            playerNumberText.text = $"Player {playerNumber}";
+        }
+
+        public void SetCameraOptions(List<string> options, int selectedIndex, bool visible = true, bool interactable = true)
+        {
+            GameObject targetRoot = cameraRoot != null
+                ? cameraRoot
+                : cameraDropdown != null
+                    ? cameraDropdown.gameObject
+                    : null;
+
+            if (targetRoot != null)
+                targetRoot.SetActive(visible);
+
+            if (cameraDropdown == null)
+                return;
+
+            cameraDropdown.ClearOptions();
+            cameraDropdown.AddOptions(options ?? new List<string>());
+
+            int clampedValue = cameraDropdown.options.Count > 0
+                ? Mathf.Clamp(selectedIndex, 0, cameraDropdown.options.Count - 1)
+                : 0;
+
+            cameraDropdown.SetValueWithoutNotify(clampedValue);
+            cameraDropdown.interactable = visible && interactable;
+            cameraDropdown.RefreshShownValue();
+        }
 
         private void ApplyAllianceColors(bool isBlue)
         {
@@ -101,9 +202,6 @@ namespace Util
 
             if (sideLabelText != null)
                 sideLabelText.color = allianceColor;
-
-            if (glowBorder != null)
-                glowBorder.color = glowColor;
         }
 
         private static Color Hex(string hex)

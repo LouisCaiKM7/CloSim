@@ -496,7 +496,7 @@ MonoBehaviour:
   - Name: HopperOutake
     Type: 2
     Animate: 0
-    Speed: 20
+    Speed: 50
     HpRandomizer: 25
     AngularSpeed: 0
     MoveTo: {fileID: 0}
@@ -1771,7 +1771,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   currentGamePiece: {fileID: 0}
-  Preload: 1
+  Preload: 0
   intakeSize: {x: 6, y: 6, z: 6}
   pieceName: 2
   currentState: 0
@@ -2444,6 +2444,8 @@ GameObject:
   - component: {fileID: 2977790943358533615}
   - component: {fileID: 472831505920260538}
   - component: {fileID: 7851556177457193736}
+  - component: {fileID: 1511068128995277193}
+  - component: {fileID: 6265630998619556096}
   m_Layer: 0
   m_Name: Outtake
   m_TagString: Untagged
@@ -2460,11 +2462,11 @@ Transform:
   m_GameObject: {fileID: 256981409825723456}
   serializedVersion: 2
   m_LocalRotation: {x: -0.55392736, y: -0, z: -0, w: 0.832565}
-  m_LocalPosition: {x: 0, y: 0.537, z: -0.218}
+  m_LocalPosition: {x: -0.084, y: 0.7533, z: -0.1363}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 3391279581775484630}
+  m_Father: {fileID: 7095321462644104896}
   m_LocalEulerAnglesHint: {x: -67.274, y: 0, z: 0}
 --- !u!114 &472831505920260538
 MonoBehaviour:
@@ -2480,14 +2482,14 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   currentGamePiece: {fileID: 0}
   Preload: 0
-  intakeSize: {x: 6, y: 6, z: 6}
+  intakeSize: {x: 3, y: 3, z: 3}
   pieceName: 0
   currentState: 0
   Actions:
   - Name: Shoot
     Type: 2
     Animate: 0
-    Speed: 150
+    Speed: 275
     HpRandomizer: 25
     AngularSpeed: 0
     MoveTo: {fileID: 0}
@@ -2495,7 +2497,7 @@ MonoBehaviour:
     Spin: {x: 0, y: 0, z: 0}
     DelayTimer: 0
     PieceType: 2
-    ControlType: 0
+    ControlType: 2
     performTimer: 0
     InputRequired: 1
     ControllerButton: 9
@@ -2529,8 +2531,11 @@ MonoBehaviour:
     selectedIndex: 9
     selectedName: Shoot
   targetPosition: {x: 0, y: 0, z: 0}
+  useAllianceTargets: 0
+  blueTargetPosition: {x: 0, y: 0, z: 0}
+  redTargetPosition: {x: 0, y: 0, z: 0}
   SetpointName: 
-  connectedTo: none
+  connectedTo: ShootPoints
   extraTargets: []
   interpolationTable:
   - distance: 2.15
@@ -2541,6 +2546,72 @@ MonoBehaviour:
     value: 320
   Distance: 3.7577927
   Output: 310.3117
+--- !u!114 &1511068128995277193
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 256981409825723456}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6a39b5aa0d074eadaffcae99211418b5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  targetType: 2
+  targetWhen: 1
+  targetOuttake:
+    canBeSelected:
+    - Shoot
+    selectedIndex: 0
+    selectedName: Shoot
+  targetPosition: {x: 0, y: 0, z: 0}
+  useAllianceTargets: 1
+  blueTargetPosition: {x: -8, y: 6, z: -2.54}
+  redTargetPosition: {x: 8, y: 6, z: -2.54}
+  SetpointName: PassLeft
+  connectedTo: ShootPoints
+  extraTargets: []
+  interpolationTable:
+  - distance: 1.75
+    value: 200
+  - distance: 4.7
+    value: 375
+  Distance: 0
+  Output: 0
+--- !u!114 &6265630998619556096
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 256981409825723456}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6a39b5aa0d074eadaffcae99211418b5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  targetType: 2
+  targetWhen: 1
+  targetOuttake:
+    canBeSelected:
+    - Shoot
+    selectedIndex: 0
+    selectedName: Shoot
+  targetPosition: {x: 0, y: 0, z: 0}
+  useAllianceTargets: 1
+  blueTargetPosition: {x: -8, y: 6, z: 2.54}
+  redTargetPosition: {x: 8, y: 6, z: 2.54}
+  SetpointName: PassRight
+  connectedTo: ShootPoints
+  extraTargets: []
+  interpolationTable:
+  - distance: 1.75
+    value: 200
+  - distance: 4.7
+    value: 375
+  Distance: 0
+  Output: 0
 --- !u!1 &258383225205434486
 GameObject:
   m_ObjectHideFlags: 0
@@ -2948,6 +3019,59 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   colliders:
   - {fileID: 2193927013985854833}
+--- !u!1 &296978251762700605
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 5194257559286080516}
+  - component: {fileID: 3017689624036691009}
+  m_Layer: 0
+  m_Name: Collider
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &5194257559286080516
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 296978251762700605}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: -0.005, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 232259134869213790}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!65 &3017689624036691009
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 296978251762700605}
+  m_Material: {fileID: 13400000, guid: 6c2b0de4f5a20f140a31a2d58fe1d946, type: 2}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 128
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 1
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 0.85, y: 0.02, z: 0.5}
+  m_Center: {x: 0, y: 0, z: 0}
 --- !u!1 &302866334750674851
 GameObject:
   m_ObjectHideFlags: 0
@@ -5574,6 +5698,8 @@ GameObject:
   - component: {fileID: 7293911734902988126}
   - component: {fileID: 7655815891832602184}
   - component: {fileID: 596391597671486821}
+  - component: {fileID: -8904827577775724997}
+  - component: {fileID: -3996516591652402517}
   m_Layer: 0
   m_Name: Roboteers
   m_TagString: Untagged
@@ -5617,7 +5743,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   units: 0
   frameSize: {x: 33.5, y: 21.5}
-  robotWeight: 90
+  robotWeight: 125
   gearRatio: 7
   moduleType: 3
   generateBumpers: 0
@@ -5656,7 +5782,7 @@ MonoBehaviour:
     d: 0
     max: 0
   requireInsideRegion: 1
-  positionReference: {fileID: 2130378027172243574}
+  bumperRoot: {fileID: 2427911672638291175}
   allowedRegions: 0000000001000000
   Distance: 0
   Output: 0
@@ -5694,7 +5820,7 @@ MonoBehaviour:
     d: 0
     max: 0
   requireInsideRegion: 0
-  positionReference: {fileID: 0}
+  bumperRoot: {fileID: 0}
   allowedRegions: 
   Distance: 0
   Output: 0
@@ -5732,12 +5858,43 @@ MonoBehaviour:
     d: 0
     max: 0
   requireInsideRegion: 0
-  positionReference: {fileID: 0}
+  bumperRoot: {fileID: 0}
   allowedRegions: 
   Distance: 0
   Output: 0
   CurrentAngle: 0
   TargetAngle: 0
+--- !u!114 &-8904827577775724997
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 673311658969713097}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0cde580fb7bc8074696700cb48d073fd, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  bumperRoot: {fileID: 2427911672638291175}
+  blueAimRegion: 0
+  redAimRegion: 1
+  penalizedPieces: 02000000
+--- !u!114 &-3996516591652402517
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 673311658969713097}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 616fae521da3a5f458801865231ddd5a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  teamNumber: 2481
+  displayNameOverride: Roboteers
+  teamIcon: {fileID: 21300000, guid: a943c8f60873b8a48916918581cdce15, type: 3}
 --- !u!1 &685825019912876445
 GameObject:
   m_ObjectHideFlags: 0
@@ -11348,6 +11505,89 @@ MeshRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_AdditionalVertexStreams: {fileID: 0}
+--- !u!1 &1381367485962625218
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 5128277938481748223}
+  - component: {fileID: 1088307984183056073}
+  m_Layer: 0
+  m_Name: Node (9)
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &5128277938481748223
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1381367485962625218}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0.016, y: 0.449, z: -0.205}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 1746780252267710258}
+  m_Father: {fileID: 5010299679576213917}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1088307984183056073
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1381367485962625218}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 12daa6e10260acd4fb01be89d33a3178, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  currentGamePiece: {fileID: 0}
+  Preload: 0
+  intakeSize: {x: 30, y: 20, z: 5}
+  pieceName: 0
+  currentState: 0
+  Actions:
+  - Name: hopper
+    Type: 1
+    Animate: 0
+    Speed: 250
+    HpRandomizer: 25
+    AngularSpeed: 0
+    MoveTo: {fileID: 7131410809449061844}
+    Direction: 0
+    Spin: {x: 0, y: 0, z: 0}
+    DelayTimer: 0.07
+    PieceType: 2
+    ControlType: 2
+    performTimer: 0
+    InputRequired: 1
+    ControllerButton: 9
+    KeyboardButton: 33
+  - Name: Intake
+    Type: 0
+    Animate: 0
+    Speed: 250
+    HpRandomizer: 25
+    AngularSpeed: 0
+    MoveTo: {fileID: 0}
+    Direction: 0
+    Spin: {x: 0, y: 0, z: 0}
+    DelayTimer: 0
+    PieceType: 2
+    ControlType: 0
+    performTimer: 0
+    InputRequired: 1
+    ControllerButton: 9
+    KeyboardButton: 33
 --- !u!1 &1385220932726553044
 GameObject:
   m_ObjectHideFlags: 0
@@ -13716,14 +13956,13 @@ Transform:
   m_GameObject: {fileID: 1632075774292606111}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -0.24159999, y: 0.2163, z: 0.081700005}
+  m_LocalPosition: {x: -0.24159999, y: 0.167, z: 0.081700005}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 2227739085148785715}
   - {fileID: 8714326429840055783}
   - {fileID: 6268609463529595877}
-  - {fileID: 6998951526520146263}
   m_Father: {fileID: 5010299679576213917}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &8702803023883502974
@@ -13740,7 +13979,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   currentGamePiece: {fileID: 0}
   Preload: 0
-  intakeSize: {x: 7, y: 10, z: 13}
+  intakeSize: {x: 7, y: 12, z: 13}
   pieceName: 0
   currentState: 0
   Actions:
@@ -13753,7 +13992,7 @@ MonoBehaviour:
     MoveTo: {fileID: 654359158373261952}
     Direction: 0
     Spin: {x: 0, y: 0, z: 0}
-    DelayTimer: 0.08
+    DelayTimer: 0.07
     PieceType: 2
     ControlType: 2
     performTimer: 0
@@ -15180,6 +15419,8 @@ GameObject:
   - component: {fileID: 6998951526520146263}
   - component: {fileID: 7131410809449061844}
   - component: {fileID: 538020690311036095}
+  - component: {fileID: 5970808153669393258}
+  - component: {fileID: 9177877706060908981}
   m_Layer: 0
   m_Name: Outtake
   m_TagString: Untagged
@@ -15196,11 +15437,11 @@ Transform:
   m_GameObject: {fileID: 1829931923237059553}
   serializedVersion: 2
   m_LocalRotation: {x: -0.55392736, y: -0, z: -0, w: 0.832565}
-  m_LocalPosition: {x: 0, y: 0.537, z: -0.218}
+  m_LocalPosition: {x: -0.24159999, y: 0.7533, z: -0.1363}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 6474010264313670280}
+  m_Father: {fileID: 7095321462644104896}
   m_LocalEulerAnglesHint: {x: -67.274, y: 0, z: 0}
 --- !u!114 &7131410809449061844
 MonoBehaviour:
@@ -15216,14 +15457,14 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   currentGamePiece: {fileID: 0}
   Preload: 0
-  intakeSize: {x: 6, y: 6, z: 6}
+  intakeSize: {x: 3, y: 3, z: 3}
   pieceName: 0
   currentState: 0
   Actions:
   - Name: Shoot
     Type: 2
     Animate: 0
-    Speed: 150
+    Speed: 275
     HpRandomizer: 25
     AngularSpeed: 0
     MoveTo: {fileID: 0}
@@ -15231,7 +15472,7 @@ MonoBehaviour:
     Spin: {x: 0, y: 0, z: 0}
     DelayTimer: 0
     PieceType: 2
-    ControlType: 0
+    ControlType: 2
     performTimer: 0
     InputRequired: 1
     ControllerButton: 9
@@ -15265,8 +15506,11 @@ MonoBehaviour:
     selectedIndex: 9
     selectedName: Shoot
   targetPosition: {x: 0, y: 0, z: 0}
+  useAllianceTargets: 0
+  blueTargetPosition: {x: 0, y: 0, z: 0}
+  redTargetPosition: {x: 0, y: 0, z: 0}
   SetpointName: 
-  connectedTo: none
+  connectedTo: ShootPoints
   extraTargets: []
   interpolationTable:
   - distance: 2.15
@@ -15277,6 +15521,72 @@ MonoBehaviour:
     value: 320
   Distance: 3.7577927
   Output: 310.3117
+--- !u!114 &5970808153669393258
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1829931923237059553}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6a39b5aa0d074eadaffcae99211418b5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  targetType: 2
+  targetWhen: 1
+  targetOuttake:
+    canBeSelected:
+    - Shoot
+    selectedIndex: 0
+    selectedName: Shoot
+  targetPosition: {x: 0, y: 0, z: 0}
+  useAllianceTargets: 1
+  blueTargetPosition: {x: -8, y: 6, z: -2.54}
+  redTargetPosition: {x: 8, y: 6, z: -2.54}
+  SetpointName: PassLeft
+  connectedTo: ShootPoints
+  extraTargets: []
+  interpolationTable:
+  - distance: 1.75
+    value: 200
+  - distance: 4.7
+    value: 375
+  Distance: 0
+  Output: 0
+--- !u!114 &9177877706060908981
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1829931923237059553}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6a39b5aa0d074eadaffcae99211418b5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  targetType: 2
+  targetWhen: 1
+  targetOuttake:
+    canBeSelected:
+    - Shoot
+    selectedIndex: 0
+    selectedName: Shoot
+  targetPosition: {x: 0, y: 0, z: 0}
+  useAllianceTargets: 1
+  blueTargetPosition: {x: -8, y: 6, z: 2.54}
+  redTargetPosition: {x: 8, y: 6, z: 2.54}
+  SetpointName: PassRight
+  connectedTo: ShootPoints
+  extraTargets: []
+  interpolationTable:
+  - distance: 1.75
+    value: 200
+  - distance: 4.7
+    value: 375
+  Distance: 0
+  Output: 0
 --- !u!1 &1833470143661346108
 GameObject:
   m_ObjectHideFlags: 0
@@ -15660,6 +15970,7 @@ MonoBehaviour:
   targetVelocity: 0
   targetModuleAngle: 0
   lateralFrictionMultiplier: 1
+  tractionCoefficient: 1.1
   _rb: {fileID: 0}
 --- !u!1 &1876865551312810929
 GameObject:
@@ -16277,6 +16588,8 @@ GameObject:
   - component: {fileID: 5129885016687628225}
   - component: {fileID: 5139774193412333153}
   - component: {fileID: 9216638271961294422}
+  - component: {fileID: 2494583571482208376}
+  - component: {fileID: 914206648983759170}
   m_Layer: 0
   m_Name: Outtake
   m_TagString: Untagged
@@ -16293,11 +16606,11 @@ Transform:
   m_GameObject: {fileID: 1923729258502543281}
   serializedVersion: 2
   m_LocalRotation: {x: -0.55392736, y: -0, z: -0, w: 0.832565}
-  m_LocalPosition: {x: 0, y: 0.537, z: -0.218}
+  m_LocalPosition: {x: 0.075, y: 0.7533, z: -0.1363}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 887550322570178150}
+  m_Father: {fileID: 7095321462644104896}
   m_LocalEulerAnglesHint: {x: -67.274, y: 0, z: 0}
 --- !u!114 &5139774193412333153
 MonoBehaviour:
@@ -16313,14 +16626,14 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   currentGamePiece: {fileID: 0}
   Preload: 0
-  intakeSize: {x: 6, y: 6, z: 6}
+  intakeSize: {x: 3, y: 3, z: 3}
   pieceName: 0
   currentState: 0
   Actions:
   - Name: Shoot
     Type: 2
     Animate: 0
-    Speed: 150
+    Speed: 275
     HpRandomizer: 25
     AngularSpeed: 0
     MoveTo: {fileID: 0}
@@ -16328,7 +16641,7 @@ MonoBehaviour:
     Spin: {x: 0, y: 0, z: 0}
     DelayTimer: 0
     PieceType: 2
-    ControlType: 0
+    ControlType: 2
     performTimer: 0
     InputRequired: 1
     ControllerButton: 9
@@ -16362,8 +16675,11 @@ MonoBehaviour:
     selectedIndex: 9
     selectedName: Shoot
   targetPosition: {x: 0, y: 0, z: 0}
+  useAllianceTargets: 0
+  blueTargetPosition: {x: 0, y: 0, z: 0}
+  redTargetPosition: {x: 0, y: 0, z: 0}
   SetpointName: 
-  connectedTo: none
+  connectedTo: ShootPoints
   extraTargets: []
   interpolationTable:
   - distance: 2.15
@@ -16374,6 +16690,72 @@ MonoBehaviour:
     value: 320
   Distance: 3.7577927
   Output: 310.3117
+--- !u!114 &2494583571482208376
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1923729258502543281}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6a39b5aa0d074eadaffcae99211418b5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  targetType: 2
+  targetWhen: 1
+  targetOuttake:
+    canBeSelected:
+    - Shoot
+    selectedIndex: 0
+    selectedName: Shoot
+  targetPosition: {x: 0, y: 0, z: 0}
+  useAllianceTargets: 1
+  blueTargetPosition: {x: -8, y: 6, z: -2.54}
+  redTargetPosition: {x: 8, y: 6, z: -2.54}
+  SetpointName: PassLeft
+  connectedTo: ShootPoints
+  extraTargets: []
+  interpolationTable:
+  - distance: 1.75
+    value: 200
+  - distance: 4.7
+    value: 375
+  Distance: 0
+  Output: 0
+--- !u!114 &914206648983759170
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1923729258502543281}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6a39b5aa0d074eadaffcae99211418b5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  targetType: 2
+  targetWhen: 1
+  targetOuttake:
+    canBeSelected:
+    - Shoot
+    selectedIndex: 0
+    selectedName: Shoot
+  targetPosition: {x: 0, y: 0, z: 0}
+  useAllianceTargets: 1
+  blueTargetPosition: {x: -8, y: 6, z: 2.54}
+  redTargetPosition: {x: 8, y: 6, z: 2.54}
+  SetpointName: PassRight
+  connectedTo: ShootPoints
+  extraTargets: []
+  interpolationTable:
+  - distance: 1.75
+    value: 200
+  - distance: 4.7
+    value: 375
+  Distance: 0
+  Output: 0
 --- !u!1 &1924444847359756518
 GameObject:
   m_ObjectHideFlags: 0
@@ -16427,7 +16809,7 @@ MonoBehaviour:
   - Name: HopperOutake
     Type: 2
     Animate: 0
-    Speed: 20
+    Speed: 50
     HpRandomizer: 25
     AngularSpeed: 0
     MoveTo: {fileID: 0}
@@ -27375,6 +27757,8 @@ GameObject:
   - component: {fileID: 4804494850227236663}
   - component: {fileID: 2065756312933596258}
   - component: {fileID: 6741930412116470831}
+  - component: {fileID: 3559268153080971945}
+  - component: {fileID: 8539289602728561567}
   m_Layer: 0
   m_Name: Outtake
   m_TagString: Untagged
@@ -27391,11 +27775,11 @@ Transform:
   m_GameObject: {fileID: 3241196487972790235}
   serializedVersion: 2
   m_LocalRotation: {x: -0.55392736, y: -0, z: -0, w: 0.832565}
-  m_LocalPosition: {x: 0, y: 0.537, z: -0.218}
+  m_LocalPosition: {x: 0.2319, y: 0.7533, z: -0.1363}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 4058023156903940491}
+  m_Father: {fileID: 7095321462644104896}
   m_LocalEulerAnglesHint: {x: -67.274, y: 0, z: 0}
 --- !u!114 &2065756312933596258
 MonoBehaviour:
@@ -27411,14 +27795,14 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   currentGamePiece: {fileID: 0}
   Preload: 0
-  intakeSize: {x: 6, y: 6, z: 6}
+  intakeSize: {x: 3, y: 3, z: 3}
   pieceName: 0
   currentState: 0
   Actions:
   - Name: Shoot
     Type: 2
     Animate: 0
-    Speed: 150
+    Speed: 275
     HpRandomizer: 25
     AngularSpeed: 0
     MoveTo: {fileID: 0}
@@ -27426,7 +27810,7 @@ MonoBehaviour:
     Spin: {x: 0, y: 0, z: 0}
     DelayTimer: 0
     PieceType: 2
-    ControlType: 0
+    ControlType: 2
     performTimer: 0
     InputRequired: 1
     ControllerButton: 9
@@ -27460,8 +27844,11 @@ MonoBehaviour:
     selectedIndex: 9
     selectedName: Shoot
   targetPosition: {x: 0, y: 0, z: 0}
+  useAllianceTargets: 0
+  blueTargetPosition: {x: 0, y: 0, z: 0}
+  redTargetPosition: {x: 0, y: 0, z: 0}
   SetpointName: 
-  connectedTo: none
+  connectedTo: ShootPoints
   extraTargets: []
   interpolationTable:
   - distance: 2.15
@@ -27472,6 +27859,72 @@ MonoBehaviour:
     value: 320
   Distance: 3.7577927
   Output: 310.3117
+--- !u!114 &3559268153080971945
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3241196487972790235}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6a39b5aa0d074eadaffcae99211418b5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  targetType: 2
+  targetWhen: 1
+  targetOuttake:
+    canBeSelected:
+    - Shoot
+    selectedIndex: 0
+    selectedName: Shoot
+  targetPosition: {x: 0, y: 0, z: 0}
+  useAllianceTargets: 1
+  blueTargetPosition: {x: -8, y: 6, z: -2.54}
+  redTargetPosition: {x: 8, y: 6, z: -2.54}
+  SetpointName: PassLeft
+  connectedTo: ShootPoints
+  extraTargets: []
+  interpolationTable:
+  - distance: 1.75
+    value: 200
+  - distance: 4.7
+    value: 375
+  Distance: 0
+  Output: 0
+--- !u!114 &8539289602728561567
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3241196487972790235}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6a39b5aa0d074eadaffcae99211418b5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  targetType: 2
+  targetWhen: 1
+  targetOuttake:
+    canBeSelected:
+    - Shoot
+    selectedIndex: 0
+    selectedName: Shoot
+  targetPosition: {x: 0, y: 0, z: 0}
+  useAllianceTargets: 1
+  blueTargetPosition: {x: -8, y: 6, z: 2.54}
+  redTargetPosition: {x: 8, y: 6, z: 2.54}
+  SetpointName: PassRight
+  connectedTo: ShootPoints
+  extraTargets: []
+  interpolationTable:
+  - distance: 1.75
+    value: 200
+  - distance: 4.7
+    value: 375
+  Distance: 0
+  Output: 0
 --- !u!1 &3243718439634548544
 GameObject:
   m_ObjectHideFlags: 0
@@ -31735,7 +32188,7 @@ MonoBehaviour:
   - Name: HopperOutake
     Type: 2
     Animate: 0
-    Speed: 20
+    Speed: 50
     HpRandomizer: 25
     AngularSpeed: 0
     MoveTo: {fileID: 0}
@@ -36864,7 +37317,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   currentGamePiece: {fileID: 0}
-  Preload: 1
+  Preload: 0
   intakeSize: {x: 6, y: 6, z: 6}
   pieceName: 2
   currentState: 0
@@ -37719,7 +38172,7 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 0.1778, y: 0.254, z: 0.3302}
+  m_Size: {x: 0.1778, y: 0.3048, z: 0.3302}
   m_Center: {x: 0, y: 0, z: 0}
 --- !u!1 &4610558879063869725
 GameObject:
@@ -37949,7 +38402,7 @@ MonoBehaviour:
   - Name: HopperOutake
     Type: 2
     Animate: 0
-    Speed: 20
+    Speed: 50
     HpRandomizer: 25
     AngularSpeed: 0
     MoveTo: {fileID: 0}
@@ -38686,6 +39139,7 @@ Transform:
   - {fileID: 2676568678744071170}
   - {fileID: 4188036321661676336}
   - {fileID: 272581606353845799}
+  - {fileID: 232259134869213790}
   m_Father: {fileID: 2130378027172243574}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &2316867084187674500
@@ -39411,14 +39865,13 @@ Transform:
   m_GameObject: {fileID: 4865477502441421467}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -0.084, y: 0.2163, z: 0.081700005}
+  m_LocalPosition: {x: -0.084, y: 0.167, z: 0.081700005}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 6339195777911506052}
   - {fileID: 2408535412463370822}
   - {fileID: 8271588294577680497}
-  - {fileID: 2977790943358533615}
   m_Father: {fileID: 5010299679576213917}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &4294270045893431824
@@ -39435,7 +39888,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   currentGamePiece: {fileID: 0}
   Preload: 0
-  intakeSize: {x: 7, y: 10, z: 13}
+  intakeSize: {x: 7, y: 12, z: 13}
   pieceName: 0
   currentState: 0
   Actions:
@@ -39448,7 +39901,7 @@ MonoBehaviour:
     MoveTo: {fileID: 2386767816908408303}
     Direction: 0
     Spin: {x: 0, y: 0, z: 0}
-    DelayTimer: 0.08
+    DelayTimer: 0.07
     PieceType: 2
     ControlType: 2
     performTimer: 0
@@ -39762,7 +40215,7 @@ MonoBehaviour:
   - Name: HopperOutake
     Type: 2
     Animate: 0
-    Speed: 20
+    Speed: 50
     HpRandomizer: 25
     AngularSpeed: 0
     MoveTo: {fileID: 0}
@@ -40713,6 +41166,7 @@ MonoBehaviour:
   targetVelocity: 0
   targetModuleAngle: 0
   lateralFrictionMultiplier: 1
+  tractionCoefficient: 1.1
   _rb: {fileID: 0}
 --- !u!1 &5083648711757564807
 GameObject:
@@ -44714,7 +45168,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   currentGamePiece: {fileID: 0}
-  Preload: 1
+  Preload: 0
   intakeSize: {x: 6, y: 6, z: 6}
   pieceName: 2
   currentState: 0
@@ -46683,7 +47137,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &185233900076617487
 Transform:
   m_ObjectHideFlags: 0
@@ -50070,7 +50524,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   currentGamePiece: {fileID: 0}
-  Preload: 1
+  Preload: 0
   intakeSize: {x: 6, y: 6, z: 6}
   pieceName: 2
   currentState: 0
@@ -55863,8 +56317,39 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 0.1778, y: 0.254, z: 0.3302}
+  m_Size: {x: 0.1778, y: 0.3048, z: 0.3302}
   m_Center: {x: 0, y: 0, z: 0}
+--- !u!1 &7024288022141061890
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 8180996828215850439}
+  m_Layer: 0
+  m_Name: Model
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &8180996828215850439
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7024288022141061890}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 7095321462644104896}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &7027913176371213890
 GameObject:
   m_ObjectHideFlags: 0
@@ -57108,7 +57593,7 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 0.1778, y: 0.254, z: 0.3302}
+  m_Size: {x: 0.1778, y: 0.3048, z: 0.3302}
   m_Center: {x: 0, y: 0, z: 0}
 --- !u!1 &7167155449231857617
 GameObject:
@@ -57694,6 +58179,101 @@ Transform:
   - {fileID: 4405784242390978765}
   m_Father: {fileID: 2394967964012923464}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &7233646306976647400
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 7095321462644104896}
+  - component: {fileID: 7367330352233483925}
+  m_Layer: 0
+  m_Name: ShootPoints
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &7095321462644104896
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7233646306976647400}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 5129885016687628225}
+  - {fileID: 4804494850227236663}
+  - {fileID: 6998951526520146263}
+  - {fileID: 2977790943358533615}
+  - {fileID: 8180996828215850439}
+  m_Father: {fileID: 5010299679576213917}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &7367330352233483925
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7233646306976647400}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e82d393aa64423b4caa1c8a30e5b0f1f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  setPoints:
+  - setpointName: 
+    controlType: 2
+    sequenceType: 0
+    sequenceTo: 
+    delay: 0
+    persist: 0
+    point: 0
+    shouldScaleToUnits: 0
+    units: 0
+    controllerButton: 3
+    keyboardButton: 17
+  - setpointName: PassLeft
+    controlType: 2
+    sequenceType: 0
+    sequenceTo: 
+    delay: 0
+    persist: 0
+    point: 0
+    shouldScaleToUnits: 0
+    units: 0
+    controllerButton: 2
+    keyboardButton: 16
+  - setpointName: PassRight
+    controlType: 2
+    sequenceType: 0
+    sequenceTo: 
+    delay: 0
+    persist: 0
+    point: 0
+    shouldScaleToUnits: 0
+    units: 0
+    controllerButton: 1
+    keyboardButton: 20
+  armModel: 3
+  units: 0
+  length: 2
+  width: 0
+  armWeight: 1
+  useNoWrapPoint: 0
+  noWrapAngle: 180
+  useAdvancedSettings: 0
+  max: 20
+  kP: 0.5
+  kI: 0
+  kD: 0.0005
 --- !u!1 &7234337490579786084
 GameObject:
   m_ObjectHideFlags: 0
@@ -57961,6 +58541,38 @@ Transform:
   m_Children:
   - {fileID: 2409456815213977885}
   m_Father: {fileID: 5084358433089712496}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &7288965148423899586
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 232259134869213790}
+  m_Layer: 0
+  m_Name: BellyPan
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &232259134869213790
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7288965148423899586}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0.016, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 5194257559286080516}
+  m_Father: {fileID: 6629456877011192383}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &7292254593750914064
 GameObject:
@@ -58924,14 +59536,13 @@ Transform:
   m_GameObject: {fileID: 7401890080050106828}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0.2319, y: 0.2163, z: 0.0817}
+  m_LocalPosition: {x: 0.2319, y: 0.167, z: 0.0817}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 8187075523723133022}
   - {fileID: 5990999923936140860}
   - {fileID: 5102160827026877014}
-  - {fileID: 4804494850227236663}
   m_Father: {fileID: 5010299679576213917}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &3879805197403238530
@@ -58948,7 +59559,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   currentGamePiece: {fileID: 0}
   Preload: 0
-  intakeSize: {x: 7, y: 10, z: 13}
+  intakeSize: {x: 7, y: 12, z: 13}
   pieceName: 0
   currentState: 0
   Actions:
@@ -58961,7 +59572,7 @@ MonoBehaviour:
     MoveTo: {fileID: 5226522028886275748}
     Direction: 0
     Spin: {x: 0, y: 0, z: 0}
-    DelayTimer: 0.08
+    DelayTimer: 0.07
     PieceType: 2
     ControlType: 2
     performTimer: 0
@@ -59664,7 +60275,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   currentGamePiece: {fileID: 0}
-  Preload: 1
+  Preload: 0
   intakeSize: {x: 6, y: 6, z: 6}
   pieceName: 2
   currentState: 0
@@ -62412,7 +63023,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   currentGamePiece: {fileID: 0}
-  Preload: 1
+  Preload: 0
   intakeSize: {x: 6, y: 6, z: 6}
   pieceName: 2
   currentState: 0
@@ -64111,6 +64722,59 @@ MonoBehaviour:
   LoadedPartScale: {x: 1, y: 1, z: 1}
   wheelType: 0
   shouldCollide: 1
+--- !u!1 &7937940273939217669
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1746780252267710258}
+  - component: {fileID: 5967189024371501124}
+  m_Layer: 0
+  m_Name: IntakeBox
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1746780252267710258
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7937940273939217669}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 5128277938481748223}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!65 &5967189024371501124
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7937940273939217669}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 0.76199996, y: 0.508, z: 0.127}
+  m_Center: {x: 0, y: 0, z: 0}
 --- !u!1 &7941524940892027221
 GameObject:
   m_ObjectHideFlags: 0
@@ -65036,14 +65700,13 @@ Transform:
   m_GameObject: {fileID: 8099951060716996192}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0.075, y: 0.2163, z: 0.081700005}
+  m_LocalPosition: {x: 0.075, y: 0.167, z: 0.081700005}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 1162388970098399834}
   - {fileID: 6042415758506240908}
   - {fileID: 2747238076061108615}
-  - {fileID: 5129885016687628225}
   m_Father: {fileID: 5010299679576213917}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &6322623426368279248
@@ -65060,7 +65723,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   currentGamePiece: {fileID: 0}
   Preload: 0
-  intakeSize: {x: 7, y: 10, z: 13}
+  intakeSize: {x: 7, y: 12, z: 13}
   pieceName: 0
   currentState: 0
   Actions:
@@ -65073,7 +65736,7 @@ MonoBehaviour:
     MoveTo: {fileID: 971759214695908558}
     Direction: 0
     Spin: {x: 0, y: 0, z: 0}
-    DelayTimer: 0.08
+    DelayTimer: 0.07
     PieceType: 2
     ControlType: 2
     performTimer: 0
@@ -65384,6 +66047,8 @@ Transform:
   - {fileID: 4058023156903940491}
   - {fileID: 6474010264313670280}
   - {fileID: 3391279581775484630}
+  - {fileID: 5128277938481748223}
+  - {fileID: 7095321462644104896}
   m_Father: {fileID: 9144171234537714357}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &8127473718445903873
@@ -66984,7 +67649,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   currentGamePiece: {fileID: 0}
-  Preload: 1
+  Preload: 0
   intakeSize: {x: 6, y: 6, z: 6}
   pieceName: 2
   currentState: 0
@@ -67674,7 +68339,7 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 0.1778, y: 0.254, z: 0.3302}
+  m_Size: {x: 0.1778, y: 0.3048, z: 0.3302}
   m_Center: {x: 0, y: 0, z: 0}
 --- !u!1 &8436159924544296022
 GameObject:
@@ -71063,16 +71728,27 @@ MonoBehaviour:
     sequenceTo: 
     delay: 0
     persist: 0
-    point: -100
+    point: -95
     shouldScaleToUnits: 0
     units: 0
     controllerButton: 8
     keyboardButton: 29
+  - setpointName: Home
+    controlType: 2
+    sequenceType: 0
+    sequenceTo: 
+    delay: 0
+    persist: 0
+    point: -45
+    shouldScaleToUnits: 0
+    units: 0
+    controllerButton: 0
+    keyboardButton: 24
   armModel: 3
   units: 0
   length: 5
   width: 0
-  armWeight: 5
+  armWeight: 10
   useNoWrapPoint: 0
   noWrapAngle: 180
   useAdvancedSettings: 0
@@ -71132,6 +71808,7 @@ MonoBehaviour:
   targetVelocity: 0
   targetModuleAngle: 0
   lateralFrictionMultiplier: 1
+  tractionCoefficient: 1.1
   _rb: {fileID: 0}
 --- !u!1 &8847616611950061853
 GameObject:
@@ -71642,6 +72319,7 @@ MonoBehaviour:
   targetVelocity: 0
   targetModuleAngle: 0
   lateralFrictionMultiplier: 1
+  tractionCoefficient: 1.1
   _rb: {fileID: 0}
 --- !u!1 &8924644180664578171
 GameObject:
@@ -73675,7 +74353,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   currentGamePiece: {fileID: 0}
-  Preload: 1
+  Preload: 0
   intakeSize: {x: 6, y: 6, z: 6}
   pieceName: 2
   currentState: 0

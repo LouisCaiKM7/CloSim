@@ -2263,6 +2263,8 @@ GameObject:
   - component: {fileID: 3976846010761174341}
   - component: {fileID: 8864266421860800222}
   - component: {fileID: 7573500655344556559}
+  - component: {fileID: 3515998527395176661}
+  - component: {fileID: 8768979254996167647}
   m_Layer: 0
   m_Name: Kitbot
   m_TagString: Untagged
@@ -2305,8 +2307,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   units: 0
   frameSize: {x: 26.5, y: 26.31}
-  robotWeight: 55
-  gearRatio: 4.71
+  robotWeight: 75
+  gearRatio: 5.2
   moduleType: 4
   generateBumpers: 0
   bumperStyle: 0
@@ -2344,12 +2346,43 @@ MonoBehaviour:
     d: 0
     max: 0
   requireInsideRegion: 1
-  positionReference: {fileID: 3976846010761174341}
+  bumperRoot: {fileID: 552205737102259183}
   allowedRegions: 0000000001000000
   Distance: 0
   Output: 0
   CurrentAngle: 0
   TargetAngle: 0
+--- !u!114 &3515998527395176661
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1397938292708102048}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0cde580fb7bc8074696700cb48d073fd, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  bumperRoot: {fileID: 552205737102259183}
+  blueAimRegion: 0
+  redAimRegion: 1
+  penalizedPieces: 02000000
+--- !u!114 &8768979254996167647
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1397938292708102048}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 616fae521da3a5f458801865231ddd5a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  teamNumber: 9995
+  displayNameOverride: Kitbot
+  teamIcon: {fileID: 21300000, guid: 1b8a91b765eb1164aa0209468112c9e9, type: 3}
 --- !u!1 &1465186127427937012
 GameObject:
   m_ObjectHideFlags: 0
@@ -7003,6 +7036,7 @@ MonoBehaviour:
   targetVelocity: 0
   targetModuleAngle: 0
   lateralFrictionMultiplier: 1
+  tractionCoefficient: 1.1
   _rb: {fileID: 0}
 --- !u!1 &4146916720327343845
 GameObject:
@@ -9362,6 +9396,7 @@ MonoBehaviour:
   targetVelocity: 0
   targetModuleAngle: 0
   lateralFrictionMultiplier: 1
+  tractionCoefficient: 1.1
   _rb: {fileID: 0}
 --- !u!1 &5120066788669582778
 GameObject:
@@ -14478,6 +14513,7 @@ MonoBehaviour:
   targetVelocity: 0
   targetModuleAngle: 0
   lateralFrictionMultiplier: 1
+  tractionCoefficient: 1.1
   _rb: {fileID: 0}
 --- !u!1 &7259066159107318585
 GameObject:
@@ -18346,6 +18382,7 @@ MonoBehaviour:
   targetVelocity: 0
   targetModuleAngle: 0
   lateralFrictionMultiplier: 1
+  tractionCoefficient: 1.1
   _rb: {fileID: 0}
 --- !u!1 &8643514854030605598
 GameObject:

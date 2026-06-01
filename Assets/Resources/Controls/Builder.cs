@@ -485,6 +485,24 @@ public partial class @Builder: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""LeftStickButton"",
+                    ""type"": ""Button"",
+                    ""id"": ""ae49d48a-9aae-49b5-b650-678654b95c5a"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""RightStickButton"",
+                    ""type"": ""Button"",
+                    ""id"": ""84014b2a-c5a0-49cc-98c8-5da221478f9a"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
                 }
             ],
             ""bindings"": [
@@ -1191,6 +1209,28 @@ public partial class @Builder: IInputActionCollection2, IDisposable
                     ""action"": ""UpArrow"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""7cb27d06-c93f-40e9-83f1-edb9b35f6ca4"",
+                    ""path"": ""<Gamepad>/leftStickPress"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": ""Gamepad"",
+                    ""action"": ""LeftStickButton"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""010864bc-bb49-4f62-ad5d-0d3188142404"",
+                    ""path"": ""<Gamepad>/rightStickPress"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": ""Gamepad"",
+                    ""action"": ""RightStickButton"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
                 }
             ]
         }
@@ -1273,6 +1313,8 @@ public partial class @Builder: IInputActionCollection2, IDisposable
         m_Robot_RightArrow = m_Robot.FindAction("RightArrow", throwIfNotFound: true);
         m_Robot_Reset = m_Robot.FindAction("Reset", throwIfNotFound: true);
         m_Robot_LeftShift = m_Robot.FindAction("LeftShift", throwIfNotFound: true);
+        m_Robot_LeftStickButton = m_Robot.FindAction("LeftStickButton", throwIfNotFound: true);
+        m_Robot_RightStickButton = m_Robot.FindAction("RightStickButton", throwIfNotFound: true);
     }
 
     public void Dispose()
@@ -1385,6 +1427,8 @@ public partial class @Builder: IInputActionCollection2, IDisposable
     private readonly InputAction m_Robot_RightArrow;
     private readonly InputAction m_Robot_Reset;
     private readonly InputAction m_Robot_LeftShift;
+    private readonly InputAction m_Robot_LeftStickButton;
+    private readonly InputAction m_Robot_RightStickButton;
     public struct RobotActions
     {
         private @Builder m_Wrapper;
@@ -1440,6 +1484,8 @@ public partial class @Builder: IInputActionCollection2, IDisposable
         public InputAction @RightArrow => m_Wrapper.m_Robot_RightArrow;
         public InputAction @Reset => m_Wrapper.m_Robot_Reset;
         public InputAction @LeftShift => m_Wrapper.m_Robot_LeftShift;
+        public InputAction @LeftStickButton => m_Wrapper.m_Robot_LeftStickButton;
+        public InputAction @RightStickButton => m_Wrapper.m_Robot_RightStickButton;
         public InputActionMap Get() { return m_Wrapper.m_Robot; }
         public void Enable() { Get().Enable(); }
         public void Disable() { Get().Disable(); }
@@ -1602,6 +1648,12 @@ public partial class @Builder: IInputActionCollection2, IDisposable
             @LeftShift.started += instance.OnLeftShift;
             @LeftShift.performed += instance.OnLeftShift;
             @LeftShift.canceled += instance.OnLeftShift;
+            @LeftStickButton.started += instance.OnLeftStickButton;
+            @LeftStickButton.performed += instance.OnLeftStickButton;
+            @LeftStickButton.canceled += instance.OnLeftStickButton;
+            @RightStickButton.started += instance.OnRightStickButton;
+            @RightStickButton.performed += instance.OnRightStickButton;
+            @RightStickButton.canceled += instance.OnRightStickButton;
         }
 
         private void UnregisterCallbacks(IRobotActions instance)
@@ -1759,6 +1811,12 @@ public partial class @Builder: IInputActionCollection2, IDisposable
             @LeftShift.started -= instance.OnLeftShift;
             @LeftShift.performed -= instance.OnLeftShift;
             @LeftShift.canceled -= instance.OnLeftShift;
+            @LeftStickButton.started -= instance.OnLeftStickButton;
+            @LeftStickButton.performed -= instance.OnLeftStickButton;
+            @LeftStickButton.canceled -= instance.OnLeftStickButton;
+            @RightStickButton.started -= instance.OnRightStickButton;
+            @RightStickButton.performed -= instance.OnRightStickButton;
+            @RightStickButton.canceled -= instance.OnRightStickButton;
         }
 
         public void RemoveCallbacks(IRobotActions instance)
@@ -1847,5 +1905,7 @@ public partial class @Builder: IInputActionCollection2, IDisposable
         void OnRightArrow(InputAction.CallbackContext context);
         void OnReset(InputAction.CallbackContext context);
         void OnLeftShift(InputAction.CallbackContext context);
+        void OnLeftStickButton(InputAction.CallbackContext context);
+        void OnRightStickButton(InputAction.CallbackContext context);
     }
 }

@@ -1108,6 +1108,8 @@ GameObject:
   - component: {fileID: 5918679715892034390}
   - component: {fileID: 2074626077941649996}
   - component: {fileID: 4481213420719308697}
+  - component: {fileID: 2784776859460660510}
+  - component: {fileID: 6748278298964938241}
   m_Layer: 0
   m_Name: Shoot
   m_TagString: Untagged
@@ -1128,7 +1130,7 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 7626848454015616415}
+  m_Father: {fileID: 89697817201538701}
   m_LocalEulerAnglesHint: {x: -68.236, y: 0, z: 0}
 --- !u!114 &2074626077941649996
 MonoBehaviour:
@@ -1146,7 +1148,7 @@ MonoBehaviour:
   Preload: 0
   intakeSize: {x: 3, y: 3, z: 3}
   pieceName: 0
-  currentState: 3
+  currentState: 0
   Actions:
   - Name: Shoot
     Type: 2
@@ -1157,9 +1159,9 @@ MonoBehaviour:
     MoveTo: {fileID: 0}
     Direction: 0
     Spin: {x: 0, y: 0, z: 0}
-    DelayTimer: 0.075
+    DelayTimer: 0
     PieceType: 2
-    ControlType: 0
+    ControlType: 2
     performTimer: 0
     InputRequired: 1
     ControllerButton: 9
@@ -1184,8 +1186,11 @@ MonoBehaviour:
     selectedIndex: 0
     selectedName: Shoot
   targetPosition: {x: 0, y: 0, z: 0}
+  useAllianceTargets: 0
+  blueTargetPosition: {x: 0, y: 0, z: 0}
+  redTargetPosition: {x: 0, y: 0, z: 0}
   SetpointName: 
-  connectedTo: none
+  connectedTo: Shooter
   extraTargets: []
   interpolationTable:
   - distance: 2
@@ -1214,6 +1219,72 @@ MonoBehaviour:
     value: 1250
   Distance: 0.44460544
   Output: 306.38168
+--- !u!114 &2784776859460660510
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 295446437815694042}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6a39b5aa0d074eadaffcae99211418b5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  targetType: 2
+  targetWhen: 1
+  targetOuttake:
+    canBeSelected:
+    - Shoot
+    selectedIndex: 0
+    selectedName: Shoot
+  targetPosition: {x: 0, y: 0, z: 0}
+  useAllianceTargets: 1
+  blueTargetPosition: {x: -8, y: 6, z: -2.54}
+  redTargetPosition: {x: 8, y: 6, z: -2.54}
+  SetpointName: PassLeft
+  connectedTo: Shooter
+  extraTargets: []
+  interpolationTable:
+  - distance: 1.75
+    value: 275
+  - distance: 4.7
+    value: 400
+  Distance: 0
+  Output: 0
+--- !u!114 &6748278298964938241
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 295446437815694042}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6a39b5aa0d074eadaffcae99211418b5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  targetType: 2
+  targetWhen: 1
+  targetOuttake:
+    canBeSelected:
+    - Shoot
+    selectedIndex: 0
+    selectedName: Shoot
+  targetPosition: {x: 0, y: 0, z: 0}
+  useAllianceTargets: 1
+  blueTargetPosition: {x: -8, y: 6, z: 2.54}
+  redTargetPosition: {x: 8, y: 6, z: 2.54}
+  SetpointName: PassRight
+  connectedTo: Shooter
+  extraTargets: []
+  interpolationTable:
+  - distance: 1.75
+    value: 275
+  - distance: 4.7
+    value: 400
+  Distance: 0
+  Output: 0
 --- !u!1 &300284895859610681
 GameObject:
   m_ObjectHideFlags: 0
@@ -2193,6 +2264,7 @@ MonoBehaviour:
   targetVelocity: 0
   targetModuleAngle: 0
   lateralFrictionMultiplier: 1
+  tractionCoefficient: 1.1
   _rb: {fileID: 0}
 --- !u!1 &710171381207280097
 GameObject:
@@ -3382,6 +3454,7 @@ MonoBehaviour:
   targetVelocity: 0
   targetModuleAngle: 0
   lateralFrictionMultiplier: 1
+  tractionCoefficient: 1.1
   _rb: {fileID: 0}
 --- !u!1 &1033426799943426705
 GameObject:
@@ -4970,6 +5043,8 @@ GameObject:
   - component: {fileID: 1545994984085528621}
   - component: {fileID: 2761655532888852231}
   - component: {fileID: 3700321356409474418}
+  - component: {fileID: -1185076615367148604}
+  - component: {fileID: 8675520271737018745}
   m_Layer: 0
   m_Name: Sabre
   m_TagString: Untagged
@@ -5010,7 +5085,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   units: 0
   frameSize: {x: 27, y: 28}
-  robotWeight: 50
+  robotWeight: 80
   gearRatio: 5.85
   moduleType: 0
   generateBumpers: 1
@@ -5049,7 +5124,7 @@ MonoBehaviour:
     d: 0
     max: 0
   requireInsideRegion: 1
-  positionReference: {fileID: 5678858960601604541}
+  bumperRoot: {fileID: 6369639929538280223}
   allowedRegions: 0000000001000000
   Distance: 0
   Output: 0
@@ -5087,7 +5162,7 @@ MonoBehaviour:
     d: 0
     max: 0
   requireInsideRegion: 0
-  positionReference: {fileID: 0}
+  bumperRoot: {fileID: 0}
   allowedRegions: 
   Distance: 0
   Output: 0
@@ -5125,12 +5200,43 @@ MonoBehaviour:
     d: 0
     max: 0
   requireInsideRegion: 0
-  positionReference: {fileID: 0}
+  bumperRoot: {fileID: 0}
   allowedRegions: 
   Distance: 0
   Output: 0
   CurrentAngle: 0
   TargetAngle: 0
+--- !u!114 &-1185076615367148604
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1487692313159551957}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0cde580fb7bc8074696700cb48d073fd, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  bumperRoot: {fileID: 6369639929538280223}
+  blueAimRegion: 0
+  redAimRegion: 1
+  penalizedPieces: 02000000
+--- !u!114 &8675520271737018745
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1487692313159551957}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 616fae521da3a5f458801865231ddd5a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  teamNumber: 6045
+  displayNameOverride: Sabre
+  teamIcon: {fileID: 21300000, guid: a841710e9d8d39748a45468141f49bd6, type: 3}
 --- !u!1 &1504636221404106030
 GameObject:
   m_ObjectHideFlags: 0
@@ -5689,7 +5795,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 3982610138000681688}
-  - {fileID: 5918679715892034390}
+  - {fileID: 89697817201538701}
   m_Father: {fileID: 6148309585295086912}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &4962812559436298321
@@ -16649,6 +16755,37 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   colliders:
   - {fileID: 836084694050049864}
+--- !u!1 &5400828511868591222
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 5677538359135965720}
+  m_Layer: 0
+  m_Name: Model
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &5677538359135965720
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5400828511868591222}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 89697817201538701}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &5422341448752307145
 GameObject:
   m_ObjectHideFlags: 0
@@ -19883,6 +20020,98 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 0.0127, y: 0.0079502, z: 0.0762}
   m_Center: {x: 0, y: 0, z: 0}
+--- !u!1 &6679096499415576521
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 89697817201538701}
+  - component: {fileID: 7079757698459373193}
+  m_Layer: 0
+  m_Name: Shooter
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &89697817201538701
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6679096499415576521}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 5918679715892034390}
+  - {fileID: 5677538359135965720}
+  m_Father: {fileID: 7626848454015616415}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &7079757698459373193
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6679096499415576521}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e82d393aa64423b4caa1c8a30e5b0f1f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  setPoints:
+  - setpointName: 
+    controlType: 2
+    sequenceType: 0
+    sequenceTo: 
+    delay: 0
+    persist: 0
+    point: 0
+    shouldScaleToUnits: 0
+    units: 0
+    controllerButton: 3
+    keyboardButton: 17
+  - setpointName: PassLeft
+    controlType: 2
+    sequenceType: 0
+    sequenceTo: 
+    delay: 0
+    persist: 0
+    point: 0
+    shouldScaleToUnits: 0
+    units: 0
+    controllerButton: 2
+    keyboardButton: 16
+  - setpointName: PassRight
+    controlType: 2
+    sequenceType: 0
+    sequenceTo: 
+    delay: 0
+    persist: 0
+    point: 0
+    shouldScaleToUnits: 0
+    units: 0
+    controllerButton: 1
+    keyboardButton: 20
+  armModel: 3
+  units: 0
+  length: 2
+  width: 0
+  armWeight: 1
+  useNoWrapPoint: 0
+  noWrapAngle: 180
+  useAdvancedSettings: 0
+  max: 20
+  kP: 0.5
+  kI: 0
+  kD: 0.0005
 --- !u!1 &6695147115635830384
 GameObject:
   m_ObjectHideFlags: 0
@@ -21827,6 +22056,7 @@ MonoBehaviour:
   targetVelocity: 0
   targetModuleAngle: 0
   lateralFrictionMultiplier: 1
+  tractionCoefficient: 1.1
   _rb: {fileID: 0}
 --- !u!1 &7134162912985853067
 GameObject:
@@ -25665,6 +25895,7 @@ MonoBehaviour:
   targetVelocity: 0
   targetModuleAngle: 0
   lateralFrictionMultiplier: 1
+  tractionCoefficient: 1.1
   _rb: {fileID: 0}
 --- !u!1 &8407735108518251865
 GameObject:
@@ -27606,6 +27837,9 @@ MonoBehaviour:
     selectedIndex: 0
     selectedName: ShootFeed
   targetPosition: {x: -6, y: 0, z: 2}
+  useAllianceTargets: 0
+  blueTargetPosition: {x: 0, y: 0, z: 0}
+  redTargetPosition: {x: 0, y: 0, z: 0}
   SetpointName: 
   connectedTo: none
   extraTargets: []

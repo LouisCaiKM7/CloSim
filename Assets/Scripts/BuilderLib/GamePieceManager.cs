@@ -112,13 +112,43 @@ namespace BuilderLib
             return true;
         }
     
-        public static bool ReleaseToWorld(GamePiece piece, NodeAction action)
+        public static bool ReleaseToWorld(GamePiece piece, NodeAction action, bool isHumanPlayerRelease = false)
         {
             if (!piece) return false;
             if (!piece.owner) return false;
             if (piece.pieceType != action.PieceType) return false;
+
+            if (isHumanPlayerRelease)
+            {
+                piece.ClearG407PenaltyState();
+                piece.launchSource = LaunchSource.HumanPlayer;
+            }
+            else
+            {
+                var swerve = piece.owner.GetComponentInParent<SwerveController>();
+                var penalty = piece.owner.GetComponentInParent<LaunchZonePenalty>();
+
+                if (swerve != null && penalty != null)
+                {
+                    bool robotIsRed = swerve.isRed;
+
+                    piece.launchSource = LaunchSource.Robot;
+                    piece.g407PenalizedAlliance = robotIsRed
+                        ? AllianceColor.Red
+                        : AllianceColor.Blue;
+
+                    penalty.MarkLaunchIfIllegal(piece, robotIsRed);
+                }
+                else
+                {
+                    piece.ClearG407PenaltyState();
+                }
+            }
+
+
             var speed = action.overideSpeed * 0.0254f ?? action.Speed * 0.0254f;
             action.overideSpeed = null;
+            
             var rb = piece.rb;
             var transform = rb.transform;
 

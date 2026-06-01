@@ -289,7 +289,7 @@ public class BuildNode : MonoBehaviour
         ref NodeAction action,
         bool buttonPressed,
         bool buttonHeld,
-        bool randomizeSpeed,
+        bool isHumanPlayerRelease,
         ref bool actionDone,
         ref bool actionFinished)
     {
@@ -323,12 +323,19 @@ public class BuildNode : MonoBehaviour
 
         float originalSpeed = action.Speed;
 
-        if (randomizeSpeed)
+        if (isHumanPlayerRelease)
         {
-            action.Speed = UnityEngine.Random.Range(action.Speed - action.HpRandomizer, action.Speed + action.HpRandomizer);
+            action.Speed = UnityEngine.Random.Range(
+                action.Speed - action.HpRandomizer,
+                action.Speed + action.HpRandomizer
+            );
         }
 
-        var finishedOuttake = GamePieceManager.ReleaseToWorld(currentGamePiece, action);
+        var finishedOuttake = GamePieceManager.ReleaseToWorld(
+            currentGamePiece,
+            action,
+            isHumanPlayerRelease
+        );
         var releasedPiece = currentGamePiece;
 
         action.Speed = originalSpeed;

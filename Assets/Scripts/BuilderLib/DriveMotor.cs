@@ -70,6 +70,6 @@ public class DriveMotor : MonoBehaviour
     /// <returns></returns>
     private bool DriveBroke()
     {
-        return !float.IsNaN(motorSpeed) && !float.IsInfinity(motorSpeed);
+        return float.IsNaN(motorSpeed) || float.IsInfinity(motorSpeed);
     }
 }

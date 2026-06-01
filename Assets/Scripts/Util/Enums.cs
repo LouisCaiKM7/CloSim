@@ -308,23 +308,53 @@ namespace Util
         RightArrow,
     }
     
-    public enum CameraSide
-    {
-        Full,
-        Left,
-        Right
-    }
-    
     public enum PlayMode
     {
-        OneVsZero,   
-        TwoVsZero,  
-        OneVsOne
+        OneVsZero,
+        TwoVsZero,
+        OneVsOne,
+        ThreeVsZero,
+        TwoVsTwo
     }
     
     public enum HumanPlayerType
     {
         Bucket,
         Dumper
+    }
+    
+    public enum LaunchSource
+    {
+        None,
+        Robot,
+        HumanPlayer
+    }
+    
+    public enum AllianceColor
+    {
+        None,
+        Blue,
+        Red
+    }
+    
+    public enum FrameRateMode
+    {
+        FPS30,
+        FPS60,
+        FPS75,
+        FPS90,
+        FPS120,
+        FPS144,
+        FPS165,
+        FPS240,
+        Unlimited,
+        VSync
+    }
+        
+    public enum WindowMode
+    {
+        Windowed = 0,
+        BorderlessFullscreen = 1,
+        ExclusiveFullscreen = 2
     }
 }

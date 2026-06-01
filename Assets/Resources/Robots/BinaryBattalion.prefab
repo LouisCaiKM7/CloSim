@@ -251,6 +251,8 @@ GameObject:
   - component: {fileID: 3154914937820018168}
   - component: {fileID: 3196931751127272159}
   - component: {fileID: 8749854854290520775}
+  - component: {fileID: 7255364811867063630}
+  - component: {fileID: 5644429242190701197}
   m_Layer: 0
   m_Name: Shoot
   m_TagString: Untagged
@@ -291,7 +293,7 @@ MonoBehaviour:
   pieceName: 0
   currentState: 0
   Actions:
-  - Name: ShootNode
+  - Name: Shoot
     Type: 2
     Animate: 0
     Speed: 275
@@ -302,7 +304,7 @@ MonoBehaviour:
     Spin: {x: 0, y: 0, z: 0}
     DelayTimer: 0
     PieceType: 2
-    ControlType: 0
+    ControlType: 2
     performTimer: 0
     InputRequired: 1
     ControllerButton: 9
@@ -325,11 +327,14 @@ MonoBehaviour:
     canBeSelected:
     - Shoot
     - ShootNode
-    selectedIndex: 1
-    selectedName: ShootNode
+    selectedIndex: 0
+    selectedName: Shoot
   targetPosition: {x: 0, y: 0, z: 0}
+  useAllianceTargets: 0
+  blueTargetPosition: {x: 0, y: 0, z: 0}
+  redTargetPosition: {x: 0, y: 0, z: 0}
   SetpointName: 
-  connectedTo: none
+  connectedTo: Shoot
   extraTargets: []
   interpolationTable:
   - distance: 2
@@ -340,6 +345,72 @@ MonoBehaviour:
     value: 450
   Distance: 3.6914508
   Output: 306.38168
+--- !u!114 &7255364811867063630
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 108385488900694145}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6a39b5aa0d074eadaffcae99211418b5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  targetType: 2
+  targetWhen: 1
+  targetOuttake:
+    canBeSelected:
+    - Shoot
+    selectedIndex: 0
+    selectedName: Shoot
+  targetPosition: {x: 0, y: 0, z: 0}
+  useAllianceTargets: 1
+  blueTargetPosition: {x: -8, y: 3, z: -2.54}
+  redTargetPosition: {x: 8, y: 3, z: -2.54}
+  SetpointName: PassLeft
+  connectedTo: Shoot
+  extraTargets: []
+  interpolationTable:
+  - distance: 1.75
+    value: 275
+  - distance: 4.7
+    value: 400
+  Distance: 0
+  Output: 0
+--- !u!114 &5644429242190701197
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 108385488900694145}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6a39b5aa0d074eadaffcae99211418b5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  targetType: 2
+  targetWhen: 1
+  targetOuttake:
+    canBeSelected:
+    - Shoot
+    selectedIndex: 0
+    selectedName: Shoot
+  targetPosition: {x: 0, y: 0, z: 0}
+  useAllianceTargets: 1
+  blueTargetPosition: {x: -8, y: 3, z: 2.54}
+  redTargetPosition: {x: 8, y: 3, z: 2.54}
+  SetpointName: PassRight
+  connectedTo: Shoot
+  extraTargets: []
+  interpolationTable:
+  - distance: 1.75
+    value: 275
+  - distance: 4.7
+    value: 400
+  Distance: 0
+  Output: 0
 --- !u!1 &109687756586845467
 GameObject:
   m_ObjectHideFlags: 0
@@ -1448,7 +1519,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 47bc878333e07bf458b435dc5a9f7d7e, type: 2}
+  - {fileID: 2100000, guid: 5f415393661ddad4f803697011a2ee82, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -4308,6 +4379,7 @@ MonoBehaviour:
   targetVelocity: 0
   targetModuleAngle: 0
   lateralFrictionMultiplier: 1
+  tractionCoefficient: 1.1
   _rb: {fileID: 0}
 --- !u!1 &849917672635729218
 GameObject:
@@ -12070,8 +12142,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2288069219988411769}
   serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -0.51405585, y: -0.07544056, z: 0.13609713}
+  m_LocalRotation: {x: -0, y: -0.00000038743013, z: -0, w: 1}
+  m_LocalPosition: {x: -0.51405615, y: -0.075440556, z: 0.13609667}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -13031,6 +13103,8 @@ GameObject:
   - component: {fileID: 615137461741909603}
   - component: {fileID: 8389602032551041424}
   - component: {fileID: 8119913614952525415}
+  - component: {fileID: 4242908292489780519}
+  - component: {fileID: 9123649448498286085}
   m_Layer: 0
   m_Name: Shoot3
   m_TagString: Untagged
@@ -13069,9 +13143,9 @@ MonoBehaviour:
   Preload: 0
   intakeSize: {x: 3, y: 3, z: 3}
   pieceName: 0
-  currentState: 3
+  currentState: 0
   Actions:
-  - Name: ShootNode
+  - Name: Shoot
     Type: 2
     Animate: 0
     Speed: 275
@@ -13082,7 +13156,7 @@ MonoBehaviour:
     Spin: {x: 0, y: 0, z: 0}
     DelayTimer: 0
     PieceType: 2
-    ControlType: 0
+    ControlType: 2
     performTimer: 0
     InputRequired: 1
     ControllerButton: 9
@@ -13105,11 +13179,14 @@ MonoBehaviour:
     canBeSelected:
     - Shoot
     - ShootNode
-    selectedIndex: 1
-    selectedName: ShootNode
+    selectedIndex: 0
+    selectedName: Shoot
   targetPosition: {x: 0, y: 0, z: 0}
+  useAllianceTargets: 0
+  blueTargetPosition: {x: 0, y: 0, z: 0}
+  redTargetPosition: {x: 0, y: 0, z: 0}
   SetpointName: 
-  connectedTo: none
+  connectedTo: Shoot
   extraTargets: []
   interpolationTable:
   - distance: 2
@@ -13120,6 +13197,72 @@ MonoBehaviour:
     value: 450
   Distance: 3.6914508
   Output: 306.38168
+--- !u!114 &4242908292489780519
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2480989852468691044}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6a39b5aa0d074eadaffcae99211418b5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  targetType: 2
+  targetWhen: 1
+  targetOuttake:
+    canBeSelected:
+    - Shoot
+    selectedIndex: 0
+    selectedName: Shoot
+  targetPosition: {x: 0, y: 0, z: 0}
+  useAllianceTargets: 1
+  blueTargetPosition: {x: -8, y: 3, z: -2.54}
+  redTargetPosition: {x: 8, y: 3, z: -2.54}
+  SetpointName: PassLeft
+  connectedTo: Shoot
+  extraTargets: []
+  interpolationTable:
+  - distance: 1.75
+    value: 275
+  - distance: 4.7
+    value: 400
+  Distance: 0
+  Output: 0
+--- !u!114 &9123649448498286085
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2480989852468691044}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6a39b5aa0d074eadaffcae99211418b5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  targetType: 2
+  targetWhen: 1
+  targetOuttake:
+    canBeSelected:
+    - Shoot
+    selectedIndex: 0
+    selectedName: Shoot
+  targetPosition: {x: 0, y: 0, z: 0}
+  useAllianceTargets: 1
+  blueTargetPosition: {x: -8, y: 3, z: 2.54}
+  redTargetPosition: {x: 8, y: 3, z: 2.54}
+  SetpointName: PassRight
+  connectedTo: Shoot
+  extraTargets: []
+  interpolationTable:
+  - distance: 1.75
+    value: 275
+  - distance: 4.7
+    value: 400
+  Distance: 0
+  Output: 0
 --- !u!1 &2490546966704599369
 GameObject:
   m_ObjectHideFlags: 0
@@ -15465,8 +15608,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2959210865276534884}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalRotation: {x: -0, y: -0.00000038743013, z: -0, w: 1}
+  m_LocalPosition: {x: -5.707848e-14, y: 0, z: -0.000000059604645}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -16307,7 +16450,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 47bc878333e07bf458b435dc5a9f7d7e, type: 2}
+  - {fileID: 2100000, guid: 5f415393661ddad4f803697011a2ee82, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -16458,6 +16601,8 @@ GameObject:
   - component: {fileID: 5603166709826300675}
   - component: {fileID: 7339059019870492045}
   - component: {fileID: 312824669775854913}
+  - component: {fileID: 265129398082415618}
+  - component: {fileID: 2268521986376257358}
   m_Layer: 0
   m_Name: Shoot4
   m_TagString: Untagged
@@ -16496,9 +16641,9 @@ MonoBehaviour:
   Preload: 0
   intakeSize: {x: 3, y: 3, z: 3}
   pieceName: 0
-  currentState: 3
+  currentState: 0
   Actions:
-  - Name: ShootNode
+  - Name: Shoot
     Type: 2
     Animate: 0
     Speed: 275
@@ -16509,7 +16654,7 @@ MonoBehaviour:
     Spin: {x: 0, y: 0, z: 0}
     DelayTimer: 0
     PieceType: 2
-    ControlType: 0
+    ControlType: 2
     performTimer: 0
     InputRequired: 1
     ControllerButton: 9
@@ -16532,11 +16677,14 @@ MonoBehaviour:
     canBeSelected:
     - Shoot
     - ShootNode
-    selectedIndex: 1
-    selectedName: ShootNode
+    selectedIndex: 0
+    selectedName: Shoot
   targetPosition: {x: 0, y: 0, z: 0}
+  useAllianceTargets: 0
+  blueTargetPosition: {x: 0, y: 0, z: 0}
+  redTargetPosition: {x: 0, y: 0, z: 0}
   SetpointName: 
-  connectedTo: none
+  connectedTo: Shoot
   extraTargets: []
   interpolationTable:
   - distance: 2
@@ -16547,6 +16695,72 @@ MonoBehaviour:
     value: 450
   Distance: 3.6914508
   Output: 306.38168
+--- !u!114 &265129398082415618
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3073843785485223651}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6a39b5aa0d074eadaffcae99211418b5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  targetType: 2
+  targetWhen: 1
+  targetOuttake:
+    canBeSelected:
+    - Shoot
+    selectedIndex: 0
+    selectedName: Shoot
+  targetPosition: {x: 0, y: 0, z: 0}
+  useAllianceTargets: 1
+  blueTargetPosition: {x: -8, y: 3, z: -2.54}
+  redTargetPosition: {x: 8, y: 3, z: -2.54}
+  SetpointName: PassLeft
+  connectedTo: Shoot
+  extraTargets: []
+  interpolationTable:
+  - distance: 1.75
+    value: 275
+  - distance: 4.7
+    value: 400
+  Distance: 0
+  Output: 0
+--- !u!114 &2268521986376257358
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3073843785485223651}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6a39b5aa0d074eadaffcae99211418b5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  targetType: 2
+  targetWhen: 1
+  targetOuttake:
+    canBeSelected:
+    - Shoot
+    selectedIndex: 0
+    selectedName: Shoot
+  targetPosition: {x: 0, y: 0, z: 0}
+  useAllianceTargets: 1
+  blueTargetPosition: {x: -8, y: 3, z: 2.54}
+  redTargetPosition: {x: 8, y: 3, z: 2.54}
+  SetpointName: PassRight
+  connectedTo: Shoot
+  extraTargets: []
+  interpolationTable:
+  - distance: 1.75
+    value: 275
+  - distance: 4.7
+    value: 400
+  Distance: 0
+  Output: 0
 --- !u!1 &3093093477776717842
 GameObject:
   m_ObjectHideFlags: 0
@@ -17498,8 +17712,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 3266894217881002629}
   serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: -0.281}
+  m_LocalRotation: {x: -0, y: -0.00000038743013, z: -0, w: 1}
+  m_LocalPosition: {x: 0.00000024672562, y: 0, z: -0.28100008}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -18194,8 +18408,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 3424010199675326723}
   serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -0.005118593, y: 0.26668578, z: -0.10839679}
+  m_LocalRotation: {x: -0, y: -0.00000038743013, z: -0, w: 1}
+  m_LocalPosition: {x: -0.0051184944, y: 0.26668578, z: -0.10839685}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -22975,7 +23189,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 47bc878333e07bf458b435dc5a9f7d7e, type: 2}
+  - {fileID: 2100000, guid: 5f415393661ddad4f803697011a2ee82, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -23724,7 +23938,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 47bc878333e07bf458b435dc5a9f7d7e, type: 2}
+  - {fileID: 2100000, guid: 5f415393661ddad4f803697011a2ee82, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -25838,6 +26052,8 @@ GameObject:
   - component: {fileID: 3909445577910507760}
   - component: {fileID: 3605218805928630020}
   - component: {fileID: 7232861731032082341}
+  - component: {fileID: 8221511849627437199}
+  - component: {fileID: 2681143229946660206}
   m_Layer: 0
   m_Name: Shoot2
   m_TagString: Untagged
@@ -25876,9 +26092,9 @@ MonoBehaviour:
   Preload: 0
   intakeSize: {x: 3, y: 3, z: 3}
   pieceName: 0
-  currentState: 3
+  currentState: 0
   Actions:
-  - Name: ShootNode
+  - Name: Shoot
     Type: 2
     Animate: 0
     Speed: 275
@@ -25889,7 +26105,7 @@ MonoBehaviour:
     Spin: {x: 0, y: 0, z: 0}
     DelayTimer: 0
     PieceType: 2
-    ControlType: 0
+    ControlType: 2
     performTimer: 0
     InputRequired: 1
     ControllerButton: 9
@@ -25912,11 +26128,14 @@ MonoBehaviour:
     canBeSelected:
     - Shoot
     - ShootNode
-    selectedIndex: 1
-    selectedName: ShootNode
+    selectedIndex: 0
+    selectedName: Shoot
   targetPosition: {x: 0, y: 0, z: 0}
+  useAllianceTargets: 0
+  blueTargetPosition: {x: 0, y: 0, z: 0}
+  redTargetPosition: {x: 0, y: 0, z: 0}
   SetpointName: 
-  connectedTo: none
+  connectedTo: Shoot
   extraTargets: []
   interpolationTable:
   - distance: 2
@@ -25927,6 +26146,72 @@ MonoBehaviour:
     value: 450
   Distance: 3.6914508
   Output: 306.38168
+--- !u!114 &8221511849627437199
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5060081775214074801}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6a39b5aa0d074eadaffcae99211418b5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  targetType: 2
+  targetWhen: 1
+  targetOuttake:
+    canBeSelected:
+    - Shoot
+    selectedIndex: 0
+    selectedName: Shoot
+  targetPosition: {x: 0, y: 0, z: 0}
+  useAllianceTargets: 1
+  blueTargetPosition: {x: -8, y: 3, z: -2.54}
+  redTargetPosition: {x: 8, y: 3, z: -2.54}
+  SetpointName: PassLeft
+  connectedTo: Shoot
+  extraTargets: []
+  interpolationTable:
+  - distance: 1.75
+    value: 275
+  - distance: 4.7
+    value: 400
+  Distance: 0
+  Output: 0
+--- !u!114 &2681143229946660206
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5060081775214074801}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6a39b5aa0d074eadaffcae99211418b5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  targetType: 2
+  targetWhen: 1
+  targetOuttake:
+    canBeSelected:
+    - Shoot
+    selectedIndex: 0
+    selectedName: Shoot
+  targetPosition: {x: 0, y: 0, z: 0}
+  useAllianceTargets: 1
+  blueTargetPosition: {x: -8, y: 3, z: 2.54}
+  redTargetPosition: {x: 8, y: 3, z: 2.54}
+  SetpointName: PassRight
+  connectedTo: Shoot
+  extraTargets: []
+  interpolationTable:
+  - distance: 1.75
+    value: 275
+  - distance: 4.7
+    value: 400
+  Distance: 0
+  Output: 0
 --- !u!1 &5066728500779913376
 GameObject:
   m_ObjectHideFlags: 0
@@ -28232,6 +28517,8 @@ GameObject:
   - component: {fileID: 2182882737658588913}
   - component: {fileID: 770005401045957113}
   - component: {fileID: 7185383627711834551}
+  - component: {fileID: -8922529303757950282}
+  - component: {fileID: -8687986123516573084}
   m_Layer: 0
   m_Name: BinaryBattalion
   m_TagString: Untagged
@@ -28272,7 +28559,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   units: 0
   frameSize: {x: 27, y: 25}
-  robotWeight: 60
+  robotWeight: 90
   gearRatio: 5.85
   moduleType: 0
   generateBumpers: 1
@@ -28311,7 +28598,7 @@ MonoBehaviour:
     d: 0.005
     max: 1
   requireInsideRegion: 1
-  positionReference: {fileID: 4182901614405659739}
+  bumperRoot: {fileID: 2552093175612692488}
   allowedRegions: 0000000001000000
   Distance: 0
   Output: 0
@@ -28349,7 +28636,7 @@ MonoBehaviour:
     d: 0.005
     max: 1
   requireInsideRegion: 0
-  positionReference: {fileID: 0}
+  bumperRoot: {fileID: 0}
   allowedRegions: 
   Distance: 0
   Output: 0
@@ -28387,12 +28674,43 @@ MonoBehaviour:
     d: 0.005
     max: 1
   requireInsideRegion: 0
-  positionReference: {fileID: 0}
+  bumperRoot: {fileID: 0}
   allowedRegions: 
   Distance: 0
   Output: 0
   CurrentAngle: 0
   TargetAngle: 0
+--- !u!114 &-8922529303757950282
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5608187783092387721}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0cde580fb7bc8074696700cb48d073fd, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  bumperRoot: {fileID: 2552093175612692488}
+  blueAimRegion: 0
+  redAimRegion: 1
+  penalizedPieces: 02000000
+--- !u!114 &-8687986123516573084
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5608187783092387721}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 616fae521da3a5f458801865231ddd5a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  teamNumber: 7028
+  displayNameOverride: BinaryBattalion
+  teamIcon: {fileID: 21300000, guid: 0d6eef12104293544968cdfb231e2ee4, type: 3}
 --- !u!1 &5642756454129369399
 GameObject:
   m_ObjectHideFlags: 0
@@ -28855,6 +29173,7 @@ MonoBehaviour:
   targetVelocity: 0
   targetModuleAngle: 0
   lateralFrictionMultiplier: 1
+  tractionCoefficient: 1.1
   _rb: {fileID: 0}
 --- !u!1 &5718237265767864401
 GameObject:
@@ -34012,6 +34331,37 @@ MeshRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_AdditionalVertexStreams: {fileID: 0}
+--- !u!1 &6653578817332735142
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 5224481533049922664}
+  m_Layer: 0
+  m_Name: Model
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &5224481533049922664
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6653578817332735142}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1650834511599694806}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &6665892144488681489
 GameObject:
   m_ObjectHideFlags: 0
@@ -35231,6 +35581,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1650834511599694806}
+  - component: {fileID: 8422320959067255259}
   m_Layer: 0
   m_Name: Shoot
   m_TagString: Untagged
@@ -35256,8 +35607,67 @@ Transform:
   - {fileID: 3909445577910507760}
   - {fileID: 615137461741909603}
   - {fileID: 5603166709826300675}
+  - {fileID: 5224481533049922664}
   m_Father: {fileID: 8731200234886846028}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &8422320959067255259
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6835682543080952410}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e82d393aa64423b4caa1c8a30e5b0f1f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  setPoints:
+  - setpointName: 
+    controlType: 2
+    sequenceType: 0
+    sequenceTo: 
+    delay: 0
+    persist: 0
+    point: 0
+    shouldScaleToUnits: 0
+    units: 0
+    controllerButton: 3
+    keyboardButton: 17
+  - setpointName: PassLeft
+    controlType: 2
+    sequenceType: 0
+    sequenceTo: 
+    delay: 0
+    persist: 0
+    point: 0
+    shouldScaleToUnits: 0
+    units: 0
+    controllerButton: 2
+    keyboardButton: 16
+  - setpointName: PassRight
+    controlType: 2
+    sequenceType: 0
+    sequenceTo: 
+    delay: 0
+    persist: 0
+    point: 0
+    shouldScaleToUnits: 0
+    units: 0
+    controllerButton: 1
+    keyboardButton: 20
+  armModel: 3
+  units: 0
+  length: 2
+  width: 0
+  armWeight: 1
+  useNoWrapPoint: 0
+  noWrapAngle: 180
+  useAdvancedSettings: 0
+  max: 20
+  kP: 0.5
+  kI: 0
+  kD: 0.0005
 --- !u!1 &6840540303142084594
 GameObject:
   m_ObjectHideFlags: 0
@@ -38782,6 +39192,7 @@ MonoBehaviour:
   targetVelocity: 0
   targetModuleAngle: 0
   lateralFrictionMultiplier: 1
+  tractionCoefficient: 1.1
   _rb: {fileID: 0}
 --- !u!1 &7576111472279369289
 GameObject:
@@ -40402,6 +40813,7 @@ MonoBehaviour:
   targetVelocity: 0
   targetModuleAngle: 0
   lateralFrictionMultiplier: 1
+  tractionCoefficient: 1.1
   _rb: {fileID: 0}
 --- !u!1 &7897233081586318930
 GameObject:
@@ -44342,6 +44754,8 @@ GameObject:
   - component: {fileID: 2404828908407934946}
   - component: {fileID: 8798564258773248973}
   - component: {fileID: 2576937593028234598}
+  - component: {fileID: 4748844648361042605}
+  - component: {fileID: 6447572429489678714}
   m_Layer: 0
   m_Name: Shoot1
   m_TagString: Untagged
@@ -44380,9 +44794,9 @@ MonoBehaviour:
   Preload: 0
   intakeSize: {x: 3, y: 3, z: 3}
   pieceName: 0
-  currentState: 3
+  currentState: 0
   Actions:
-  - Name: ShootNode
+  - Name: Shoot
     Type: 2
     Animate: 0
     Speed: 275
@@ -44393,7 +44807,7 @@ MonoBehaviour:
     Spin: {x: 0, y: 0, z: 0}
     DelayTimer: 0
     PieceType: 2
-    ControlType: 0
+    ControlType: 2
     performTimer: 0
     InputRequired: 1
     ControllerButton: 9
@@ -44416,11 +44830,14 @@ MonoBehaviour:
     canBeSelected:
     - Shoot
     - ShootNode
-    selectedIndex: 1
-    selectedName: ShootNode
+    selectedIndex: 0
+    selectedName: Shoot
   targetPosition: {x: 0, y: 0, z: 0}
+  useAllianceTargets: 0
+  blueTargetPosition: {x: 0, y: 0, z: 0}
+  redTargetPosition: {x: 0, y: 0, z: 0}
   SetpointName: 
-  connectedTo: none
+  connectedTo: Shoot
   extraTargets: []
   interpolationTable:
   - distance: 2
@@ -44431,6 +44848,72 @@ MonoBehaviour:
     value: 450
   Distance: 3.6914508
   Output: 306.38168
+--- !u!114 &4748844648361042605
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8652464147428540967}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6a39b5aa0d074eadaffcae99211418b5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  targetType: 2
+  targetWhen: 1
+  targetOuttake:
+    canBeSelected:
+    - Shoot
+    selectedIndex: 0
+    selectedName: Shoot
+  targetPosition: {x: 0, y: 0, z: 0}
+  useAllianceTargets: 1
+  blueTargetPosition: {x: -8, y: 3, z: -2.54}
+  redTargetPosition: {x: 8, y: 3, z: -2.54}
+  SetpointName: PassLeft
+  connectedTo: Shoot
+  extraTargets: []
+  interpolationTable:
+  - distance: 1.75
+    value: 275
+  - distance: 4.7
+    value: 400
+  Distance: 0
+  Output: 0
+--- !u!114 &6447572429489678714
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8652464147428540967}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6a39b5aa0d074eadaffcae99211418b5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  targetType: 2
+  targetWhen: 1
+  targetOuttake:
+    canBeSelected:
+    - Shoot
+    selectedIndex: 0
+    selectedName: Shoot
+  targetPosition: {x: 0, y: 0, z: 0}
+  useAllianceTargets: 1
+  blueTargetPosition: {x: -8, y: 3, z: 2.54}
+  redTargetPosition: {x: 8, y: 3, z: 2.54}
+  SetpointName: PassRight
+  connectedTo: Shoot
+  extraTargets: []
+  interpolationTable:
+  - distance: 1.75
+    value: 275
+  - distance: 4.7
+    value: 400
+  Distance: 0
+  Output: 0
 --- !u!1 &8679820132887306427
 GameObject:
   m_ObjectHideFlags: 0
@@ -46617,7 +47100,7 @@ Transform:
   m_GameObject: {fileID: 9042638806702228464}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0.016, z: 0}
+  m_LocalPosition: {x: 0, y: 0.028, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:

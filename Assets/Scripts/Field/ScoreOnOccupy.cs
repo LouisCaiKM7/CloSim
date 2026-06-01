@@ -1,7 +1,5 @@
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using Util;
 
 public class ScoreOnOccupy : FieldScorer
 {
@@ -32,12 +30,10 @@ public class ScoreOnOccupy : FieldScorer
 
     private void DoubleScored(List<GamePiece> a, List<GamePiece> b)
     {
-        for (int i = 0; i < a.Count; i++)
+        for (int i = a.Count - 1; i >= 0; i--)
         {
             if (b.Contains(a[i]))
-            {
-                a.Remove(a[i]);
-            }
+                a.RemoveAt(i);
         }
     }
 }

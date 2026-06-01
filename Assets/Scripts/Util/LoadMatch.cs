@@ -7,6 +7,7 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.InputSystem.Utilities;
 using Util;
+using UnityEngine.InputSystem.Users;
 
 [Serializable]
 public class TeamSpawnLocation
@@ -16,84 +17,122 @@ public class TeamSpawnLocation
 }
 
 [Serializable]
+public class PlayerMatchSettings
+{
+    public int robotIndex;
+    public int blueSpawnIndex;
+    public int redSpawnIndex;
+    public bool useVanityBumpers = true;
+    public StationNum driverStation = StationNum.One;
+    public Cameras view = Cameras.ThirdPerson;
+
+    public PlayerMatchSettings Clone()
+    {
+        return new PlayerMatchSettings
+        {
+            robotIndex = robotIndex,
+            blueSpawnIndex = blueSpawnIndex,
+            redSpawnIndex = redSpawnIndex,
+            useVanityBumpers = useVanityBumpers,
+            driverStation = driverStation,
+            view = view
+        };
+    }
+}
+
+[Serializable]
 public class MatchSettings
 {
-    public int robotIndex1;
-    public int robotIndex2;
+    public List<PlayerMatchSettings> players = new()
+    {
+        new PlayerMatchSettings { driverStation = StationNum.One },
+        new PlayerMatchSettings { driverStation = StationNum.Three },
+        new PlayerMatchSettings { driverStation = StationNum.One },
+        new PlayerMatchSettings { driverStation = StationNum.Three }
+    };
 
-    public int blueSpawnIndex1;
-    public int blueSpawnIndex2;
-
-    public int redSpawnIndex1;
-    public int redSpawnIndex2;
-
-    public Cameras view = Cameras.ThirdPerson;
     public Util.PlayMode playMode = Util.PlayMode.OneVsZero;
     public bool useBlueAlliance = true;
-
     public TrackingType trackingType = TrackingType.TrackRobot;
 
     public MatchSettings Clone()
     {
-        return new MatchSettings
+        var clone = new MatchSettings
         {
-            robotIndex1 = robotIndex1,
-            robotIndex2 = robotIndex2,
-            blueSpawnIndex1 = blueSpawnIndex1,
-            blueSpawnIndex2 = blueSpawnIndex2,
-            redSpawnIndex1 = redSpawnIndex1,
-            redSpawnIndex2 = redSpawnIndex2,
-            view = view,
             playMode = playMode,
             useBlueAlliance = useBlueAlliance,
-            trackingType = trackingType
+            trackingType = trackingType,
+            players = new List<PlayerMatchSettings>()
         };
+
+        for (int i = 0; i < players.Count; i++)
+            clone.players.Add(players[i].Clone());
+
+        while (clone.players.Count < 4)
+            clone.players.Add(new PlayerMatchSettings());
+
+        return clone;
+    }
+
+    public PlayerMatchSettings GetPlayer(int index)
+    {
+        while (players.Count < 4)
+            players.Add(new PlayerMatchSettings());
+
+        return players[Mathf.Clamp(index, 0, 3)];
     }
 }
 
 public class LoadMatch : MonoBehaviour
 {
-    [Header("Field")]
-    [SerializeField] private GameObject[] fieldPrefab;
+    [Header("Field")] [SerializeField] private GameObject[] fieldPrefab;
 
-    [Header("Spawn Points")]
-    [SerializeField] private List<TeamSpawnLocation> blueSideSpawns = new();
+    [Header("Spawn Points")] [SerializeField]
+    private List<TeamSpawnLocation> blueSideSpawns = new();
+
     [SerializeField] private List<TeamSpawnLocation> redSideSpawns = new();
 
-    [Header("Default Robot Selection")]
-    [SerializeField] private InspectorDropdown robotSelected1;
-    [SerializeField] private InspectorDropdown robotSelected2;
+    [Header("Spawn Rotation Overrides")] [SerializeField]
+    private List<string> robotsToFlipSpawn180 = new();
 
-    [Header("Default Match Settings")]
-    [SerializeField] private Cameras defaultView = Cameras.ThirdPerson;
+    [Header("Default Match Settings")] [SerializeField]
+    private Cameras defaultView = Cameras.ThirdPerson;
+
     [SerializeField] private Util.PlayMode defaultPlayMode = Util.PlayMode.OneVsZero;
     [SerializeField] private bool defaultUseBlueAlliance = true;
     [SerializeField] private TrackingType defaultTrackingType = TrackingType.TrackRobot;
 
-    [Header("Driver Station Cameras")]
-    [SerializeField] private StationNum player1DriverStation = 0;
-    
-    [SerializeField] private StationNum player2DriverStation = (StationNum) 2;
+    [Header("Driver Station Cameras")] [SerializeField]
+    private StationNum player1DriverStation = 0;
 
-    [Header("Input")]
-    [SerializeField] private string robotActionMap = "Robot";
+    [SerializeField] private StationNum player2DriverStation = (StationNum)2;
+
+    [Header("Field Camera")] [SerializeField]
+    private string fieldCameraAnchorName = "FieldCameraAnchor";
+
+    [Header("Input")] [SerializeField] private string robotActionMap = "Robot";
     [SerializeField] private string gamepadControlScheme = "Gamepad";
     [SerializeField] private string keyboardControlScheme = "Keyboard";
     [SerializeField] private InputActionAsset builderActions;
 
-    private int _selectedRobotIndex1;
-    private int _selectedRobotIndex2;
-    private string _selectedName1;
-    private string _selectedName2;
+    [Header("Runtime Camera Toggle")] [SerializeField]
+    private bool allowRightStickCameraToggle = true;
+
+    private bool _runtimeCameraViewsInitialized;
 
     private readonly List<GameObject> _availableRobots = new List<GameObject>();
+    private readonly HashSet<PlayerInput> _runtimeInputAssetsCloned = new();
 
     private GameObject _fieldHolder;
-    private GameObject _activeRobot1;
-    private GameObject _activeRobot2;
+    private readonly GameObject[] _activeRobots = new GameObject[4];
+    private readonly GameObject[] _spawnedCameras = new GameObject[4];
+    private readonly Cameras[] _runtimeViews = new Cameras[4];
+
+    private readonly bool[] _rightStickWasPressed = new bool[4];
+    private readonly bool[] _keyboardEWasPressed = new bool[4];
+
+    private GameObject _fieldCamera;
     private GameObject _activeCam;
-    private GameObject _spawnedCamera1;
-    private GameObject _spawnedCamera2;
 
     private FMS _fms;
 
@@ -104,19 +143,16 @@ public class LoadMatch : MonoBehaviour
 
     private MatchSettings _settings = new MatchSettings();
 
-    private enum CameraSide
-    {
-        Full,
-        Left,
-        Right
-    }
+    private HumanPlayerOutpost[] _humanPlayerOutposts = System.Array.Empty<HumanPlayerOutpost>();
+    private HumanPlayerType _selectedHumanPlayerType = HumanPlayerType.Bucket;
+
+    private Coroutine _resetCoroutine;
 
     private void OnEnable()
     {
         if (!Application.isPlaying) return;
 
         CheckRobots();
-        RefreshInspectorDropdownData();
     }
 
     private void LateUpdate()
@@ -125,8 +161,6 @@ public class LoadMatch : MonoBehaviour
         if (!Application.isPlaying) return;
 
         CheckRobots();
-        RefreshInspectorDropdownData();
-        SyncInspectorDropdownSelection();
 #endif
     }
 
@@ -135,31 +169,42 @@ public class LoadMatch : MonoBehaviour
         if (!Application.isPlaying)
             return;
 
-        _selectedName1 = robotSelected1 != null ? robotSelected1.selectedName : string.Empty;
-        _selectedName2 = robotSelected2 != null ? robotSelected2.selectedName : string.Empty;
-
-        _selectedRobotIndex1 = 3;
-        _selectedRobotIndex2 = 3;
-
         CheckRobots();
+
+        int defaultRobotIndex = _availableRobots.Count > 0
+            ? Mathf.Clamp(4, 0, _availableRobots.Count - 1)
+            : 0;
 
         _settings = new MatchSettings
         {
-            robotIndex1 = _selectedRobotIndex1,
-            robotIndex2 = _selectedRobotIndex2,
-            blueSpawnIndex1 = 0,
-            blueSpawnIndex2 = Mathf.Min(1, Mathf.Max(0, blueSideSpawns.Count - 1)),
-            redSpawnIndex1 = 0,
-            redSpawnIndex2 = Mathf.Min(1, Mathf.Max(0, redSideSpawns.Count - 1)),
-            view = defaultView,
             playMode = defaultPlayMode,
             useBlueAlliance = defaultUseBlueAlliance,
             trackingType = defaultTrackingType
         };
 
+        for (int i = 0; i < 4; i++)
+        {
+            PlayerMatchSettings player = _settings.GetPlayer(i);
+
+            player.robotIndex = defaultRobotIndex;
+            player.blueSpawnIndex = ClampSpawnIndex(i, blueSideSpawns.Count);
+            player.redSpawnIndex = ClampSpawnIndex(i, redSideSpawns.Count);
+            player.useVanityBumpers = true;
+            player.view = defaultView;
+
+            player.driverStation = i switch
+            {
+                0 => player1DriverStation,
+                1 => player2DriverStation,
+                2 => StationNum.One,
+                3 => StationNum.Three,
+                _ => StationNum.One
+            };
+        }
+
         SanitizeSettings();
         SanitizeSpawnSettings();
-        SyncSelectionNamesFromSettings();
+        SetRuntimeCameraViewsFromSettings();
 
         ResetField();
     }
@@ -169,104 +214,91 @@ public class LoadMatch : MonoBehaviour
         if (!Application.isPlaying)
             return;
 
-        if (robotSelected1 != null)
-        {
-            _selectedName1 = robotSelected1.selectedName;
-            _selectedRobotIndex1 = robotSelected1.selectedIndex;
-        }
-
-        if (robotSelected2 != null)
-        {
-            _selectedName2 = robotSelected2.selectedName;
-            _selectedRobotIndex2 = robotSelected2.selectedIndex;
-        }
-    }
-
-    private void RefreshInspectorDropdownData()
-    {
-        var robotNames = _availableRobots.Select(x => x.name).ToList();
-
-        if (robotSelected1 != null)
-            robotSelected1.canBeSelected = robotNames;
-
-        if (robotSelected2 != null)
-            robotSelected2.canBeSelected = robotNames;
-    }
-
-    private void SyncInspectorDropdownSelection()
-    {
-        if (robotSelected1 != null)
-        {
-            robotSelected1.selectedIndex = _settings.robotIndex1;
-            robotSelected1.selectedName = _selectedName1;
-        }
-
-        if (robotSelected2 != null)
-        {
-            robotSelected2.selectedIndex = _settings.robotIndex2;
-            robotSelected2.selectedName = _selectedName2;
-        }
-    }
-
-    private void SyncSelectionNamesFromSettings()
-    {
-        _selectedRobotIndex1 = _settings.robotIndex1;
-        _selectedRobotIndex2 = _settings.robotIndex2;
-
-        _selectedName1 = _availableRobots.Count > _selectedRobotIndex1
-            ? _availableRobots[_selectedRobotIndex1].name
-            : string.Empty;
-
-        _selectedName2 = _availableRobots.Count > _selectedRobotIndex2
-            ? _availableRobots[_selectedRobotIndex2].name
-            : string.Empty;
+        HandleRuntimeCameraToggle();
     }
 
     private void SanitizeSettings()
     {
-        if (_availableRobots.Count == 0)
-        {
-            _settings.robotIndex1 = 0;
-            _settings.robotIndex2 = 0;
-            return;
-        }
+        int robotCount = _availableRobots.Count;
 
-        _settings.robotIndex1 = Mathf.Clamp(_settings.robotIndex1, 0, _availableRobots.Count - 1);
-        _settings.robotIndex2 = Mathf.Clamp(_settings.robotIndex2, 0, _availableRobots.Count - 1);
-
-        if (IsRedAllianceDriverStationForbidden())
+        for (int i = 0; i < 4; i++)
         {
-            Debug.LogWarning("1v0 and 2v0 cannot use Red alliance with Driver Station camera. Forcing Blue alliance.");
-            _settings.useBlueAlliance = true;
+            PlayerMatchSettings player = _settings.GetPlayer(i);
+
+            player.robotIndex = robotCount > 0
+                ? Mathf.Clamp(player.robotIndex, 0, robotCount - 1)
+                : 0;
+
+            player.driverStation = ClampDriverStation(player.driverStation);
+
+            if (player.view == Cameras.DriverStation &&
+                !IsPlayerBlue(i) &&
+                (_settings.playMode == Util.PlayMode.OneVsZero ||
+                 _settings.playMode == Util.PlayMode.TwoVsZero ||
+                 _settings.playMode == Util.PlayMode.ThreeVsZero))
+            {
+                Debug.LogWarning(
+                    "Driver Station camera is only valid from the blue-side station in same-alliance modes. Forcing Blue alliance.");
+                _settings.useBlueAlliance = true;
+            }
         }
     }
 
     private void SanitizeSpawnSettings()
     {
-        _settings.blueSpawnIndex1 = ClampSpawnIndex(_settings.blueSpawnIndex1, blueSideSpawns.Count);
-        _settings.blueSpawnIndex2 = ClampSpawnIndex(_settings.blueSpawnIndex2, blueSideSpawns.Count);
-        _settings.redSpawnIndex1 = ClampSpawnIndex(_settings.redSpawnIndex1, redSideSpawns.Count);
-        _settings.redSpawnIndex2 = ClampSpawnIndex(_settings.redSpawnIndex2, redSideSpawns.Count);
-
-        EnforceUniqueSpawnSelectionForSide(ref _settings.blueSpawnIndex1, ref _settings.blueSpawnIndex2, blueSideSpawns.Count);
-        EnforceUniqueSpawnSelectionForSide(ref _settings.redSpawnIndex1, ref _settings.redSpawnIndex2, redSideSpawns.Count);
-    }
-    
-    private void EnforceUniqueSpawnSelectionForSide(ref int firstIndex, ref int secondIndex, int count)
-    {
-        if (count <= 1)
-            return;
-
-        if (firstIndex != secondIndex)
-            return;
-
-        for (int i = 0; i < count; i++)
+        for (int i = 0; i < 4; i++)
         {
-            if (i != firstIndex)
+            PlayerMatchSettings player = _settings.GetPlayer(i);
+
+            player.blueSpawnIndex = ClampSpawnIndex(player.blueSpawnIndex, blueSideSpawns.Count);
+            player.redSpawnIndex = ClampSpawnIndex(player.redSpawnIndex, redSideSpawns.Count);
+        }
+
+        EnforceUniqueSpawnSelectionsForAlliance(true);
+        EnforceUniqueSpawnSelectionsForAlliance(false);
+    }
+
+    private void EnforceUniqueSpawnSelectionsForAlliance(bool blueAlliance)
+    {
+        int playerCount = GetPlayerCount();
+        int spawnCount = blueAlliance ? blueSideSpawns.Count : redSideSpawns.Count;
+
+        if (spawnCount <= 1)
+            return;
+
+        HashSet<int> used = new();
+
+        for (int i = 0; i < playerCount; i++)
+        {
+            if (IsPlayerBlue(i) != blueAlliance)
+                continue;
+
+            PlayerMatchSettings player = _settings.GetPlayer(i);
+            int currentIndex = blueAlliance ? player.blueSpawnIndex : player.redSpawnIndex;
+
+            if (!used.Contains(currentIndex))
             {
-                secondIndex = i;
-                return;
+                used.Add(currentIndex);
+                continue;
             }
+
+            int replacement = currentIndex;
+
+            for (int j = 0; j < spawnCount; j++)
+            {
+                if (!used.Contains(j))
+                {
+                    replacement = j;
+                    break;
+                }
+            }
+
+            if (blueAlliance)
+                player.blueSpawnIndex = replacement;
+            else
+                player.redSpawnIndex = replacement;
+
+            used.Add(replacement);
         }
     }
 
@@ -276,9 +308,49 @@ public class LoadMatch : MonoBehaviour
         return Mathf.Clamp(value, 0, count - 1);
     }
 
+    private StationNum ClampDriverStation(StationNum station)
+    {
+        int value = Mathf.Clamp((int)station, (int)StationNum.One, (int)StationNum.Three);
+        return (StationNum)value;
+    }
+
     public MatchSettings GetSettingsCopy()
     {
         return _settings.Clone();
+    }
+
+    private int GetPlayerCount()
+    {
+        return _settings.playMode switch
+        {
+            Util.PlayMode.OneVsZero => 1,
+            Util.PlayMode.TwoVsZero => 2,
+            Util.PlayMode.OneVsOne => 2,
+            Util.PlayMode.ThreeVsZero => 3,
+            Util.PlayMode.TwoVsTwo => 4,
+            _ => 1
+        };
+    }
+
+    private bool IsPlayerBlue(int playerIndex)
+    {
+        return _settings.playMode switch
+        {
+            Util.PlayMode.OneVsZero => _settings.useBlueAlliance,
+            Util.PlayMode.TwoVsZero => _settings.useBlueAlliance,
+            Util.PlayMode.ThreeVsZero => _settings.useBlueAlliance,
+
+            Util.PlayMode.OneVsOne => playerIndex == 0,
+            Util.PlayMode.TwoVsTwo => playerIndex < 2,
+
+            _ => true
+        };
+    }
+
+    private bool UsesFourWaySplit()
+    {
+        return _settings.playMode == Util.PlayMode.ThreeVsZero ||
+               _settings.playMode == Util.PlayMode.TwoVsTwo;
     }
 
     public void ApplySettings(MatchSettings newSettings)
@@ -287,11 +359,13 @@ public class LoadMatch : MonoBehaviour
             return;
 
         _settings = newSettings.Clone();
+
         CheckRobots();
         SanitizeSettings();
         SanitizeSpawnSettings();
-        SyncSelectionNamesFromSettings();
-        SyncInspectorDropdownSelection();
+        SetRuntimeCameraViewsFromSettings();
+
+        ApplyHumanPlayerObjects();
     }
 
     public List<string> GetAvailableRobotNames()
@@ -351,36 +425,9 @@ public class LoadMatch : MonoBehaviour
             .ToList();
     }
 
-    private Transform GetBlueSpawnPoint(int slot)
-    {
-        if (blueSideSpawns.Count == 0)
-            return null;
-
-        SanitizeSpawnSettings();
-
-        int index = slot == 0 ? _settings.blueSpawnIndex1 : _settings.blueSpawnIndex2;
-        return blueSideSpawns[index].point;
-    }
-
-    private Transform GetRedSpawnPoint(int slot)
-    {
-        if (redSideSpawns.Count == 0)
-            return null;
-
-        SanitizeSpawnSettings();
-
-        int index = slot == 0 ? _settings.redSpawnIndex1 : _settings.redSpawnIndex2;
-        return redSideSpawns[index].point;
-    }
-
     private StationNum GetStationNumberForRobot(int robotSlot)
     {
-        return robotSlot switch
-        {
-            0 => player1DriverStation,
-            1 => player2DriverStation,
-            _ => player1DriverStation
-        };
+        return _settings.GetPlayer(robotSlot).driverStation;
     }
 
     private void LoadField()
@@ -413,12 +460,33 @@ public class LoadMatch : MonoBehaviour
 
     public Cameras GetViewType()
     {
-        return _settings.view;
+        return _settings.GetPlayer(0).view;
+    }
+
+    public Cameras GetViewType(int playerIndex)
+    {
+        return _settings.GetPlayer(playerIndex).view;
     }
 
     public Util.PlayMode GetPlayMode()
     {
         return _settings.playMode;
+    }
+
+    private void SetRuntimeCameraViewsFromSettings()
+    {
+        for (int i = 0; i < 4; i++)
+            _runtimeViews[i] = _settings.GetPlayer(i).view;
+
+        _runtimeCameraViewsInitialized = true;
+    }
+
+    private void InitializeRuntimeCameraViewsIfNeeded()
+    {
+        if (_runtimeCameraViewsInitialized)
+            return;
+
+        SetRuntimeCameraViewsFromSettings();
     }
 
     public bool UsesBlueAlliance()
@@ -431,6 +499,14 @@ public class LoadMatch : MonoBehaviour
         if (_isResettingField)
             return;
 
+        if (_resetCoroutine != null)
+            StopCoroutine(_resetCoroutine);
+
+        _resetCoroutine = StartCoroutine(ResetFieldRoutine());
+    }
+
+    private IEnumerator ResetFieldRoutine()
+    {
         _isResettingField = true;
         _setupVersion++;
         _pairedVersion = -1;
@@ -441,33 +517,57 @@ public class LoadMatch : MonoBehaviour
             _inputSetupCoroutine = null;
         }
 
+        if (_fieldHolder != null)
+        {
+            foreach (var spawner in _fieldHolder.GetComponentsInChildren<SpawnGamePiece>(true))
+                spawner.enabled = false;
+
+            foreach (var scorer in _fieldHolder.GetComponentsInChildren<FieldScorer>(true))
+                scorer.enabled = false;
+
+            foreach (var fms in _fieldHolder.GetComponentsInChildren<FMS>(true))
+                fms.enabled = false;
+        }
+
+        SpawnGamePiece.ClearTargets();
+        Utils.resetParentCache();
+
         CheckRobots();
         SanitizeSettings();
         SanitizeSpawnSettings();
-        SyncSelectionNamesFromSettings();
+
+        InitializeRuntimeCameraViewsIfNeeded();
 
         DestroySpawnedCameraOnly();
         DeleteRobots();
         DestroyField();
+
+        yield return null;
+
         LoadField();
+
+        // Must happen AFTER LoadField(), not before DestroyField().
+        CacheHumanPlayerOutposts();
+
         SpawnRobots();
         AddSplitScreenCameras();
+
+        // Must happen AFTER CacheHumanPlayerOutposts().
+        ApplyHumanPlayerObjects();
+
         Utils.resetParentCache();
 
         _inputSetupCoroutine = StartCoroutine(SetupInputsWhenReady(_setupVersion));
 
+        FieldScorer.ResetFuelCounters();
+
         if (_fms)
-        {
             _fms.Restart();
-        }
 
-        StartCoroutine(ClearResetLockNextFrame());
-    }
-
-    private IEnumerator ClearResetLockNextFrame()
-    {
         yield return null;
+
         _isResettingField = false;
+        _resetCoroutine = null;
     }
 
     private IEnumerator SetupInputsWhenReady(int version)
@@ -480,16 +580,23 @@ public class LoadMatch : MonoBehaviour
             if (version != _setupVersion)
                 yield break;
 
-            if (_activeRobot1 != null)
-                EnsurePlayerInputConfigured(_activeRobot1);
+            bool allReady = true;
+            int playerCount = GetPlayerCount();
 
-            if (_activeRobot2 != null)
-                EnsurePlayerInputConfigured(_activeRobot2);
+            for (int i = 0; i < playerCount; i++)
+            {
+                GameObject robot = _activeRobots[i];
 
-            bool p1Ready = _activeRobot1 == null || HasReadyPlayerInput(_activeRobot1);
-            bool p2Ready = _activeRobot2 == null || HasReadyPlayerInput(_activeRobot2);
+                if (robot == null)
+                    continue;
 
-            if (p1Ready && p2Ready)
+                EnsurePlayerInputConfigured(robot);
+
+                if (!HasReadyPlayerInput(robot))
+                    allReady = false;
+            }
+
+            if (allReady)
                 break;
 
             yield return null;
@@ -518,8 +625,7 @@ public class LoadMatch : MonoBehaviour
 
     private void SpawnRobots()
     {
-        _activeRobot1 = null;
-        _activeRobot2 = null;
+        Array.Clear(_activeRobots, 0, _activeRobots.Length);
 
         if (_availableRobots.Count == 0)
         {
@@ -533,90 +639,111 @@ public class LoadMatch : MonoBehaviour
             return;
         }
 
-        Transform p1Spawn = GetSpawnPointForRobot(0);
-        if (p1Spawn == null)
+        int playerCount = GetPlayerCount();
+
+        for (int i = 0; i < playerCount; i++)
         {
-            Debug.LogError("Player 1 spawn point is not assigned.");
-            return;
+            PlayerMatchSettings player = _settings.GetPlayer(i);
+
+            Transform spawn = GetSpawnPointForRobot(i);
+            if (spawn == null)
+            {
+                Debug.LogError($"Player {i + 1} spawn point is not assigned.");
+                continue;
+            }
+
+            GameObject robotPrefab = GetRobotPrefabBySelection(player.robotIndex);
+            if (robotPrefab == null)
+            {
+                Debug.LogError($"Selected robot prefab for Player {i + 1} is invalid.");
+                continue;
+            }
+
+            Quaternion rotation = GetSpawnRotationForRobot(spawn, robotPrefab);
+
+            GameObject robot = Instantiate(
+                robotPrefab,
+                spawn.position,
+                rotation,
+                _fieldHolder.transform
+            );
+
+            robot.name = $"{robotPrefab.name}_P{i + 1}";
+            _activeRobots[i] = robot;
+
+            EnsurePlayerInputConfigured(robot);
+            ConfigureRobotDriveMode(robot, i);
+
+            StartCoroutine(ConfigureRobotBumpersWhenReady(
+                robot,
+                robotPrefab,
+                i,
+                player.useVanityBumpers
+            ));
+
+            ConfigureOutpostReleaseOwnership(robot, i);
         }
-
-        GameObject robotPrefab1 = GetRobotPrefabBySelection(_settings.robotIndex1);
-        if (robotPrefab1 == null)
-        {
-            Debug.LogError("Selected robot 1 prefab is invalid.");
-            return;
-        }
-
-        _activeRobot1 = Instantiate(robotPrefab1, p1Spawn.position, p1Spawn.rotation, _fieldHolder.transform);
-        _activeRobot1.name = robotPrefab1.name + "_P1";
-        EnsurePlayerInputConfigured(_activeRobot1);
-        ConfigureRobotDriveMode(_activeRobot1, false);
-        ConfigureOutpostReleaseOwnership(_activeRobot1, false);
-
-        bool spawnSecondRobot =
-            _settings.playMode == Util.PlayMode.TwoVsZero ||
-            _settings.playMode == Util.PlayMode.OneVsOne;
-
-        if (!spawnSecondRobot)
-            return;
-
-        Transform p2Spawn = GetSpawnPointForRobot(1);
-        if (p2Spawn == null)
-        {
-            Debug.LogError($"Player 2 spawn point is not assigned for play mode {_settings.playMode}.");
-            return;
-        }
-
-        GameObject robotPrefab2 = GetRobotPrefabBySelection(_settings.robotIndex2);
-        if (robotPrefab2 == null)
-        {
-            Debug.LogError("Selected robot 2 prefab is invalid.");
-            return;
-        }
-
-        _activeRobot2 = Instantiate(robotPrefab2, p2Spawn.position, p2Spawn.rotation, _fieldHolder.transform);
-        _activeRobot2.name = robotPrefab2.name + "_P2";
-        EnsurePlayerInputConfigured(_activeRobot2);
-        ConfigureRobotDriveMode(_activeRobot2, true);
-        ConfigureOutpostReleaseOwnership(_activeRobot2, true);
     }
 
-    private Transform GetSpawnPointForRobot(int robotSlot)
+    private Transform GetSpawnPointForRobot(int playerIndex)
     {
-        return _settings.playMode switch
-        {
-            Util.PlayMode.OneVsZero => _settings.useBlueAlliance
-                ? GetBlueSpawnPoint(0)
-                : GetRedSpawnPoint(0),
+        PlayerMatchSettings player = _settings.GetPlayer(playerIndex);
 
-            Util.PlayMode.TwoVsZero => _settings.useBlueAlliance
-                ? GetBlueSpawnPoint(robotSlot)
-                : GetRedSpawnPoint(robotSlot),
+        bool blue = IsPlayerBlue(playerIndex);
+        int index = blue ? player.blueSpawnIndex : player.redSpawnIndex;
 
-            Util.PlayMode.OneVsOne => robotSlot == 0
-                ? GetBlueSpawnPoint(0)
-                : GetRedSpawnPoint(0),
+        List<TeamSpawnLocation> spawns = blue ? blueSideSpawns : redSideSpawns;
 
-            _ => null
-        };
+        if (spawns == null || spawns.Count == 0)
+            return null;
+
+        index = Mathf.Clamp(index, 0, spawns.Count - 1);
+        return spawns[index].point;
     }
-    
+
+    private bool ShouldFlipSpawnRotation(GameObject robotPrefab)
+    {
+        if (robotPrefab == null)
+            return false;
+
+        for (int i = 0; i < robotsToFlipSpawn180.Count; i++)
+        {
+            if (string.Equals(
+                    robotsToFlipSpawn180[i]?.Trim(),
+                    robotPrefab.name,
+                    StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private Quaternion GetSpawnRotationForRobot(Transform spawnPoint, GameObject robotPrefab)
+    {
+        if (spawnPoint == null)
+            return Quaternion.identity;
+
+        Quaternion rotation = spawnPoint.rotation;
+
+        if (ShouldFlipSpawnRotation(robotPrefab))
+            rotation *= Quaternion.Euler(0f, 180f, 0f);
+
+        return rotation;
+    }
+
     public int GetHumanPlayerOwnerSlotForAlliance(bool blueAlliance)
     {
-        switch (_settings.playMode)
+        int playerCount = GetPlayerCount();
+
+        for (int i = 0; i < playerCount; i++)
         {
-            case Util.PlayMode.OneVsZero:
-                return 0;
-
-            case Util.PlayMode.TwoVsZero:
-                return 0;
-
-            case Util.PlayMode.OneVsOne:
-                return blueAlliance ? 0 : 1;
-
-            default:
-                return 0;
+            if (IsPlayerBlue(i) == blueAlliance)
+                return i;
         }
+
+        return 0;
     }
 
     private GameObject GetRobotPrefabBySelection(int selectedIndex)
@@ -633,77 +760,44 @@ public class LoadMatch : MonoBehaviour
         if (_pairedVersion == _setupVersion)
             return;
 
-        var pads = Gamepad.all;
+        ReadOnlyArray<Gamepad> pads = Gamepad.all;
+        int playerCount = GetPlayerCount();
 
-        switch (_settings.playMode)
-        {
-            case Util.PlayMode.OneVsZero:
-                PairPlayerOneOnly(pads);
-                if (_activeRobot2 != null)
-                    DisableRobotInput(_activeRobot2);
-                break;
+        bool allowKeyboardForPlayer2 =
+            playerCount == 2 &&
+            (_settings.playMode == Util.PlayMode.TwoVsZero ||
+             _settings.playMode == Util.PlayMode.OneVsOne);
 
-            case Util.PlayMode.TwoVsZero:
-            case Util.PlayMode.OneVsOne:
-                PairTwoRobots(pads);
-                break;
-        }
-    }
+        for (int i = 0; i < playerCount; i++)
+        {
+            GameObject robot = _activeRobots[i];
 
-    private void PairPlayerOneOnly(ReadOnlyArray<Gamepad> pads)
-    {
-        if (_activeRobot1 == null)
-            return;
+            if (robot == null)
+                continue;
 
-        if (pads.Count >= 1)
-        {
-            BindRobotToGamepad(_activeRobot1, pads[0], gamepadControlScheme);
-        }
-        else if (Keyboard.current != null)
-        {
-            BindRobotToKeyboard(_activeRobot1, keyboardControlScheme);
-        }
-        else
-        {
-            DisableRobotInput(_activeRobot1);
-            Debug.LogWarning("Player 1 has no valid device available.");
-        }
-    }
-
-    private void PairTwoRobots(ReadOnlyArray<Gamepad> pads)
-    {
-        if (_activeRobot1 != null)
-        {
-            if (pads.Count >= 1)
+            if (i < pads.Count)
             {
-                BindRobotToGamepad(_activeRobot1, pads[0], gamepadControlScheme);
+                BindRobotToGamepad(robot, pads[i], gamepadControlScheme);
             }
-            else if (Keyboard.current != null)
+            else if (i == 0 && Keyboard.current != null)
             {
-                BindRobotToKeyboard(_activeRobot1, keyboardControlScheme);
+                BindRobotToKeyboard(robot, keyboardControlScheme);
+            }
+            else if (i == 1 && allowKeyboardForPlayer2 && Keyboard.current != null)
+            {
+                BindRobotToKeyboard(robot, keyboardControlScheme);
             }
             else
             {
-                DisableRobotInput(_activeRobot1);
-                Debug.LogWarning("Player 1 has no valid device available.");
+                DisableRobotInput(robot);
+                Debug.LogWarning($"Player {i + 1} has no valid input device. Connect a gamepad.");
             }
         }
 
-        if (_activeRobot2 != null)
+        for (int i = playerCount; i < _activeRobots.Length; i++)
         {
-            if (pads.Count >= 2)
-            {
-                BindRobotToGamepad(_activeRobot2, pads[1], gamepadControlScheme);
-            }
-            else if (pads.Count >= 1 && Keyboard.current != null)
-            {
-                BindRobotToKeyboard(_activeRobot2, keyboardControlScheme);
-            }
-            else
-            {
-                DisableRobotInput(_activeRobot2);
-                Debug.LogWarning("Player 2 has no valid device available.");
-            }
+            if (_activeRobots[i] != null)
+                DisableRobotInput(_activeRobots[i]);
         }
     }
 
@@ -721,13 +815,7 @@ public class LoadMatch : MonoBehaviour
 
         try
         {
-            bool alreadyCorrect =
-                playerInput.currentControlScheme == controlScheme &&
-                playerInput.user.valid &&
-                playerInput.user.pairedDevices.Contains(gamepad);
-
-            if (alreadyCorrect)
-                return;
+            playerInput.DeactivateInput();
 
             playerInput.neverAutoSwitchControlSchemes = true;
             playerInput.defaultActionMap = robotActionMap;
@@ -735,14 +823,20 @@ public class LoadMatch : MonoBehaviour
             playerInput.actions.Disable();
             playerInput.actions.bindingMask = null;
 
+            if (playerInput.user.valid)
+                playerInput.user.UnpairDevices();
+
+            InputUser.PerformPairingWithDevice(gamepad, playerInput.user);
+
             playerInput.SwitchCurrentControlScheme(controlScheme, gamepad);
             playerInput.SwitchCurrentActionMap(robotActionMap);
+
             playerInput.actions.bindingMask = InputBinding.MaskByGroup(controlScheme);
             playerInput.ActivateInput();
         }
         catch (Exception ex)
         {
-            Debug.LogError($"{robot.name} failed to bind gamepad: {ex}");
+            Debug.LogError($"{robot.name} failed to bind gamepad {gamepad.displayName}: {ex}");
         }
     }
 
@@ -760,13 +854,7 @@ public class LoadMatch : MonoBehaviour
 
         try
         {
-            bool alreadyCorrect =
-                playerInput.currentControlScheme == controlScheme &&
-                playerInput.user.valid &&
-                playerInput.user.pairedDevices.Contains(Keyboard.current);
-
-            if (alreadyCorrect)
-                return;
+            playerInput.DeactivateInput();
 
             playerInput.neverAutoSwitchControlSchemes = true;
             playerInput.defaultActionMap = robotActionMap;
@@ -774,8 +862,14 @@ public class LoadMatch : MonoBehaviour
             playerInput.actions.Disable();
             playerInput.actions.bindingMask = null;
 
+            if (playerInput.user.valid)
+                playerInput.user.UnpairDevices();
+
+            InputUser.PerformPairingWithDevice(Keyboard.current, playerInput.user);
+
             playerInput.SwitchCurrentControlScheme(controlScheme, Keyboard.current);
             playerInput.SwitchCurrentActionMap(robotActionMap);
+
             playerInput.actions.bindingMask = InputBinding.MaskByGroup(controlScheme);
             playerInput.ActivateInput();
         }
@@ -800,27 +894,13 @@ public class LoadMatch : MonoBehaviour
             playerInput.actions.bindingMask = new InputBinding { groups = "__disabled__" };
         }
     }
-    
-    private bool IsRobotOnRedAllianceSide(bool isPlayer2)
+
+    private bool IsRobotOnRedAllianceSide(int playerIndex)
     {
-        return _settings.playMode switch
-        {
-            Util.PlayMode.OneVsZero => !_settings.useBlueAlliance,
-            Util.PlayMode.TwoVsZero => !_settings.useBlueAlliance,
-            Util.PlayMode.OneVsOne => isPlayer2,
-            _ => false
-        };
-    }
-    
-    private bool IsRedAllianceDriverStationForbidden()
-    {
-        return _settings.view == Cameras.DriverStation &&
-               !_settings.useBlueAlliance &&
-               (_settings.playMode == Util.PlayMode.OneVsZero ||
-                _settings.playMode == Util.PlayMode.TwoVsZero);
+        return !IsPlayerBlue(playerIndex);
     }
 
-    private void ConfigureRobotDriveMode(GameObject robot, bool isPlayer2)
+    private void ConfigureRobotDriveMode(GameObject robot, int playerIndex)
     {
         if (robot == null)
             return;
@@ -833,12 +913,13 @@ public class LoadMatch : MonoBehaviour
         if (controller == null)
             return;
 
-        bool robotIsRedSide = IsRobotOnRedAllianceSide(isPlayer2);
+        bool robotIsRedSide = !IsPlayerBlue(playerIndex);
+        Cameras view = _runtimeViews[playerIndex];
 
         controller.isRed = robotIsRedSide;
         controller.reversed = false;
 
-        switch (_settings.view)
+        switch (view)
         {
             case Cameras.FirstPerson:
                 controller.fieldCentric = false;
@@ -866,19 +947,17 @@ public class LoadMatch : MonoBehaviour
                 break;
         }
     }
-    
-    private void ConfigureOutpostReleaseOwnership(GameObject robot, bool isPlayer2)
+
+    private void ConfigureOutpostReleaseOwnership(GameObject robot, int playerSlot)
     {
         if (robot == null)
             return;
 
-        StartCoroutine(ConfigureOutpostReleaseOwnershipWhenReady(robot, isPlayer2));
+        StartCoroutine(ConfigureOutpostReleaseOwnershipWhenReady(robot, playerSlot));
     }
 
-    private IEnumerator ConfigureOutpostReleaseOwnershipWhenReady(GameObject robot, bool isPlayer2)
+    private IEnumerator ConfigureOutpostReleaseOwnershipWhenReady(GameObject robot, int playerSlot)
     {
-        int playerSlot = isPlayer2 ? 1 : 0;
-
         const float timeout = 2f;
         float startTime = Time.time;
 
@@ -889,9 +968,7 @@ public class LoadMatch : MonoBehaviour
             if (outpostReleases.Length > 0)
             {
                 foreach (var release in outpostReleases)
-                {
                     release.ConfigureOwnership(playerSlot);
-                }
 
                 yield break;
             }
@@ -899,61 +976,71 @@ public class LoadMatch : MonoBehaviour
             yield return null;
         }
     }
-    
+
     public bool RobotLoaded()
     {
-        return _activeRobot1 != null || _activeRobot2 != null;
+        for (int i = 0; i < _activeRobots.Length; i++)
+        {
+            if (_activeRobots[i] != null)
+                return true;
+        }
+
+        return false;
     }
 
     public GameObject GetRobotLoaded()
     {
-        return _activeRobot1;
+        return GetRobotLoaded(0);
     }
 
     public GameObject GetRobotLoaded(int index)
     {
-        return index switch
-        {
-            0 => _activeRobot1,
-            1 => _activeRobot2,
-            _ => null
-        };
+        if (index < 0 || index >= _activeRobots.Length)
+            return null;
+
+        return _activeRobots[index];
     }
 
     public GameObject[] GetLoadedRobots()
     {
-        return new[] { _activeRobot1, _activeRobot2 };
+        return _activeRobots;
     }
 
     private void DeleteRobots()
     {
         DestroySpawnedCameraOnly();
 
-        if (_activeRobot1 != null)
+        for (int i = 0; i < _activeRobots.Length; i++)
         {
-            Destroy(_activeRobot1);
-            _activeRobot1 = null;
-        }
+            GameObject robot = _activeRobots[i];
 
-        if (_activeRobot2 != null)
-        {
-            Destroy(_activeRobot2);
-            _activeRobot2 = null;
+            if (robot == null)
+                continue;
+
+            var input = robot.GetComponent<PlayerInput>();
+            if (input != null)
+                _runtimeInputAssetsCloned.Remove(input);
+
+            Destroy(robot);
+            _activeRobots[i] = null;
         }
     }
 
     private void DestroySpawnedCameraOnly()
     {
-        if (_spawnedCamera1 != null)
+        for (int i = 0; i < _spawnedCameras.Length; i++)
         {
-            Destroy(_spawnedCamera1);
-            _spawnedCamera1 = null;
+            if (_spawnedCameras[i] != null)
+            {
+                Destroy(_spawnedCameras[i]);
+                _spawnedCameras[i] = null;
+            }
         }
 
-        if (_spawnedCamera2 != null)
+        if (_fieldCamera != null)
         {
-            Destroy(_spawnedCamera2);
-            _spawnedCamera2 = null;
+            Destroy(_fieldCamera);
+            _fieldCamera = null;
         }
     }
 
@@ -962,22 +1049,7 @@ public class LoadMatch : MonoBehaviour
         GameObject[] loadedRobots = Resources.LoadAll<GameObject>("Robots");
 
         _availableRobots.Clear();
-        foreach (var robot in loadedRobots)
-        {
-            _availableRobots.Add(robot);
-        }
-
-        if (_availableRobots.Count == 0)
-        {
-            _selectedRobotIndex1 = 0;
-            _selectedRobotIndex2 = 0;
-            _selectedName1 = string.Empty;
-            _selectedName2 = string.Empty;
-            return;
-        }
-
-        _selectedRobotIndex1 = Mathf.Clamp(_selectedRobotIndex1, 0, _availableRobots.Count - 1);
-        _selectedRobotIndex2 = Mathf.Clamp(_selectedRobotIndex2, 0, _availableRobots.Count - 1);
+        _availableRobots.AddRange(loadedRobots);
 
         SanitizeSettings();
     }
@@ -989,6 +1061,21 @@ public class LoadMatch : MonoBehaviour
 
         var playerInput = robot.GetComponent<PlayerInput>();
         return playerInput != null && playerInput.actions != null;
+    }
+
+    public bool HasVanityBumperMaterialAt(int index)
+    {
+        CheckRobots();
+
+        if (_availableRobots.Count == 0)
+            return false;
+
+        index = Mathf.Clamp(index, 0, _availableRobots.Count - 1);
+
+        string robotName = _availableRobots[index].name;
+        Material material = Resources.Load<Material>($"{VanityBumperMaterialFolder}/{robotName}");
+
+        return material != null;
     }
 
     private bool EnsurePlayerInputConfigured(GameObject robot)
@@ -1013,15 +1100,20 @@ public class LoadMatch : MonoBehaviour
         playerInput.defaultActionMap = robotActionMap;
         playerInput.neverAutoSwitchControlSchemes = true;
 
-        if (playerInput.actions == null)
+        if (!_runtimeInputAssetsCloned.Contains(playerInput))
         {
-            if (builderActions == null)
+            InputActionAsset source = playerInput.actions != null
+                ? playerInput.actions
+                : builderActions;
+
+            if (source == null)
             {
-                Debug.LogError($"{robot.name} PlayerInput has no Actions asset assigned, and LoadMatch.builderActions is also null.");
+                Debug.LogError($"{robot.name} has no InputActionAsset source.");
                 return false;
             }
 
-            playerInput.actions = Instantiate(builderActions);
+            playerInput.actions = Instantiate(source);
+            _runtimeInputAssetsCloned.Add(playerInput);
         }
 
         return playerInput.actions != null;
@@ -1029,29 +1121,28 @@ public class LoadMatch : MonoBehaviour
 
     private void AddSplitScreenCameras()
     {
-        if (_activeRobot1 == null)
-            return;
+        int playerCount = GetPlayerCount();
 
-        bool hasSecondRobot = _activeRobot2 != null;
-
-        Transform p1Spawn = GetSpawnPointForRobot(0);
-        _spawnedCamera1 = CreateCameraForRobot(_activeRobot1, p1Spawn, 0);
-        ConfigureCameraViewport(_spawnedCamera1, hasSecondRobot ? CameraSide.Left : CameraSide.Full);
-
-        if (hasSecondRobot)
+        for (int i = 0; i < playerCount; i++)
         {
-            Transform p2Spawn = GetSpawnPointForRobot(1);
-            _spawnedCamera2 = CreateCameraForRobot(_activeRobot2, p2Spawn, 1);
-            ConfigureCameraViewport(_spawnedCamera2, CameraSide.Right);
+            if (_activeRobots[i] == null)
+                continue;
+
+            Transform spawn = GetSpawnPointForRobot(i);
+            _spawnedCameras[i] = CreateCameraForRobot(_activeRobots[i], spawn, i, _runtimeViews[i]);
+            ConfigureCameraViewport(_spawnedCameras[i], i);
         }
+
+        if (_settings.playMode == Util.PlayMode.ThreeVsZero)
+            AddFieldCamera();
     }
 
-    private GameObject CreateCameraForRobot(GameObject robot, Transform spawnPoint, int robotSlot)
+    private GameObject CreateCameraForRobot(GameObject robot, Transform spawnPoint, int robotSlot, Cameras view)
     {
         if (robot == null)
             return null;
 
-        string objectToLoad = "Cameras/" + _settings.view;
+        string objectToLoad = GetCameraPrefabPath(view);
         _activeCam = Resources.Load<GameObject>(objectToLoad);
 
         if (_activeCam == null)
@@ -1063,17 +1154,29 @@ public class LoadMatch : MonoBehaviour
         var parent = robot;
         var spawnRotation = spawnPoint != null ? spawnPoint.gameObject : robot;
 
-        if (_fms && _settings.view == Cameras.DriverStation)
+        if (_fms && view == Cameras.DriverStation)
         {
             StationNum station = GetStationNumberForRobot(robotSlot);
-            bool useBlueSide = _settings.playMode == Util.PlayMode.TwoVsZero || robotSlot == 0;
+            bool useBlueSide = IsPlayerBlue(robotSlot);
 
-            var stationCam = useBlueSide
-                ? _fms.blueStationCams[(int)station]
-                : _fms.redStationCams[(int)station];
+            GameObject[] stationCams = useBlueSide
+                ? _fms.blueStationCams
+                : _fms.redStationCams;
+
+            int stationIndex = Mathf.Clamp((int)station, 0, stationCams.Length - 1);
+
+            GameObject stationCam = stationCams.Length > 0
+                ? stationCams[stationIndex]
+                : null;
+
+            if (stationCam == null)
+            {
+                Debug.LogWarning($"Missing driver station camera for Player {robotSlot + 1}.");
+                return null;
+            }
 
             parent = stationCam;
-            spawnRotation = stationCam.gameObject;
+            spawnRotation = stationCam;
         }
 
         var spawnedCamera = Instantiate(
@@ -1084,56 +1187,492 @@ public class LoadMatch : MonoBehaviour
         );
 
         spawnedCamera.transform.localPosition = Vector3.zero;
+        ConfigureSpawnedCameraLocalRotation(spawnedCamera, view);
 
         var lookAt = spawnedCamera.GetComponentInChildren<LookAtRobot>(true);
-        if (lookAt != null) 
+        if (lookAt != null)
             lookAt.SetRobotSlot(robotSlot);
 
         return spawnedCamera;
     }
 
-    private void ConfigureCameraViewport(GameObject cameraObject, CameraSide side)
+    private void ConfigureCameraViewport(GameObject cameraObject, int playerIndex)
     {
         if (cameraObject == null)
             return;
 
-        Rect rect;
-        float depth;
+        Rect rect = GetViewportRect(playerIndex);
+        float depth = playerIndex;
 
-        switch (side)
-        {
-            case CameraSide.Full:
-                rect = new Rect(0f, 0f, 1f, 1f);
-                depth = 0f;
-                break;
-
-            case CameraSide.Left:
-                rect = new Rect(0f, 0f, 0.5f, 1f);
-                depth = 0f;
-                break;
-
-            case CameraSide.Right:
-                rect = new Rect(0.5f, 0f, 0.5f, 1f);
-                depth = 1f;
-                break;
-
-            default:
-                rect = new Rect(0f, 0f, 1f, 1f);
-                depth = 0f;
-                break;
-        }
-
-        var cameras = cameraObject.GetComponentsInChildren<Camera>(true);
-        foreach (var cam in cameras)
+        Camera[] cameras = cameraObject.GetComponentsInChildren<Camera>(true);
+        foreach (Camera cam in cameras)
         {
             cam.rect = rect;
             cam.depth = depth;
         }
 
-        var listeners = cameraObject.GetComponentsInChildren<AudioListener>(true);
+        AudioListener[] listeners = cameraObject.GetComponentsInChildren<AudioListener>(true);
         for (int i = 0; i < listeners.Length; i++)
+            listeners[i].enabled = playerIndex == 0 && i == 0;
+    }
+
+    private Rect GetViewportRect(int playerIndex)
+    {
+        if (!UsesFourWaySplit())
         {
-            listeners[i].enabled = side != CameraSide.Right && i == 0;
+            return playerIndex switch
+            {
+                0 when GetPlayerCount() == 1 => new Rect(0f, 0f, 1f, 1f),
+                0 => new Rect(0f, 0f, 0.5f, 1f),
+                1 => new Rect(0.5f, 0f, 0.5f, 1f),
+                _ => new Rect(0f, 0f, 1f, 1f)
+            };
+        }
+
+        if (_settings.playMode == Util.PlayMode.ThreeVsZero)
+        {
+            return playerIndex switch
+            {
+                0 => new Rect(0f, 0.5f, 0.5f, 0.5f), // P1 top-left
+                1 => new Rect(0.5f, 0.5f, 0.5f, 0.5f), // P2 top-right
+                2 => new Rect(0f, 0f, 0.5f, 0.5f), // P3 bottom-left
+                3 => new Rect(0.5f, 0f, 0.5f, 0.5f), // field cam bottom-right
+                _ => new Rect(0f, 0f, 1f, 1f)
+            };
+        }
+
+        // 2v2: blue left, red right
+        return playerIndex switch
+        {
+            0 => new Rect(0f, 0.5f, 0.5f, 0.5f), // P1 blue top-left
+            1 => new Rect(0f, 0f, 0.5f, 0.5f), // P2 blue bottom-left
+            2 => new Rect(0.5f, 0.5f, 0.5f, 0.5f), // P3 red top-right
+            3 => new Rect(0.5f, 0f, 0.5f, 0.5f), // P4 red bottom-right
+            _ => new Rect(0f, 0f, 1f, 1f)
+        };
+    }
+
+    private void AddFieldCamera()
+    {
+        Transform anchor = FindFieldCameraAnchor();
+        if (anchor == null)
+        {
+            Debug.LogWarning($"No field camera anchor named {fieldCameraAnchorName} found on the loaded field.");
+            return;
+        }
+
+        GameObject prefab = Resources.Load<GameObject>(GetCameraPrefabPath(Cameras.FirstPerson));
+        if (prefab == null)
+        {
+            Debug.LogWarning("Field camera could not load Resources/Cameras/FirstPerson.");
+            return;
+        }
+
+        _fieldCamera = Instantiate(prefab, anchor.position, anchor.rotation, anchor);
+        _fieldCamera.transform.localPosition = Vector3.zero;
+        _fieldCamera.transform.localRotation = Quaternion.identity;
+
+        foreach (LookAtRobot lookAt in _fieldCamera.GetComponentsInChildren<LookAtRobot>(true))
+            lookAt.enabled = false;
+
+        ConfigureCameraViewport(_fieldCamera, 3);
+    }
+
+    private Transform FindFieldCameraAnchor()
+    {
+        if (_fieldHolder == null)
+            return null;
+
+        Transform[] children = _fieldHolder.GetComponentsInChildren<Transform>(true);
+
+        foreach (Transform child in children)
+        {
+            if (child.name == fieldCameraAnchorName)
+                return child;
+        }
+
+        return null;
+    }
+
+    private void ConfigureSpawnedCameraLocalRotation(GameObject spawnedCamera, Cameras view)
+    {
+        if (spawnedCamera == null)
+            return;
+
+        bool isFirstPerson =
+            view == Cameras.FirstPerson ||
+            view == Cameras.FirstPersonReversed;
+
+        if (!isFirstPerson)
+            return;
+
+        bool reversed = view == Cameras.FirstPersonReversed;
+
+        spawnedCamera.transform.localPosition = Vector3.zero;
+        spawnedCamera.transform.localRotation = reversed
+            ? Quaternion.Euler(0f, 180f, 0f)
+            : Quaternion.identity;
+
+        Camera[] childCameras = spawnedCamera.GetComponentsInChildren<Camera>(true);
+
+        foreach (Camera cam in childCameras)
+        {
+            Transform camTransform = cam.transform;
+            Vector3 localEuler = camTransform.localEulerAngles;
+
+            camTransform.localRotation = Quaternion.Euler(
+                NormalizeEulerAngle(localEuler.x),
+                0f,
+                NormalizeEulerAngle(localEuler.z)
+            );
+        }
+
+        LookAtRobot[] lookAts = spawnedCamera.GetComponentsInChildren<LookAtRobot>(true);
+        foreach (LookAtRobot lookAt in lookAts)
+        {
+            lookAt.enabled = false;
         }
     }
+
+    private float NormalizeEulerAngle(float angle)
+    {
+        angle %= 360f;
+
+        if (angle > 180f)
+            angle -= 360f;
+
+        return angle;
+    }
+
+    private string GetCameraPrefabPath(Cameras view)
+    {
+        return view switch
+        {
+            Cameras.FirstPerson => "Cameras/FirstPerson",
+            Cameras.FirstPersonReversed => "Cameras/FirstPerson",
+
+            Cameras.ThirdPerson => "Cameras/ThirdPerson",
+            Cameras.ReversedThirdPerson => "Cameras/ReversedThirdPerson",
+
+            Cameras.DriverStation => "Cameras/DriverStation",
+
+            _ => "Cameras/" + view
+        };
+    }
+
+    private void HandleRuntimeCameraToggle()
+    {
+        if (!allowRightStickCameraToggle)
+            return;
+
+        int playerCount = GetPlayerCount();
+
+        for (int i = 0; i < playerCount; i++)
+        {
+            HandleRuntimeCameraToggleForRobot(
+                _activeRobots[i],
+                i,
+                ref _rightStickWasPressed[i],
+                ref _keyboardEWasPressed[i]
+            );
+        }
+    }
+
+    private void HandleRuntimeCameraToggleForRobot(
+        GameObject robot,
+        int robotSlot,
+        ref bool rightStickWasPressed,
+        ref bool keyboardEWasPressed
+    )
+    {
+        if (robot == null)
+            return;
+
+        var playerInput = robot.GetComponent<PlayerInput>();
+        if (playerInput == null || !playerInput.user.valid)
+            return;
+
+        bool rightStickPressed = IsPairedRightStickPressed(playerInput);
+        bool keyboardEPressed = IsPairedKeyboardEPressed(playerInput);
+
+        if ((rightStickPressed && !rightStickWasPressed) ||
+            (keyboardEPressed && !keyboardEWasPressed))
+        {
+            ToggleCameraViewForRobot(robotSlot);
+        }
+
+        rightStickWasPressed = rightStickPressed;
+        keyboardEWasPressed = keyboardEPressed;
+    }
+
+    private bool IsPairedRightStickPressed(PlayerInput playerInput)
+    {
+        foreach (var device in playerInput.user.pairedDevices)
+        {
+            if (device is Gamepad gamepad)
+                return gamepad.rightStickButton.isPressed;
+        }
+
+        return false;
+    }
+
+    private bool IsPairedKeyboardEPressed(PlayerInput playerInput)
+    {
+        foreach (var device in playerInput.user.pairedDevices)
+        {
+            if (device is Keyboard keyboard)
+                return keyboard.eKey.isPressed;
+        }
+
+        return false;
+    }
+
+    private void ToggleCameraViewForRobot(int playerIndex)
+    {
+        Cameras newView = GetToggledCameraView(_runtimeViews[playerIndex]);
+
+        if (newView == _runtimeViews[playerIndex])
+            return;
+
+        _runtimeViews[playerIndex] = newView;
+
+        ConfigureRobotDriveMode(_activeRobots[playerIndex], playerIndex);
+        RebuildSpawnedCameraForRobot(playerIndex);
+    }
+
+    private Cameras GetToggledCameraView(Cameras view)
+    {
+        return view switch
+        {
+            Cameras.FirstPerson => Cameras.FirstPersonReversed,
+            Cameras.FirstPersonReversed => Cameras.FirstPerson,
+
+            Cameras.ThirdPerson => Cameras.ReversedThirdPerson,
+            Cameras.ReversedThirdPerson => Cameras.ThirdPerson,
+
+            Cameras.DriverStation => Cameras.DriverStation,
+
+            _ => view
+        };
+    }
+
+    private void RebuildSpawnedCameraForRobot(int playerIndex)
+    {
+        if (_spawnedCameras[playerIndex] != null)
+        {
+            Destroy(_spawnedCameras[playerIndex]);
+            _spawnedCameras[playerIndex] = null;
+        }
+
+        if (_activeRobots[playerIndex] == null)
+            return;
+
+        Transform spawn = GetSpawnPointForRobot(playerIndex);
+        _spawnedCameras[playerIndex] = CreateCameraForRobot(
+            _activeRobots[playerIndex],
+            spawn,
+            playerIndex,
+            _runtimeViews[playerIndex]
+        );
+
+        ConfigureCameraViewport(_spawnedCameras[playerIndex], playerIndex);
+    }
+
+    public HumanPlayerOutpost[] GetHumanPlayerOutposts()
+    {
+        return _humanPlayerOutposts;
+    }
+
+    private void CacheHumanPlayerOutposts()
+    {
+        if (_fieldHolder == null)
+        {
+            _humanPlayerOutposts = System.Array.Empty<HumanPlayerOutpost>();
+            return;
+        }
+
+        _humanPlayerOutposts = _fieldHolder.GetComponentsInChildren<HumanPlayerOutpost>(true);
+    }
+
+    public void SetHumanPlayerType(HumanPlayerType selectedType)
+    {
+        _selectedHumanPlayerType = selectedType;
+        ApplyHumanPlayerObjects();
+    }
+
+    private void ApplyHumanPlayerObjects()
+    {
+        bool blueAllianceUsed = IsBlueAllianceUsedForCurrentSettings();
+        bool redAllianceUsed = IsRedAllianceUsedForCurrentSettings();
+
+        HumanPlayerRuntimeState.SetState(
+            _selectedHumanPlayerType,
+            blueAllianceUsed,
+            redAllianceUsed
+        );
+
+        foreach (var outpost in _humanPlayerOutposts)
+        {
+            if (outpost == null)
+                continue;
+
+            bool allianceUsed = outpost.IsBlue ? blueAllianceUsed : redAllianceUsed;
+            bool typeSelected = outpost.Type == _selectedHumanPlayerType;
+
+            outpost.SetVisible(allianceUsed && typeSelected);
+        }
+
+        ConfigureAllOutpostReleaseOwnership();
+    }
+
+    private bool IsBlueAllianceUsedForCurrentSettings()
+    {
+        return _settings.playMode == Util.PlayMode.OneVsOne ||
+               _settings.playMode == Util.PlayMode.TwoVsTwo ||
+               _settings.useBlueAlliance;
+    }
+
+    private bool IsRedAllianceUsedForCurrentSettings()
+    {
+        return _settings.playMode == Util.PlayMode.OneVsOne ||
+               _settings.playMode == Util.PlayMode.TwoVsTwo ||
+               !_settings.useBlueAlliance;
+    }
+
+    private void ConfigureAllOutpostReleaseOwnership()
+    {
+        foreach (var release in GetOutpostReleases())
+        {
+            if (release == null)
+                continue;
+
+            bool releaseIsBlue = release.IsBlue();
+            int ownerSlot = GetHumanPlayerOwnerSlotForAlliance(releaseIsBlue);
+
+            release.ConfigureOwnership(ownerSlot);
+        }
+    }
+
+    public OutpostRelease[] GetOutpostReleases()
+    {
+        if (_fieldHolder == null)
+            return System.Array.Empty<OutpostRelease>();
+
+        return _fieldHolder.GetComponentsInChildren<OutpostRelease>(true);
+    }
+
+    #region Bumper Materials
+
+    private const string BlueBumperMaterialPath = "Materials/Bumpers/Blue";
+    private const string RedBumperMaterialPath = "Materials/Bumpers/Red";
+    private const string VanityBumperMaterialFolder = "Materials/Bumpers/Vanity";
+
+    private Material _blueBumperMaterial;
+    private Material _redBumperMaterial;
+    private readonly Dictionary<string, Material> _vanityBumperMaterialCache = new();
+
+    private IEnumerator ConfigureRobotBumpersWhenReady(
+        GameObject robot,
+        GameObject robotPrefab,
+        int playerIndex,
+        bool useVanityBumpers
+    )
+    {
+        if (robot == null || robotPrefab == null)
+            yield break;
+
+        Material materialToApply = useVanityBumpers
+            ? GetVanityBumperMaterial(robotPrefab.name)
+            : null;
+
+        if (materialToApply == null)
+            materialToApply = GetAllianceBumperMaterial(playerIndex);
+
+        const int maxFramesToWait = 10;
+
+        for (int frame = 0; frame < maxFramesToWait; frame++)
+        {
+            int changedCount = ApplyMaterialToAllBumpers(robot, materialToApply);
+
+            if (changedCount > 0)
+            {
+                yield break;
+            }
+
+            yield return null;
+        }
+    }
+
+    private Material GetAllianceBumperMaterial(int playerIndex)
+    {
+        _blueBumperMaterial ??= Resources.Load<Material>(BlueBumperMaterialPath);
+        _redBumperMaterial ??= Resources.Load<Material>(RedBumperMaterialPath);
+
+        bool isRed = IsRobotOnRedAllianceSide(playerIndex);
+        return isRed ? _redBumperMaterial : _blueBumperMaterial;
+    }
+
+    private Material GetVanityBumperMaterial(string robotPrefabName)
+    {
+        if (string.IsNullOrWhiteSpace(robotPrefabName))
+            return null;
+
+        if (_vanityBumperMaterialCache.TryGetValue(robotPrefabName, out Material cached))
+            return cached;
+
+        Material material = Resources.Load<Material>($"{VanityBumperMaterialFolder}/{robotPrefabName}");
+        _vanityBumperMaterialCache[robotPrefabName] = material;
+
+        return material;
+    }
+
+    private int ApplyMaterialToAllBumpers(GameObject robot, Material material)
+    {
+        int changedCount = 0;
+
+        Renderer[] renderers = robot.GetComponentsInChildren<Renderer>(true);
+
+        foreach (Renderer renderer in renderers)
+        {
+            if (renderer == null)
+                continue;
+
+            if (!IsBumperRenderer(renderer))
+                continue;
+
+            Material[] materials = renderer.sharedMaterials;
+
+            for (int i = 0; i < materials.Length; i++)
+            {
+                materials[i] = material;
+            }
+
+            renderer.sharedMaterials = materials;
+            changedCount++;
+        }
+
+        return changedCount;
+    }
+
+    private bool IsBumperRenderer(Renderer renderer)
+    {
+        Transform current = renderer.transform;
+
+        while (current != null)
+        {
+            string objectName = current.name.ToLowerInvariant();
+
+            if (objectName.Contains("bumper"))
+                return true;
+
+            if (current.GetComponent<BuildBumper>() != null)
+                return true;
+
+            current = current.parent;
+        }
+
+        return false;
+    }
+
+    #endregion
 }

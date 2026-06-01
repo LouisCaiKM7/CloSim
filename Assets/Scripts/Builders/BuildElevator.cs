@@ -1,4 +1,5 @@
 using System;
+using BuilderLib;
 using MyBox;
 using UnityEngine;
 using UnityEngine.Audio;
@@ -87,6 +88,8 @@ public class Buildelevator : BuildMechanism
     private AudioSource _audioSource;
 
     private AudioResource[] _audioClips;
+    
+    private bool _elevatorFrozenForDisable;
 
 
     // Start is called before the first frame update
@@ -176,36 +179,47 @@ public class Buildelevator : BuildMechanism
             case Units.Inch:
                 _scaleFactor = 0.0254f;
                 break;
+
             case Units.Centimeter:
                 _scaleFactor = 0.01f;
                 break;
+
             case Units.Meter:
                 _scaleFactor = 1.0f;
                 break;
+
             case Units.Millimeter:
                 _scaleFactor = 0.001f;
                 break;
         }
+
         if (!Application.isPlaying)
         {
-            
             BuildModel();
-            
 
             if (setPoints == null) return;
+
             foreach (var point in setPoints)
             {
                 point.shouldScaleToUnits = true;
                 point.units = units;
             }
+
+            return;
         }
-        else if (elevatorType == ElevatorType.Cascade)
+
+        bool disabled = FMS.RobotState == RobotState.disabled;
+        SetElevatorFrozenForDisable(disabled);
+
+        if (elevatorType == ElevatorType.Cascade)
         {
             CascadeMovement();
         }
         else
         {
-            ContinuousClick();
+            if (!disabled)
+                ContinuousClick();
+
             ContinuousMovement();
         }
     }
@@ -215,35 +229,58 @@ public class Buildelevator : BuildMechanism
     /// </summary>
     private void ContinuousMovement()
     {
+        if (_rigidbodies == null || _controllers == null)
+            return;
+
         for (int i = 0; i < _rigidbodies.Length; i++)
         {
+            if (_rigidbodies[i] == null || _controllers[i] == null)
+                continue;
+
+            float currentHeight = transform
+                .InverseTransformPoint(_rigidbodies[i].transform.position)
+                .y;
+
+            _controllers[i].currentPosition = currentHeight;
+
             if (i == _rigidbodies.Length - 1)
             {
                 _controllers[i].setPoints = setPoints;
-                _controllers[i].currentPosition = transform.InverseTransformPoint(_rigidbodies[i].transform.position).y;
                 _controllers[i].follower = false;
-                continue; //skip follower calculations
+                continue;
             }
-            else
+
+            _controllers[i].follower = true;
+
+            // While disabled, only feed live position. Do not overwrite follower targets.
+            // JointController is holding the disabled latch itself.
+            if (FMS.RobotState == RobotState.disabled)
+                continue;
+
+            var combinedHeight = carriage
+                ? (-carriageHeight * _scaleFactor) - (3f * 0.0254f) - (i * 0.0254f)
+                : 0;
+
+            for (int j = i; j < stages - 1; j++)
             {
-                _controllers[i].follower = true;
+                combinedHeight += (height * _scaleFactor) -
+                                  (j < stages - 2
+                                      ? (5 * 0.0254f) + (((stages - j) * 2) * 0.0254f)
+                                      : 0);
             }
-            
-            var combinedHeight = carriage? (-carriageHeight * _scaleFactor) - (3f * 0.0254f) - ((i) * 0.0254f): 0;
-            for (int j = i; j < stages-1; j++)
-            {
-                combinedHeight += (height * _scaleFactor) - (j < stages-2 ? (5 * 0.0254f) + (((stages-j)*2) * 0.0254f): 0);
-            }
-            
+
             float setPoint = 0;
 
-            if (combinedHeight < transform.InverseTransformPoint(_rigidbodies[^1].transform.position).y)
+            float carriageHeightNow = transform
+                .InverseTransformPoint(_rigidbodies[^1].transform.position)
+                .y;
+
+            if (combinedHeight < carriageHeightNow)
             {
-                setPoint = transform.InverseTransformPoint(_rigidbodies[^1].transform.position).y - combinedHeight;
+                setPoint = carriageHeightNow - combinedHeight;
             }
 
             _controllers[i].FollowPosition(setPoint);
-            _controllers[i].currentPosition = transform.InverseTransformPoint(_rigidbodies[i].transform.position).y;
         }
     }
 
@@ -292,21 +329,35 @@ public class Buildelevator : BuildMechanism
     /// </summary>
     private void CascadeMovement()
     {
-        //TODO: add the cascade rigged motion to this function
-        float totalHeight = transform.InverseTransformPoint(_rigidbodies[^1].transform.position).y;
-        
-        //Sets carriage position
+        if (_rigidbodies == null || _controllers == null || _rigidbodies.Length == 0)
+            return;
+
+        float totalHeight = transform
+            .InverseTransformPoint(_rigidbodies[^1].transform.position)
+            .y;
+
         _controllers[^1].follower = false;
         _controllers[^1].setPoints = setPoints;
         _controllers[^1].currentPosition = totalHeight;
-        
-        //Sets other stages to follow carriage
+
         for (int i = 0; i < _rigidbodies.Length - 1; i++)
         {
-            float targetHeight = totalHeight * (i + 1) / _rigidbodies.Length;
+            if (_rigidbodies[i] == null || _controllers[i] == null)
+                continue;
+
+            _controllers[i].currentPosition = transform
+                .InverseTransformPoint(_rigidbodies[i].transform.position)
+                .y;
+
             _controllers[i].follower = true;
+
+            // While disabled, only feed live position. Do not overwrite follower targets.
+            // JointController is holding the disabled latch itself.
+            if (FMS.RobotState == RobotState.disabled)
+                continue;
+
+            float targetHeight = totalHeight * (i + 1) / _rigidbodies.Length;
             _controllers[i].FollowPosition(targetHeight);
-            _controllers[i].currentPosition = transform.InverseTransformPoint(_rigidbodies[i].transform.position).y;
         }
     }
 
@@ -1180,5 +1231,29 @@ public class Buildelevator : BuildMechanism
         }
 
         return filtered;
+    }
+    
+    private void SetElevatorFrozenForDisable(bool frozen)
+    {
+        if (_rigidbodies == null)
+            return;
+
+        if (_elevatorFrozenForDisable == frozen)
+            return;
+
+        _elevatorFrozenForDisable = frozen;
+
+        for (int i = 0; i < _rigidbodies.Length; i++)
+        {
+            Rigidbody rb = _rigidbodies[i];
+
+            if (rb == null)
+                continue;
+
+            rb.velocity = Vector3.zero;
+            rb.angularVelocity = Vector3.zero;
+            rb.isKinematic = false;
+            rb.useGravity = !frozen;
+        }
     }
 }

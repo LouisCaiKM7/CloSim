@@ -137,7 +137,7 @@ MonoBehaviour:
   LoadedPartRotation: {x: 0, y: 0, z: 0, w: 1}
   LoadedPartScale: {x: 1, y: 1, z: 1}
   wheelType: 1
-  shouldCollide: 1
+  shouldCollide: 0
 --- !u!1 &36973129616879814
 GameObject:
   m_ObjectHideFlags: 0
@@ -190,7 +190,7 @@ MonoBehaviour:
   LoadedPartRotation: {x: 0, y: 0, z: 0, w: 1}
   LoadedPartScale: {x: 1, y: 1, z: 1}
   wheelType: 5
-  shouldCollide: 1
+  shouldCollide: 0
 --- !u!1 &37804667867321693
 GameObject:
   m_ObjectHideFlags: 0
@@ -274,7 +274,7 @@ MeshCollider:
   m_LayerOverridePriority: 0
   m_IsTrigger: 0
   m_ProvidesContacts: 0
-  m_Enabled: 1
+  m_Enabled: 0
   serializedVersion: 5
   m_Convex: 1
   m_CookingOptions: 30
@@ -345,7 +345,7 @@ MonoBehaviour:
   LoadedPartRotation: {x: 0, y: 0, z: 0, w: 1}
   LoadedPartScale: {x: 1, y: 1, z: 1}
   wheelType: 1
-  shouldCollide: 1
+  shouldCollide: 0
 --- !u!1 &45576541385163797
 GameObject:
   m_ObjectHideFlags: 0
@@ -1635,7 +1635,7 @@ Transform:
   m_GameObject: {fileID: 261312158451603964}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0.7071068, w: 0.7071068}
-  m_LocalPosition: {x: 0.47000003, y: 0.30599993, z: 0}
+  m_LocalPosition: {x: 0.326, y: 0.30599993, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1660,7 +1660,7 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 0.2, y: 0.35, z: 0.65}
+  m_Size: {x: 0.2, y: 0.05, z: 0.65}
   m_Center: {x: 0, y: 0, z: 0}
 --- !u!1 &290187904295181789
 GameObject:
@@ -2134,7 +2134,7 @@ MonoBehaviour:
   LoadedPartRotation: {x: 0, y: 0, z: 0, w: 1}
   LoadedPartScale: {x: 1, y: 1, z: 1}
   wheelType: 1
-  shouldCollide: 1
+  shouldCollide: 0
 --- !u!1 &341796744512268555
 GameObject:
   m_ObjectHideFlags: 0
@@ -2545,7 +2545,7 @@ MonoBehaviour:
   LoadedPartRotation: {x: 0, y: 0, z: 0, w: 1}
   LoadedPartScale: {x: 1, y: 1, z: 1}
   wheelType: 1
-  shouldCollide: 1
+  shouldCollide: 0
 --- !u!1 &419041410090357129
 GameObject:
   m_ObjectHideFlags: 0
@@ -3321,7 +3321,7 @@ MeshCollider:
   m_LayerOverridePriority: 0
   m_IsTrigger: 0
   m_ProvidesContacts: 0
-  m_Enabled: 1
+  m_Enabled: 0
   serializedVersion: 5
   m_Convex: 1
   m_CookingOptions: 30
@@ -3904,7 +3904,7 @@ MonoBehaviour:
   LoadedPartRotation: {x: 0, y: 0, z: 0, w: 1}
   LoadedPartScale: {x: 1, y: 1, z: 1}
   wheelType: 1
-  shouldCollide: 1
+  shouldCollide: 0
 --- !u!1 &591820276913551738
 GameObject:
   m_ObjectHideFlags: 0
@@ -5111,7 +5111,7 @@ MonoBehaviour:
   LoadedPartRotation: {x: 0, y: 0, z: 0, w: 1}
   LoadedPartScale: {x: 1, y: 1, z: 1}
   wheelType: 5
-  shouldCollide: 1
+  shouldCollide: 0
 --- !u!1 &1014907798285993877
 GameObject:
   m_ObjectHideFlags: 0
@@ -5420,7 +5420,7 @@ MonoBehaviour:
   LoadedPartRotation: {x: 0, y: 0, z: 0, w: 1}
   LoadedPartScale: {x: 1, y: 1, z: 1}
   wheelType: 1
-  shouldCollide: 1
+  shouldCollide: 0
 --- !u!1 &1070673070645257006
 GameObject:
   m_ObjectHideFlags: 0
@@ -5677,7 +5677,7 @@ MeshCollider:
   m_LayerOverridePriority: 0
   m_IsTrigger: 0
   m_ProvidesContacts: 0
-  m_Enabled: 1
+  m_Enabled: 0
   serializedVersion: 5
   m_Convex: 1
   m_CookingOptions: 30
@@ -6124,7 +6124,7 @@ MeshCollider:
   m_LayerOverridePriority: 0
   m_IsTrigger: 0
   m_ProvidesContacts: 0
-  m_Enabled: 1
+  m_Enabled: 0
   serializedVersion: 5
   m_Convex: 1
   m_CookingOptions: 30
@@ -6842,7 +6842,7 @@ MonoBehaviour:
   units: 0
   length: 8
   width: 23.5
-  armWeight: 4
+  armWeight: 1
   useNoWrapPoint: 0
   noWrapAngle: 180
   useAdvancedSettings: 1
@@ -8607,7 +8607,7 @@ MeshCollider:
   m_LayerOverridePriority: 0
   m_IsTrigger: 0
   m_ProvidesContacts: 0
-  m_Enabled: 1
+  m_Enabled: 0
   serializedVersion: 5
   m_Convex: 1
   m_CookingOptions: 30
@@ -8839,7 +8839,7 @@ Transform:
   m_GameObject: {fileID: 1571131723887624955}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: 0.7071068, w: 0.7071068}
-  m_LocalPosition: {x: -0.47000003, y: 0.30599993, z: 0}
+  m_LocalPosition: {x: -0.344, y: 0.306, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -8864,7 +8864,7 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 0.2, y: 0.35, z: 0.65}
+  m_Size: {x: 0.2, y: 0.05, z: 0.65}
   m_Center: {x: 0, y: 0, z: 0}
 --- !u!1 &1614098710069812750
 GameObject:
@@ -8949,7 +8949,7 @@ MeshCollider:
   m_LayerOverridePriority: 0
   m_IsTrigger: 0
   m_ProvidesContacts: 0
-  m_Enabled: 1
+  m_Enabled: 0
   serializedVersion: 5
   m_Convex: 1
   m_CookingOptions: 30
@@ -9632,7 +9632,7 @@ MonoBehaviour:
   LoadedPartRotation: {x: 0, y: 0, z: 0, w: 1}
   LoadedPartScale: {x: 1, y: 1, z: 1}
   wheelType: 5
-  shouldCollide: 1
+  shouldCollide: 0
 --- !u!1 &1736231313412545441
 GameObject:
   m_ObjectHideFlags: 0
@@ -9683,7 +9683,7 @@ MeshCollider:
   m_LayerOverridePriority: 0
   m_IsTrigger: 0
   m_ProvidesContacts: 0
-  m_Enabled: 1
+  m_Enabled: 0
   serializedVersion: 5
   m_Convex: 1
   m_CookingOptions: 30
@@ -10171,7 +10171,7 @@ MeshCollider:
   m_LayerOverridePriority: 0
   m_IsTrigger: 0
   m_ProvidesContacts: 0
-  m_Enabled: 1
+  m_Enabled: 0
   serializedVersion: 5
   m_Convex: 1
   m_CookingOptions: 30
@@ -10479,7 +10479,7 @@ MeshCollider:
   m_LayerOverridePriority: 0
   m_IsTrigger: 0
   m_ProvidesContacts: 0
-  m_Enabled: 1
+  m_Enabled: 0
   serializedVersion: 5
   m_Convex: 1
   m_CookingOptions: 30
@@ -10548,7 +10548,7 @@ MeshCollider:
   m_LayerOverridePriority: 0
   m_IsTrigger: 0
   m_ProvidesContacts: 0
-  m_Enabled: 1
+  m_Enabled: 0
   serializedVersion: 5
   m_Convex: 1
   m_CookingOptions: 30
@@ -11184,7 +11184,7 @@ MeshCollider:
   m_LayerOverridePriority: 0
   m_IsTrigger: 0
   m_ProvidesContacts: 0
-  m_Enabled: 1
+  m_Enabled: 0
   serializedVersion: 5
   m_Convex: 1
   m_CookingOptions: 30
@@ -11993,7 +11993,7 @@ MonoBehaviour:
   LoadedPartRotation: {x: 0, y: 0, z: 0, w: 1}
   LoadedPartScale: {x: 1, y: 1, z: 1}
   wheelType: 5
-  shouldCollide: 1
+  shouldCollide: 0
 --- !u!1 &2242678617717148743
 GameObject:
   m_ObjectHideFlags: 0
@@ -12044,7 +12044,7 @@ MeshCollider:
   m_LayerOverridePriority: 0
   m_IsTrigger: 0
   m_ProvidesContacts: 0
-  m_Enabled: 1
+  m_Enabled: 0
   serializedVersion: 5
   m_Convex: 1
   m_CookingOptions: 30
@@ -12198,7 +12198,7 @@ MeshCollider:
   m_LayerOverridePriority: 0
   m_IsTrigger: 0
   m_ProvidesContacts: 0
-  m_Enabled: 1
+  m_Enabled: 0
   serializedVersion: 5
   m_Convex: 1
   m_CookingOptions: 30
@@ -12508,14 +12508,14 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   currentGamePiece: {fileID: 0}
   Preload: 0
-  intakeSize: {x: 6, y: 6, z: 6}
+  intakeSize: {x: 3, y: 3, z: 3}
   pieceName: 0
   currentState: 0
   Actions:
-  - Name: Transfer
+  - Name: Shoot
     Type: 2
     Animate: 0
-    Speed: 260
+    Speed: 275
     HpRandomizer: 25
     AngularSpeed: 0
     MoveTo: {fileID: 0}
@@ -12526,8 +12526,8 @@ MonoBehaviour:
     ControlType: 2
     performTimer: 0
     InputRequired: 1
-    ControllerButton: 0
-    KeyboardButton: 0
+    ControllerButton: 9
+    KeyboardButton: 33
 --- !u!114 &1799041961221973256
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -12546,9 +12546,12 @@ MonoBehaviour:
     canBeSelected:
     - Shoot
     - Transfer
-    selectedIndex: 1
-    selectedName: Transfer
+    selectedIndex: 0
+    selectedName: Shoot
   targetPosition: {x: 0, y: 0, z: 0}
+  useAllianceTargets: 0
+  blueTargetPosition: {x: 0, y: 0, z: 0}
+  redTargetPosition: {x: 0, y: 0, z: 0}
   SetpointName: 
   connectedTo: Hood
   extraTargets: []
@@ -12577,20 +12580,23 @@ MonoBehaviour:
   targetWhen: 1
   targetOuttake:
     canBeSelected:
-    - Transfer
+    - Shoot
     selectedIndex: 0
-    selectedName: Transfer
-  targetPosition: {x: -5.2, y: 9, z: -2}
-  SetpointName: Pass
+    selectedName: Shoot
+  targetPosition: {x: 0, y: 0, z: 0}
+  useAllianceTargets: 1
+  blueTargetPosition: {x: -8, y: 6, z: -2.54}
+  redTargetPosition: {x: 8, y: 6, z: -2.54}
+  SetpointName: PassLeft
   connectedTo: Hood
   extraTargets: []
   interpolationTable:
-  - distance: 2.2
-    value: 275
-  - distance: 4.1
-    value: 325
-  - distance: 6.6
-    value: 375
+  - distance: 3.5
+    value: 225
+  - distance: 9.4
+    value: 350
+  - distance: 0
+    value: 50
   Distance: 0
   Output: 0
 --- !u!114 &6857710732484728155
@@ -12609,20 +12615,23 @@ MonoBehaviour:
   targetWhen: 1
   targetOuttake:
     canBeSelected:
-    - Transfer
+    - Shoot
     selectedIndex: 0
-    selectedName: Transfer
-  targetPosition: {x: -5.2, y: 9, z: 2}
-  SetpointName: Pass2
+    selectedName: Shoot
+  targetPosition: {x: 0, y: 0, z: 0}
+  useAllianceTargets: 1
+  blueTargetPosition: {x: -8, y: 6, z: 2.54}
+  redTargetPosition: {x: 8, y: 6, z: 2.54}
+  SetpointName: PassRight
   connectedTo: Hood
   extraTargets: []
   interpolationTable:
-  - distance: 2.2
-    value: 275
-  - distance: 4.1
-    value: 325
-  - distance: 6.6
-    value: 375
+  - distance: 3.5
+    value: 225
+  - distance: 9.4
+    value: 350
+  - distance: 0
+    value: 50
   Distance: 0
   Output: 0
 --- !u!1 &2344573497354953046
@@ -12675,7 +12684,7 @@ MeshCollider:
   m_LayerOverridePriority: 0
   m_IsTrigger: 0
   m_ProvidesContacts: 0
-  m_Enabled: 1
+  m_Enabled: 0
   serializedVersion: 5
   m_Convex: 1
   m_CookingOptions: 30
@@ -13309,7 +13318,7 @@ MonoBehaviour:
   LoadedPartRotation: {x: 0, y: 0, z: 0, w: 1}
   LoadedPartScale: {x: 1, y: 1, z: 1}
   wheelType: 5
-  shouldCollide: 1
+  shouldCollide: 0
 --- !u!1 &2446074520983587418
 GameObject:
   m_ObjectHideFlags: 0
@@ -13445,7 +13454,7 @@ MeshCollider:
   m_LayerOverridePriority: 0
   m_IsTrigger: 0
   m_ProvidesContacts: 0
-  m_Enabled: 1
+  m_Enabled: 0
   serializedVersion: 5
   m_Convex: 1
   m_CookingOptions: 30
@@ -13826,7 +13835,7 @@ MonoBehaviour:
   units: 0
   plateHeight: 10
   plateWidth: 4
-  shouldCollide: 1
+  shouldCollide: 0
 --- !u!1 &2542357467371548199
 GameObject:
   m_ObjectHideFlags: 0
@@ -13930,7 +13939,7 @@ MeshCollider:
   m_LayerOverridePriority: 0
   m_IsTrigger: 0
   m_ProvidesContacts: 0
-  m_Enabled: 1
+  m_Enabled: 0
   serializedVersion: 5
   m_Convex: 1
   m_CookingOptions: 30
@@ -14724,7 +14733,7 @@ MeshCollider:
   m_LayerOverridePriority: 0
   m_IsTrigger: 0
   m_ProvidesContacts: 0
-  m_Enabled: 1
+  m_Enabled: 0
   serializedVersion: 5
   m_Convex: 1
   m_CookingOptions: 30
@@ -14939,7 +14948,7 @@ MeshCollider:
   m_LayerOverridePriority: 0
   m_IsTrigger: 0
   m_ProvidesContacts: 0
-  m_Enabled: 1
+  m_Enabled: 0
   serializedVersion: 5
   m_Convex: 1
   m_CookingOptions: 30
@@ -15788,7 +15797,7 @@ MeshCollider:
   m_LayerOverridePriority: 0
   m_IsTrigger: 0
   m_ProvidesContacts: 0
-  m_Enabled: 1
+  m_Enabled: 0
   serializedVersion: 5
   m_Convex: 1
   m_CookingOptions: 30
@@ -15914,7 +15923,7 @@ MonoBehaviour:
   LoadedPartRotation: {x: 0, y: 0, z: 0, w: 1}
   LoadedPartScale: {x: 1, y: 1, z: 1}
   wheelType: 1
-  shouldCollide: 1
+  shouldCollide: 0
 --- !u!1 &2885600983324095945
 GameObject:
   m_ObjectHideFlags: 0
@@ -16002,7 +16011,7 @@ MonoBehaviour:
   LoadedPartRotation: {x: 0, y: 0, z: 0, w: 1}
   LoadedPartScale: {x: 1, y: 1, z: 1}
   wheelType: 5
-  shouldCollide: 1
+  shouldCollide: 0
 --- !u!1 &2896501169644364391
 GameObject:
   m_ObjectHideFlags: 0
@@ -16119,7 +16128,7 @@ MonoBehaviour:
   units: 0
   length: 15
   width: 26
-  armWeight: 4
+  armWeight: 1
   useNoWrapPoint: 0
   noWrapAngle: 180
   useAdvancedSettings: 1
@@ -16214,7 +16223,7 @@ MonoBehaviour:
   LoadedPartRotation: {x: 0, y: 0, z: 0, w: 1}
   LoadedPartScale: {x: 1, y: 1, z: 1}
   wheelType: 5
-  shouldCollide: 1
+  shouldCollide: 0
 --- !u!1 &2941419369280011206
 GameObject:
   m_ObjectHideFlags: 0
@@ -16471,7 +16480,7 @@ MeshCollider:
   m_LayerOverridePriority: 0
   m_IsTrigger: 0
   m_ProvidesContacts: 0
-  m_Enabled: 1
+  m_Enabled: 0
   serializedVersion: 5
   m_Convex: 1
   m_CookingOptions: 30
@@ -16573,7 +16582,7 @@ MeshCollider:
   m_LayerOverridePriority: 0
   m_IsTrigger: 0
   m_ProvidesContacts: 0
-  m_Enabled: 1
+  m_Enabled: 0
   serializedVersion: 5
   m_Convex: 1
   m_CookingOptions: 30
@@ -17263,7 +17272,7 @@ MeshCollider:
   m_LayerOverridePriority: 0
   m_IsTrigger: 0
   m_ProvidesContacts: 0
-  m_Enabled: 1
+  m_Enabled: 0
   serializedVersion: 5
   m_Convex: 1
   m_CookingOptions: 30
@@ -17954,6 +17963,7 @@ MonoBehaviour:
   targetVelocity: 0
   targetModuleAngle: 0
   lateralFrictionMultiplier: 1
+  tractionCoefficient: 1.1
   _rb: {fileID: 0}
 --- !u!1 &3261615660734116557
 GameObject:
@@ -18093,7 +18103,7 @@ MonoBehaviour:
   LoadedPartRotation: {x: 0, y: 0, z: 0, w: 1}
   LoadedPartScale: {x: 1, y: 1, z: 1}
   wheelType: 1
-  shouldCollide: 1
+  shouldCollide: 0
 --- !u!1 &3269774526264062747
 GameObject:
   m_ObjectHideFlags: 0
@@ -18144,7 +18154,7 @@ MeshCollider:
   m_LayerOverridePriority: 0
   m_IsTrigger: 0
   m_ProvidesContacts: 0
-  m_Enabled: 1
+  m_Enabled: 0
   serializedVersion: 5
   m_Convex: 1
   m_CookingOptions: 30
@@ -18248,7 +18258,7 @@ MonoBehaviour:
   LoadedPartRotation: {x: 0, y: 0, z: 0, w: 1}
   LoadedPartScale: {x: 1, y: 1, z: 1}
   wheelType: 1
-  shouldCollide: 1
+  shouldCollide: 0
 --- !u!1 &3309277846833159968
 GameObject:
   m_ObjectHideFlags: 0
@@ -18386,7 +18396,7 @@ MonoBehaviour:
   LoadedPartRotation: {x: 0, y: 0, z: 0, w: 1}
   LoadedPartScale: {x: 1, y: 1, z: 1}
   wheelType: 1
-  shouldCollide: 1
+  shouldCollide: 0
 --- !u!1 &3332962667368540181
 GameObject:
   m_ObjectHideFlags: 0
@@ -18575,7 +18585,7 @@ MeshCollider:
   m_LayerOverridePriority: 0
   m_IsTrigger: 0
   m_ProvidesContacts: 0
-  m_Enabled: 1
+  m_Enabled: 0
   serializedVersion: 5
   m_Convex: 1
   m_CookingOptions: 30
@@ -18646,7 +18656,7 @@ MonoBehaviour:
   LoadedPartRotation: {x: 0, y: 0, z: 0, w: 1}
   LoadedPartScale: {x: 1, y: 1, z: 1}
   wheelType: 1
-  shouldCollide: 1
+  shouldCollide: 0
 --- !u!1 &3354081485545018112
 GameObject:
   m_ObjectHideFlags: 0
@@ -18784,7 +18794,7 @@ MonoBehaviour:
   LoadedPartRotation: {x: 0, y: 0, z: 0, w: 1}
   LoadedPartScale: {x: 1, y: 1, z: 1}
   wheelType: 1
-  shouldCollide: 1
+  shouldCollide: 0
 --- !u!1 &3367587090559561980
 GameObject:
   m_ObjectHideFlags: 0
@@ -18921,7 +18931,7 @@ MeshCollider:
   m_LayerOverridePriority: 0
   m_IsTrigger: 0
   m_ProvidesContacts: 0
-  m_Enabled: 1
+  m_Enabled: 0
   serializedVersion: 5
   m_Convex: 1
   m_CookingOptions: 30
@@ -19313,7 +19323,7 @@ MonoBehaviour:
   LoadedPartRotation: {x: 0, y: 0, z: 0, w: 1}
   LoadedPartScale: {x: 1, y: 1, z: 1}
   wheelType: 1
-  shouldCollide: 1
+  shouldCollide: 0
 --- !u!1 &3511227941016186755
 GameObject:
   m_ObjectHideFlags: 0
@@ -19417,7 +19427,7 @@ MeshCollider:
   m_LayerOverridePriority: 0
   m_IsTrigger: 0
   m_ProvidesContacts: 0
-  m_Enabled: 1
+  m_Enabled: 0
   serializedVersion: 5
   m_Convex: 1
   m_CookingOptions: 30
@@ -19488,7 +19498,7 @@ MonoBehaviour:
   LoadedPartRotation: {x: 0, y: 0, z: 0, w: 1}
   LoadedPartScale: {x: 1, y: 1, z: 1}
   wheelType: 1
-  shouldCollide: 1
+  shouldCollide: 0
 --- !u!1 &3549644997977899596
 GameObject:
   m_ObjectHideFlags: 0
@@ -20241,7 +20251,7 @@ MeshCollider:
   m_LayerOverridePriority: 0
   m_IsTrigger: 0
   m_ProvidesContacts: 0
-  m_Enabled: 1
+  m_Enabled: 0
   serializedVersion: 5
   m_Convex: 1
   m_CookingOptions: 30
@@ -20312,7 +20322,7 @@ MonoBehaviour:
   LoadedPartRotation: {x: 0, y: 0, z: 0, w: 1}
   LoadedPartScale: {x: 1, y: 1, z: 1}
   wheelType: 5
-  shouldCollide: 1
+  shouldCollide: 0
 --- !u!1 &3690597841860915566
 GameObject:
   m_ObjectHideFlags: 0
@@ -20365,7 +20375,7 @@ MonoBehaviour:
   LoadedPartRotation: {x: 0, y: 0, z: 0, w: 1}
   LoadedPartScale: {x: 1, y: 1, z: 1}
   wheelType: 1
-  shouldCollide: 1
+  shouldCollide: 0
 --- !u!1 &3702740647785609833
 GameObject:
   m_ObjectHideFlags: 0
@@ -20418,7 +20428,7 @@ MonoBehaviour:
   LoadedPartRotation: {x: 0, y: 0, z: 0, w: 1}
   LoadedPartScale: {x: 1, y: 1, z: 1}
   wheelType: 1
-  shouldCollide: 1
+  shouldCollide: 0
 --- !u!1 &3713588986515028609
 GameObject:
   m_ObjectHideFlags: 0
@@ -20879,7 +20889,7 @@ MeshCollider:
   m_LayerOverridePriority: 0
   m_IsTrigger: 0
   m_ProvidesContacts: 0
-  m_Enabled: 1
+  m_Enabled: 0
   serializedVersion: 5
   m_Convex: 1
   m_CookingOptions: 30
@@ -21355,7 +21365,7 @@ MeshCollider:
   m_LayerOverridePriority: 0
   m_IsTrigger: 0
   m_ProvidesContacts: 0
-  m_Enabled: 1
+  m_Enabled: 0
   serializedVersion: 5
   m_Convex: 1
   m_CookingOptions: 30
@@ -21662,7 +21672,7 @@ MonoBehaviour:
   LoadedPartRotation: {x: 0, y: 0, z: 0, w: 1}
   LoadedPartScale: {x: 1, y: 1, z: 1}
   wheelType: 5
-  shouldCollide: 1
+  shouldCollide: 0
 --- !u!1 &3877980154746303626
 GameObject:
   m_ObjectHideFlags: 0
@@ -21894,7 +21904,7 @@ MonoBehaviour:
   units: 0
   length: 15
   width: 26
-  armWeight: 4
+  armWeight: 1
   useNoWrapPoint: 0
   noWrapAngle: 180
   useAdvancedSettings: 1
@@ -22223,7 +22233,7 @@ MeshCollider:
   m_LayerOverridePriority: 0
   m_IsTrigger: 0
   m_ProvidesContacts: 0
-  m_Enabled: 1
+  m_Enabled: 0
   serializedVersion: 5
   m_Convex: 1
   m_CookingOptions: 30
@@ -22537,7 +22547,7 @@ MeshCollider:
   m_LayerOverridePriority: 0
   m_IsTrigger: 0
   m_ProvidesContacts: 0
-  m_Enabled: 1
+  m_Enabled: 0
   serializedVersion: 5
   m_Convex: 1
   m_CookingOptions: 30
@@ -22862,7 +22872,7 @@ MeshCollider:
   m_LayerOverridePriority: 0
   m_IsTrigger: 0
   m_ProvidesContacts: 0
-  m_Enabled: 1
+  m_Enabled: 0
   serializedVersion: 5
   m_Convex: 1
   m_CookingOptions: 30
@@ -23297,6 +23307,7 @@ MonoBehaviour:
   targetVelocity: 0
   targetModuleAngle: 0
   lateralFrictionMultiplier: 1
+  tractionCoefficient: 1.1
   _rb: {fileID: 0}
 --- !u!1 &4207289442610598587
 GameObject:
@@ -23360,7 +23371,7 @@ MonoBehaviour:
   units: 0
   length: 8
   width: 23.5
-  armWeight: 4
+  armWeight: 1
   useNoWrapPoint: 0
   noWrapAngle: 180
   useAdvancedSettings: 1
@@ -23451,7 +23462,7 @@ MeshCollider:
   m_LayerOverridePriority: 0
   m_IsTrigger: 0
   m_ProvidesContacts: 0
-  m_Enabled: 1
+  m_Enabled: 0
   serializedVersion: 5
   m_Convex: 1
   m_CookingOptions: 30
@@ -23520,7 +23531,7 @@ MeshCollider:
   m_LayerOverridePriority: 0
   m_IsTrigger: 0
   m_ProvidesContacts: 0
-  m_Enabled: 1
+  m_Enabled: 0
   serializedVersion: 5
   m_Convex: 1
   m_CookingOptions: 30
@@ -23729,7 +23740,7 @@ MeshCollider:
   m_LayerOverridePriority: 0
   m_IsTrigger: 0
   m_ProvidesContacts: 0
-  m_Enabled: 1
+  m_Enabled: 0
   serializedVersion: 5
   m_Convex: 1
   m_CookingOptions: 30
@@ -23800,7 +23811,7 @@ MonoBehaviour:
   LoadedPartRotation: {x: 0, y: 0, z: 0, w: 1}
   LoadedPartScale: {x: 1, y: 1, z: 1}
   wheelType: 1
-  shouldCollide: 1
+  shouldCollide: 0
 --- !u!1 &4276426634703414814
 GameObject:
   m_ObjectHideFlags: 0
@@ -24277,7 +24288,7 @@ MeshCollider:
   m_LayerOverridePriority: 0
   m_IsTrigger: 0
   m_ProvidesContacts: 0
-  m_Enabled: 1
+  m_Enabled: 0
   serializedVersion: 5
   m_Convex: 1
   m_CookingOptions: 30
@@ -24474,7 +24485,7 @@ MonoBehaviour:
   units: 0
   plateHeight: 10
   plateWidth: 4
-  shouldCollide: 1
+  shouldCollide: 0
 --- !u!1 &4395535607533623003
 GameObject:
   m_ObjectHideFlags: 0
@@ -24631,7 +24642,7 @@ MeshCollider:
   m_LayerOverridePriority: 0
   m_IsTrigger: 0
   m_ProvidesContacts: 0
-  m_Enabled: 1
+  m_Enabled: 0
   serializedVersion: 5
   m_Convex: 1
   m_CookingOptions: 30
@@ -24700,7 +24711,7 @@ MeshCollider:
   m_LayerOverridePriority: 0
   m_IsTrigger: 0
   m_ProvidesContacts: 0
-  m_Enabled: 1
+  m_Enabled: 0
   serializedVersion: 5
   m_Convex: 1
   m_CookingOptions: 30
@@ -25025,7 +25036,7 @@ MeshCollider:
   m_LayerOverridePriority: 0
   m_IsTrigger: 0
   m_ProvidesContacts: 0
-  m_Enabled: 1
+  m_Enabled: 0
   serializedVersion: 5
   m_Convex: 1
   m_CookingOptions: 30
@@ -25146,7 +25157,7 @@ MeshCollider:
   m_LayerOverridePriority: 0
   m_IsTrigger: 0
   m_ProvidesContacts: 0
-  m_Enabled: 1
+  m_Enabled: 0
   serializedVersion: 5
   m_Convex: 1
   m_CookingOptions: 30
@@ -25502,7 +25513,7 @@ MeshCollider:
   m_LayerOverridePriority: 0
   m_IsTrigger: 0
   m_ProvidesContacts: 0
-  m_Enabled: 1
+  m_Enabled: 0
   serializedVersion: 5
   m_Convex: 1
   m_CookingOptions: 30
@@ -25638,7 +25649,7 @@ MonoBehaviour:
   LoadedPartRotation: {x: 0, y: 0, z: 0, w: 1}
   LoadedPartScale: {x: 1, y: 1, z: 1}
   wheelType: 5
-  shouldCollide: 1
+  shouldCollide: 0
 --- !u!1 &4724704203597252769
 GameObject:
   m_ObjectHideFlags: 0
@@ -25774,7 +25785,7 @@ MeshCollider:
   m_LayerOverridePriority: 0
   m_IsTrigger: 0
   m_ProvidesContacts: 0
-  m_Enabled: 1
+  m_Enabled: 0
   serializedVersion: 5
   m_Convex: 1
   m_CookingOptions: 30
@@ -26015,7 +26026,7 @@ MonoBehaviour:
   LoadedPartRotation: {x: 0, y: 0, z: 0, w: 1}
   LoadedPartScale: {x: 1, y: 1, z: 1}
   wheelType: 1
-  shouldCollide: 1
+  shouldCollide: 0
 --- !u!1 &4738313251681109988
 GameObject:
   m_ObjectHideFlags: 0
@@ -26210,7 +26221,7 @@ MonoBehaviour:
   LoadedPartRotation: {x: 0, y: 0, z: 0, w: 1}
   LoadedPartScale: {x: 1, y: 1, z: 1}
   wheelType: 1
-  shouldCollide: 1
+  shouldCollide: 0
 --- !u!1 &4788369221258282847
 GameObject:
   m_ObjectHideFlags: 0
@@ -26406,7 +26417,7 @@ MonoBehaviour:
   LoadedPartRotation: {x: 0, y: 0, z: 0, w: 1}
   LoadedPartScale: {x: 1, y: 1, z: 1}
   wheelType: 1
-  shouldCollide: 1
+  shouldCollide: 0
 --- !u!1 &4826532112382222622
 GameObject:
   m_ObjectHideFlags: 0
@@ -26558,7 +26569,7 @@ MonoBehaviour:
   LoadedPartRotation: {x: 0, y: 0, z: 0, w: 1}
   LoadedPartScale: {x: 1, y: 1, z: 1}
   wheelType: 5
-  shouldCollide: 1
+  shouldCollide: 0
 --- !u!1 &4900560858297780680
 GameObject:
   m_ObjectHideFlags: 0
@@ -26970,7 +26981,7 @@ MonoBehaviour:
   LoadedPartRotation: {x: 0, y: 0, z: 0, w: 1}
   LoadedPartScale: {x: 1, y: 1, z: 1}
   wheelType: 5
-  shouldCollide: 1
+  shouldCollide: 0
 --- !u!1 &5047711511865533521
 GameObject:
   m_ObjectHideFlags: 0
@@ -27109,7 +27120,7 @@ MonoBehaviour:
   LoadedPartRotation: {x: 0, y: 0, z: 0, w: 1}
   LoadedPartScale: {x: 1, y: 1, z: 1}
   wheelType: 1
-  shouldCollide: 1
+  shouldCollide: 0
 --- !u!1 &5069971962915516990
 GameObject:
   m_ObjectHideFlags: 0
@@ -27247,7 +27258,7 @@ MonoBehaviour:
   LoadedPartRotation: {x: 0, y: 0, z: 0, w: 1}
   LoadedPartScale: {x: 1, y: 1, z: 1}
   wheelType: 1
-  shouldCollide: 1
+  shouldCollide: 0
 --- !u!1 &5123487782611449015
 GameObject:
   m_ObjectHideFlags: 0
@@ -27300,7 +27311,7 @@ MonoBehaviour:
   LoadedPartRotation: {x: 0, y: 0, z: 0, w: 1}
   LoadedPartScale: {x: 1, y: 1, z: 1}
   wheelType: 1
-  shouldCollide: 1
+  shouldCollide: 0
 --- !u!1 &5141611658137305824
 GameObject:
   m_ObjectHideFlags: 0
@@ -27472,7 +27483,7 @@ MonoBehaviour:
   LoadedPartRotation: {x: 0, y: 0, z: 0, w: 1}
   LoadedPartScale: {x: 1, y: 1, z: 1}
   wheelType: 1
-  shouldCollide: 1
+  shouldCollide: 0
 --- !u!1 &5210622693113139689
 GameObject:
   m_ObjectHideFlags: 0
@@ -27610,7 +27621,7 @@ MonoBehaviour:
   LoadedPartRotation: {x: 0, y: 0, z: 0, w: 1}
   LoadedPartScale: {x: 1, y: 1, z: 1}
   wheelType: 1
-  shouldCollide: 1
+  shouldCollide: 0
 --- !u!1 &5232209978085638766
 GameObject:
   m_ObjectHideFlags: 0
@@ -27981,7 +27992,7 @@ BoxCollider:
   m_LayerOverridePriority: 0
   m_IsTrigger: 0
   m_ProvidesContacts: 0
-  m_Enabled: 1
+  m_Enabled: 0
   serializedVersion: 3
   m_Size: {x: 1, y: 0.00635, z: 1}
   m_Center: {x: 0, y: 0, z: 0}
@@ -28300,7 +28311,7 @@ MonoBehaviour:
   LoadedPartRotation: {x: 0, y: 0, z: 0, w: 1}
   LoadedPartScale: {x: 1, y: 1, z: 1}
   wheelType: 1
-  shouldCollide: 1
+  shouldCollide: 0
 --- !u!1 &5358480471520434197
 GameObject:
   m_ObjectHideFlags: 0
@@ -29182,7 +29193,7 @@ MonoBehaviour:
   LoadedPartRotation: {x: 0, y: 0, z: 0, w: 1}
   LoadedPartScale: {x: 1, y: 1, z: 1}
   wheelType: 5
-  shouldCollide: 1
+  shouldCollide: 0
 --- !u!1 &5568573611053109519
 GameObject:
   m_ObjectHideFlags: 0
@@ -29235,7 +29246,7 @@ MonoBehaviour:
   LoadedPartRotation: {x: 0, y: 0, z: 0, w: 1}
   LoadedPartScale: {x: 1, y: 1, z: 1}
   wheelType: 5
-  shouldCollide: 1
+  shouldCollide: 0
 --- !u!1 &5590997043227181567
 GameObject:
   m_ObjectHideFlags: 0
@@ -29645,7 +29656,6 @@ Transform:
   m_Children:
   - {fileID: 1856586708934379794}
   - {fileID: 7740464016158951647}
-  - {fileID: 5683836099094967657}
   m_Father: {fileID: 6472797729041702431}
   m_LocalEulerAnglesHint: {x: -90, y: 0, z: 180}
 --- !u!114 &5590651922596024251
@@ -29698,7 +29708,7 @@ MonoBehaviour:
   units: 0
   length: 2
   width: 0
-  armWeight: 5
+  armWeight: 1
   useNoWrapPoint: 0
   noWrapAngle: 0
   useAdvancedSettings: 1
@@ -29721,8 +29731,8 @@ MonoBehaviour:
   targetType: 0
   targetWhen: 1
   targetingMethod: 0
-  useAlliancePreset: 0
   targetPosition: {x: 0, y: 0, z: 0}
+  useAlliancePreset: 0
   blueTargetPosition: {x: 0, y: 0, z: 0}
   redTargetPosition: {x: 0, y: 0, z: 0}
   SetpointName: 
@@ -29732,7 +29742,7 @@ MonoBehaviour:
   angleOffset: -25
   interpolationTable: []
   requireInsideRegion: 1
-  positionReference: {fileID: 6472797729041702431}
+  bumperRoot: {fileID: 6602692375235749256}
   allowedRegions: 0000000001000000
   goToHome: 1
 --- !u!114 &3505663508596966107
@@ -29750,18 +29760,18 @@ MonoBehaviour:
   targetType: 2
   targetWhen: 1
   targetingMethod: 0
-  useAlliancePreset: 1
   targetPosition: {x: 0, y: 0, z: 0}
-  blueTargetPosition: {x: -8, y: 5, z: -2.54}
-  redTargetPosition: {x: 8, y: 5, z: 2.54}
+  useAlliancePreset: 1
+  blueTargetPosition: {x: -6, y: 3, z: -2.54}
+  redTargetPosition: {x: 6, y: 3, z: 2.54}
   SetpointName: PassLeft
   extraTargets: []
   robotPosition: {fileID: 0}
   heightOffset: 0.75
-  angleOffset: 0
+  angleOffset: -10
   interpolationTable: []
   requireInsideRegion: 0
-  positionReference: {fileID: 0}
+  bumperRoot: {fileID: 0}
   allowedRegions: 
   goToHome: 0
 --- !u!114 &9024217513775985368
@@ -29779,18 +29789,18 @@ MonoBehaviour:
   targetType: 2
   targetWhen: 1
   targetingMethod: 0
-  useAlliancePreset: 1
   targetPosition: {x: 0, y: 0, z: 0}
-  blueTargetPosition: {x: -8, y: 5, z: -2.54}
-  redTargetPosition: {x: 8, y: 5, z: 2.54}
+  useAlliancePreset: 1
+  blueTargetPosition: {x: -6, y: 3, z: -2.54}
+  redTargetPosition: {x: 6, y: 3, z: 2.54}
   SetpointName: PassRight
   extraTargets: []
   robotPosition: {fileID: 0}
   heightOffset: 0.75
-  angleOffset: 0
+  angleOffset: -10
   interpolationTable: []
   requireInsideRegion: 0
-  positionReference: {fileID: 0}
+  bumperRoot: {fileID: 0}
   allowedRegions: 
   goToHome: 0
 --- !u!1 &5662258255901971526
@@ -30149,7 +30159,7 @@ MonoBehaviour:
   LoadedPartRotation: {x: 0, y: 0, z: 0, w: 1}
   LoadedPartScale: {x: 1, y: 1, z: 1}
   wheelType: 1
-  shouldCollide: 1
+  shouldCollide: 0
 --- !u!1 &5761091731265351296
 GameObject:
   m_ObjectHideFlags: 0
@@ -30423,7 +30433,7 @@ MeshCollider:
   m_LayerOverridePriority: 0
   m_IsTrigger: 0
   m_ProvidesContacts: 0
-  m_Enabled: 1
+  m_Enabled: 0
   serializedVersion: 5
   m_Convex: 1
   m_CookingOptions: 30
@@ -30833,14 +30843,14 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   currentGamePiece: {fileID: 0}
   Preload: 0
-  intakeSize: {x: 6, y: 6, z: 6}
+  intakeSize: {x: 3, y: 3, z: 3}
   pieceName: 0
   currentState: 0
   Actions:
-  - Name: Transfer
+  - Name: Shoot
     Type: 2
     Animate: 0
-    Speed: 260
+    Speed: 275
     HpRandomizer: 25
     AngularSpeed: 0
     MoveTo: {fileID: 0}
@@ -30851,8 +30861,8 @@ MonoBehaviour:
     ControlType: 2
     performTimer: 0
     InputRequired: 1
-    ControllerButton: 0
-    KeyboardButton: 0
+    ControllerButton: 9
+    KeyboardButton: 33
 --- !u!114 &1459027524414086194
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -30871,9 +30881,12 @@ MonoBehaviour:
     canBeSelected:
     - Shoot
     - Transfer
-    selectedIndex: 1
-    selectedName: Transfer
+    selectedIndex: 0
+    selectedName: Shoot
   targetPosition: {x: 0, y: 0, z: 0}
+  useAllianceTargets: 0
+  blueTargetPosition: {x: 0, y: 0, z: 0}
+  redTargetPosition: {x: 0, y: 0, z: 0}
   SetpointName: 
   connectedTo: Hood
   extraTargets: []
@@ -30902,20 +30915,23 @@ MonoBehaviour:
   targetWhen: 1
   targetOuttake:
     canBeSelected:
-    - Transfer
+    - Shoot
     selectedIndex: 0
-    selectedName: Transfer
-  targetPosition: {x: -5.2, y: 9, z: -2}
-  SetpointName: Pass
+    selectedName: Shoot
+  targetPosition: {x: 0, y: 0, z: 0}
+  useAllianceTargets: 1
+  blueTargetPosition: {x: -8, y: 6, z: -2.54}
+  redTargetPosition: {x: 8, y: 6, z: -2.54}
+  SetpointName: PassLeft
   connectedTo: Hood
   extraTargets: []
   interpolationTable:
-  - distance: 2.2
-    value: 275
-  - distance: 4.1
-    value: 325
-  - distance: 6.6
-    value: 375
+  - distance: 3.5
+    value: 225
+  - distance: 9.4
+    value: 350
+  - distance: 0
+    value: 50
   Distance: 0
   Output: 0
 --- !u!114 &3123596093483286221
@@ -30934,20 +30950,23 @@ MonoBehaviour:
   targetWhen: 1
   targetOuttake:
     canBeSelected:
-    - Transfer
+    - Shoot
     selectedIndex: 0
-    selectedName: Transfer
-  targetPosition: {x: -5.2, y: 9, z: 2}
-  SetpointName: Pass2
+    selectedName: Shoot
+  targetPosition: {x: 0, y: 0, z: 0}
+  useAllianceTargets: 1
+  blueTargetPosition: {x: -8, y: 6, z: 2.54}
+  redTargetPosition: {x: 8, y: 6, z: 2.54}
+  SetpointName: PassRight
   connectedTo: Hood
   extraTargets: []
   interpolationTable:
-  - distance: 2.2
-    value: 275
-  - distance: 4.1
-    value: 325
-  - distance: 6.6
-    value: 375
+  - distance: 3.5
+    value: 225
+  - distance: 9.4
+    value: 350
+  - distance: 0
+    value: 50
   Distance: 0
   Output: 0
 --- !u!1 &5893819791647228871
@@ -31302,7 +31321,7 @@ MonoBehaviour:
   LoadedPartRotation: {x: 0, y: 0, z: 0, w: 1}
   LoadedPartScale: {x: 1, y: 1, z: 1}
   wheelType: 1
-  shouldCollide: 1
+  shouldCollide: 0
 --- !u!1 &5933318788327550942
 GameObject:
   m_ObjectHideFlags: 0
@@ -31571,7 +31590,7 @@ MeshCollider:
   m_LayerOverridePriority: 0
   m_IsTrigger: 0
   m_ProvidesContacts: 0
-  m_Enabled: 1
+  m_Enabled: 0
   serializedVersion: 5
   m_Convex: 1
   m_CookingOptions: 30
@@ -31724,14 +31743,14 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   currentGamePiece: {fileID: 0}
   Preload: 0
-  intakeSize: {x: 6, y: 6, z: 6}
+  intakeSize: {x: 3, y: 3, z: 3}
   pieceName: 0
   currentState: 0
   Actions:
-  - Name: Transfer
+  - Name: Shoot
     Type: 2
     Animate: 0
-    Speed: 260
+    Speed: 275
     HpRandomizer: 25
     AngularSpeed: 0
     MoveTo: {fileID: 0}
@@ -31742,8 +31761,8 @@ MonoBehaviour:
     ControlType: 2
     performTimer: 0
     InputRequired: 1
-    ControllerButton: 0
-    KeyboardButton: 0
+    ControllerButton: 9
+    KeyboardButton: 33
 --- !u!114 &1317597472643702238
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -31762,9 +31781,12 @@ MonoBehaviour:
     canBeSelected:
     - Shoot
     - Transfer
-    selectedIndex: 1
-    selectedName: Transfer
+    selectedIndex: 0
+    selectedName: Shoot
   targetPosition: {x: 0, y: 0, z: 0}
+  useAllianceTargets: 0
+  blueTargetPosition: {x: 0, y: 0, z: 0}
+  redTargetPosition: {x: 0, y: 0, z: 0}
   SetpointName: 
   connectedTo: Hood
   extraTargets: []
@@ -31793,20 +31815,23 @@ MonoBehaviour:
   targetWhen: 1
   targetOuttake:
     canBeSelected:
-    - Transfer
+    - Shoot
     selectedIndex: 0
-    selectedName: Transfer
-  targetPosition: {x: -5.2, y: 9, z: -2}
-  SetpointName: Pass
+    selectedName: Shoot
+  targetPosition: {x: 0, y: 0, z: 0}
+  useAllianceTargets: 1
+  blueTargetPosition: {x: -8, y: 6, z: -2.54}
+  redTargetPosition: {x: 8, y: 6, z: -2.54}
+  SetpointName: PassLeft
   connectedTo: Hood
   extraTargets: []
   interpolationTable:
-  - distance: 2.2
-    value: 275
-  - distance: 4.1
-    value: 325
-  - distance: 6.6
-    value: 375
+  - distance: 3.5
+    value: 225
+  - distance: 9.4
+    value: 350
+  - distance: 0
+    value: 50
   Distance: 0
   Output: 0
 --- !u!114 &8154829807009360598
@@ -31825,20 +31850,23 @@ MonoBehaviour:
   targetWhen: 1
   targetOuttake:
     canBeSelected:
-    - Transfer
+    - Shoot
     selectedIndex: 0
-    selectedName: Transfer
-  targetPosition: {x: -5.2, y: 9, z: 2}
-  SetpointName: Pass2
+    selectedName: Shoot
+  targetPosition: {x: 0, y: 0, z: 0}
+  useAllianceTargets: 1
+  blueTargetPosition: {x: -8, y: 6, z: 2.54}
+  redTargetPosition: {x: 8, y: 6, z: 2.54}
+  SetpointName: PassRight
   connectedTo: Hood
   extraTargets: []
   interpolationTable:
-  - distance: 2.2
-    value: 275
-  - distance: 4.1
-    value: 325
-  - distance: 6.6
-    value: 375
+  - distance: 3.5
+    value: 225
+  - distance: 9.4
+    value: 350
+  - distance: 0
+    value: 50
   Distance: 0
   Output: 0
 --- !u!1 &6011051308148642172
@@ -31891,7 +31919,7 @@ MeshCollider:
   m_LayerOverridePriority: 0
   m_IsTrigger: 0
   m_ProvidesContacts: 0
-  m_Enabled: 1
+  m_Enabled: 0
   serializedVersion: 5
   m_Convex: 1
   m_CookingOptions: 30
@@ -32495,7 +32523,7 @@ MonoBehaviour:
   LoadedPartRotation: {x: 0, y: 0, z: 0, w: 1}
   LoadedPartScale: {x: 1, y: 1, z: 1}
   wheelType: 5
-  shouldCollide: 1
+  shouldCollide: 0
 --- !u!1 &6098688208124955597
 GameObject:
   m_ObjectHideFlags: 0
@@ -32614,7 +32642,7 @@ MeshCollider:
   m_LayerOverridePriority: 0
   m_IsTrigger: 0
   m_ProvidesContacts: 0
-  m_Enabled: 1
+  m_Enabled: 0
   serializedVersion: 5
   m_Convex: 1
   m_CookingOptions: 30
@@ -32685,7 +32713,7 @@ MonoBehaviour:
   LoadedPartRotation: {x: 0, y: 0, z: 0, w: 1}
   LoadedPartScale: {x: 1, y: 1, z: 1}
   wheelType: 1
-  shouldCollide: 1
+  shouldCollide: 0
 --- !u!1 &6128028494008216772
 GameObject:
   m_ObjectHideFlags: 0
@@ -32916,7 +32944,7 @@ MonoBehaviour:
   LoadedPartRotation: {x: 0, y: 0, z: 0, w: 1}
   LoadedPartScale: {x: 1, y: 1, z: 1}
   wheelType: 1
-  shouldCollide: 1
+  shouldCollide: 0
 --- !u!1 &6208331654729780747
 GameObject:
   m_ObjectHideFlags: 0
@@ -33516,7 +33544,7 @@ MonoBehaviour:
   LoadedPartRotation: {x: 0, y: 0, z: 0, w: 1}
   LoadedPartScale: {x: 1, y: 1, z: 1}
   wheelType: 5
-  shouldCollide: 1
+  shouldCollide: 0
 --- !u!1 &6361481384924366819
 GameObject:
   m_ObjectHideFlags: 0
@@ -33742,7 +33770,7 @@ Transform:
   m_GameObject: {fileID: 6436182509994751533}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0.03, z: 0}
+  m_LocalPosition: {x: 0, y: 0.04, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -33940,7 +33968,7 @@ MonoBehaviour:
   LoadedPartRotation: {x: 0, y: 0, z: 0, w: 1}
   LoadedPartScale: {x: 1, y: 1, z: 1}
   wheelType: 1
-  shouldCollide: 1
+  shouldCollide: 0
 --- !u!1 &6467299189557220824
 GameObject:
   m_ObjectHideFlags: 0
@@ -33993,7 +34021,7 @@ MonoBehaviour:
   LoadedPartRotation: {x: 0, y: 0, z: 0, w: 1}
   LoadedPartScale: {x: 1, y: 1, z: 1}
   wheelType: 1
-  shouldCollide: 1
+  shouldCollide: 0
 --- !u!1 &6505587632838367525
 GameObject:
   m_ObjectHideFlags: 0
@@ -34335,7 +34363,7 @@ MeshCollider:
   m_LayerOverridePriority: 0
   m_IsTrigger: 0
   m_ProvidesContacts: 0
-  m_Enabled: 1
+  m_Enabled: 0
   serializedVersion: 5
   m_Convex: 1
   m_CookingOptions: 30
@@ -34629,7 +34657,7 @@ MonoBehaviour:
   LoadedPartRotation: {x: 0, y: 0, z: 0, w: 1}
   LoadedPartScale: {x: 1, y: 1, z: 1}
   wheelType: 5
-  shouldCollide: 1
+  shouldCollide: 0
 --- !u!1 &6567087292167271859
 GameObject:
   m_ObjectHideFlags: 0
@@ -35625,7 +35653,7 @@ MeshCollider:
   m_LayerOverridePriority: 0
   m_IsTrigger: 0
   m_ProvidesContacts: 0
-  m_Enabled: 1
+  m_Enabled: 0
   serializedVersion: 5
   m_Convex: 1
   m_CookingOptions: 30
@@ -35898,7 +35926,7 @@ MeshCollider:
   m_LayerOverridePriority: 0
   m_IsTrigger: 0
   m_ProvidesContacts: 0
-  m_Enabled: 1
+  m_Enabled: 0
   serializedVersion: 5
   m_Convex: 1
   m_CookingOptions: 30
@@ -35967,7 +35995,7 @@ BoxCollider:
   m_LayerOverridePriority: 0
   m_IsTrigger: 0
   m_ProvidesContacts: 0
-  m_Enabled: 1
+  m_Enabled: 0
   serializedVersion: 3
   m_Size: {x: 1, y: 0.00635, z: 1}
   m_Center: {x: 0, y: 0, z: 0}
@@ -36325,7 +36353,7 @@ MonoBehaviour:
   LoadedPartRotation: {x: 0, y: 0, z: 0, w: 1}
   LoadedPartScale: {x: 1, y: 1, z: 1}
   wheelType: 1
-  shouldCollide: 1
+  shouldCollide: 0
 --- !u!1 &6994169771913534073
 GameObject:
   m_ObjectHideFlags: 0
@@ -36529,7 +36557,7 @@ MeshCollider:
   m_LayerOverridePriority: 0
   m_IsTrigger: 0
   m_ProvidesContacts: 0
-  m_Enabled: 1
+  m_Enabled: 0
   serializedVersion: 5
   m_Convex: 1
   m_CookingOptions: 30
@@ -36740,7 +36768,7 @@ MonoBehaviour:
   LoadedPartRotation: {x: 0, y: 0, z: 0, w: 1}
   LoadedPartScale: {x: 1, y: 1, z: 1}
   wheelType: 1
-  shouldCollide: 1
+  shouldCollide: 0
 --- !u!1 &7081943913017239691
 GameObject:
   m_ObjectHideFlags: 0
@@ -37366,7 +37394,7 @@ MonoBehaviour:
   LoadedPartRotation: {x: 0, y: 0, z: 0, w: 1}
   LoadedPartScale: {x: 1, y: 1, z: 1}
   wheelType: 1
-  shouldCollide: 1
+  shouldCollide: 0
 --- !u!1 &7226526119462974254
 GameObject:
   m_ObjectHideFlags: 0
@@ -37711,7 +37739,7 @@ MeshCollider:
   m_LayerOverridePriority: 0
   m_IsTrigger: 0
   m_ProvidesContacts: 0
-  m_Enabled: 1
+  m_Enabled: 0
   serializedVersion: 5
   m_Convex: 1
   m_CookingOptions: 30
@@ -38123,7 +38151,7 @@ MonoBehaviour:
   LoadedPartRotation: {x: 0, y: 0, z: 0, w: 1}
   LoadedPartScale: {x: 1, y: 1, z: 1}
   wheelType: 1
-  shouldCollide: 1
+  shouldCollide: 0
 --- !u!1 &7395125359259198323
 GameObject:
   m_ObjectHideFlags: 0
@@ -38606,7 +38634,7 @@ MeshCollider:
   m_LayerOverridePriority: 0
   m_IsTrigger: 0
   m_ProvidesContacts: 0
-  m_Enabled: 1
+  m_Enabled: 0
   serializedVersion: 5
   m_Convex: 1
   m_CookingOptions: 30
@@ -38931,7 +38959,7 @@ MeshCollider:
   m_LayerOverridePriority: 0
   m_IsTrigger: 0
   m_ProvidesContacts: 0
-  m_Enabled: 1
+  m_Enabled: 0
   serializedVersion: 5
   m_Convex: 1
   m_CookingOptions: 30
@@ -39837,7 +39865,7 @@ MeshCollider:
   m_LayerOverridePriority: 0
   m_IsTrigger: 0
   m_ProvidesContacts: 0
-  m_Enabled: 1
+  m_Enabled: 0
   serializedVersion: 5
   m_Convex: 1
   m_CookingOptions: 30
@@ -40075,37 +40103,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   colliders:
   - {fileID: 3114022037070566853}
---- !u!1 &7871745958947816402
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 5683836099094967657}
-  m_Layer: 0
-  m_Name: Model
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &5683836099094967657
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7871745958947816402}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 8523574626315448901}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &7884336915124230075
 GameObject:
   m_ObjectHideFlags: 0
@@ -40500,7 +40497,7 @@ MonoBehaviour:
   LoadedPartRotation: {x: 0, y: 0, z: 0, w: 1}
   LoadedPartScale: {x: 1, y: 1, z: 1}
   wheelType: 1
-  shouldCollide: 1
+  shouldCollide: 0
 --- !u!1 &8022635291664045169
 GameObject:
   m_ObjectHideFlags: 0
@@ -40761,7 +40758,7 @@ MonoBehaviour:
   LoadedPartRotation: {x: 0, y: 0, z: 0, w: 1}
   LoadedPartScale: {x: 1, y: 1, z: 1}
   wheelType: 1
-  shouldCollide: 1
+  shouldCollide: 0
 --- !u!1 &8052660552064033810
 GameObject:
   m_ObjectHideFlags: 0
@@ -40966,7 +40963,7 @@ MonoBehaviour:
   LoadedPartRotation: {x: 0, y: 0, z: 0, w: 1}
   LoadedPartScale: {x: 1, y: 1, z: 1}
   wheelType: 5
-  shouldCollide: 1
+  shouldCollide: 0
 --- !u!1 &8082412667910834871
 GameObject:
   m_ObjectHideFlags: 0
@@ -41650,7 +41647,7 @@ MonoBehaviour:
   LoadedPartRotation: {x: 0, y: 0, z: 0, w: 1}
   LoadedPartScale: {x: 1, y: 1, z: 1}
   wheelType: 1
-  shouldCollide: 1
+  shouldCollide: 0
 --- !u!1 &8181280753406185211
 GameObject:
   m_ObjectHideFlags: 0
@@ -41938,7 +41935,7 @@ MeshCollider:
   m_LayerOverridePriority: 0
   m_IsTrigger: 0
   m_ProvidesContacts: 0
-  m_Enabled: 1
+  m_Enabled: 0
   serializedVersion: 5
   m_Convex: 1
   m_CookingOptions: 30
@@ -42116,7 +42113,7 @@ MonoBehaviour:
   LoadedPartRotation: {x: 0, y: 0, z: 0, w: 1}
   LoadedPartScale: {x: 1, y: 1, z: 1}
   wheelType: 5
-  shouldCollide: 1
+  shouldCollide: 0
 --- !u!1 &8290634804636346743
 GameObject:
   m_ObjectHideFlags: 0
@@ -43029,7 +43026,7 @@ MeshCollider:
   m_LayerOverridePriority: 0
   m_IsTrigger: 0
   m_ProvidesContacts: 0
-  m_Enabled: 1
+  m_Enabled: 0
   serializedVersion: 5
   m_Convex: 1
   m_CookingOptions: 30
@@ -43100,7 +43097,7 @@ MonoBehaviour:
   LoadedPartRotation: {x: 0, y: 0, z: 0, w: 1}
   LoadedPartScale: {x: 1, y: 1, z: 1}
   wheelType: 5
-  shouldCollide: 1
+  shouldCollide: 0
 --- !u!1 &8439360387444251539
 GameObject:
   m_ObjectHideFlags: 0
@@ -43890,7 +43887,7 @@ MeshCollider:
   m_LayerOverridePriority: 0
   m_IsTrigger: 0
   m_ProvidesContacts: 0
-  m_Enabled: 1
+  m_Enabled: 0
   serializedVersion: 5
   m_Convex: 1
   m_CookingOptions: 30
@@ -44044,7 +44041,7 @@ MeshCollider:
   m_LayerOverridePriority: 0
   m_IsTrigger: 0
   m_ProvidesContacts: 0
-  m_Enabled: 1
+  m_Enabled: 0
   serializedVersion: 5
   m_Convex: 1
   m_CookingOptions: 30
@@ -44166,7 +44163,7 @@ MeshCollider:
   m_LayerOverridePriority: 0
   m_IsTrigger: 0
   m_ProvidesContacts: 0
-  m_Enabled: 1
+  m_Enabled: 0
   serializedVersion: 5
   m_Convex: 1
   m_CookingOptions: 30
@@ -44373,7 +44370,7 @@ MeshCollider:
   m_LayerOverridePriority: 0
   m_IsTrigger: 0
   m_ProvidesContacts: 0
-  m_Enabled: 1
+  m_Enabled: 0
   serializedVersion: 5
   m_Convex: 1
   m_CookingOptions: 30
@@ -44923,7 +44920,7 @@ MonoBehaviour:
   LoadedPartRotation: {x: 0, y: 0, z: 0, w: 1}
   LoadedPartScale: {x: 1, y: 1, z: 1}
   wheelType: 1
-  shouldCollide: 1
+  shouldCollide: 0
 --- !u!1 &8806322949362610477
 GameObject:
   m_ObjectHideFlags: 0
@@ -45479,6 +45476,8 @@ GameObject:
   - component: {fileID: -3275394484169815475}
   - component: {fileID: -6650642417730793484}
   - component: {fileID: -4872237822822968770}
+  - component: {fileID: 4539911158520212328}
+  - component: {fileID: -7789132178323638370}
   m_Layer: 0
   m_Name: JackInTheBotV1
   m_TagString: Untagged
@@ -45521,8 +45520,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   units: 0
   frameSize: {x: 27, y: 27}
-  robotWeight: 45
-  gearRatio: 3.27
+  robotWeight: 90
+  gearRatio: 5.2
   moduleType: 0
   generateBumpers: 1
   bumperStyle: 0
@@ -45560,7 +45559,7 @@ MonoBehaviour:
     d: 0.005
     max: 1
   requireInsideRegion: 1
-  positionReference: {fileID: 6472797729041702431}
+  bumperRoot: {fileID: 6602692375235749256}
   allowedRegions: 0000000001000000
   Distance: 0
   Output: 0
@@ -45598,7 +45597,7 @@ MonoBehaviour:
     d: 0.005
     max: 1
   requireInsideRegion: 0
-  positionReference: {fileID: 0}
+  bumperRoot: {fileID: 0}
   allowedRegions: 
   Distance: 0
   Output: 0
@@ -45636,12 +45635,43 @@ MonoBehaviour:
     d: 0.005
     max: 1
   requireInsideRegion: 0
-  positionReference: {fileID: 0}
+  bumperRoot: {fileID: 0}
   allowedRegions: 
   Distance: 0
   Output: 0
   CurrentAngle: 0
   TargetAngle: 0
+--- !u!114 &4539911158520212328
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8914855751309806196}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0cde580fb7bc8074696700cb48d073fd, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  bumperRoot: {fileID: 6602692375235749256}
+  blueAimRegion: 0
+  redAimRegion: 1
+  penalizedPieces: 02000000
+--- !u!114 &-7789132178323638370
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8914855751309806196}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 616fae521da3a5f458801865231ddd5a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  teamNumber: 2910
+  displayNameOverride: JackInTheBot
+  teamIcon: {fileID: 21300000, guid: f6699abc3a89dcf41b24535804842058, type: 3}
 --- !u!1 &8920273112698771474
 GameObject:
   m_ObjectHideFlags: 0
@@ -45918,6 +45948,7 @@ MonoBehaviour:
   targetVelocity: 0
   targetModuleAngle: 0
   lateralFrictionMultiplier: 1
+  tractionCoefficient: 1.1
   _rb: {fileID: 0}
 --- !u!1 &8953366007573596591
 GameObject:
@@ -46001,14 +46032,14 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   currentGamePiece: {fileID: 0}
   Preload: 0
-  intakeSize: {x: 6, y: 6, z: 6}
+  intakeSize: {x: 3, y: 3, z: 3}
   pieceName: 0
   currentState: 0
   Actions:
-  - Name: Transfer
+  - Name: Shoot
     Type: 2
     Animate: 0
-    Speed: 260
+    Speed: 275
     HpRandomizer: 25
     AngularSpeed: 0
     MoveTo: {fileID: 0}
@@ -46019,8 +46050,8 @@ MonoBehaviour:
     ControlType: 2
     performTimer: 0
     InputRequired: 1
-    ControllerButton: 0
-    KeyboardButton: 0
+    ControllerButton: 9
+    KeyboardButton: 33
 --- !u!114 &8012105258471476774
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -46039,9 +46070,12 @@ MonoBehaviour:
     canBeSelected:
     - Shoot
     - Transfer
-    selectedIndex: 1
-    selectedName: Transfer
+    selectedIndex: 0
+    selectedName: Shoot
   targetPosition: {x: 0, y: 0, z: 0}
+  useAllianceTargets: 0
+  blueTargetPosition: {x: 0, y: 0, z: 0}
+  redTargetPosition: {x: 0, y: 0, z: 0}
   SetpointName: 
   connectedTo: Hood
   extraTargets: []
@@ -46070,20 +46104,23 @@ MonoBehaviour:
   targetWhen: 1
   targetOuttake:
     canBeSelected:
-    - Transfer
+    - Shoot
     selectedIndex: 0
-    selectedName: Transfer
-  targetPosition: {x: -5.2, y: 9, z: -2}
-  SetpointName: Pass
+    selectedName: Shoot
+  targetPosition: {x: 0, y: 0, z: 0}
+  useAllianceTargets: 1
+  blueTargetPosition: {x: -8, y: 6, z: -2.54}
+  redTargetPosition: {x: 8, y: 6, z: -2.54}
+  SetpointName: PassLeft
   connectedTo: Hood
   extraTargets: []
   interpolationTable:
-  - distance: 2.2
-    value: 275
-  - distance: 4.1
-    value: 325
-  - distance: 6.6
-    value: 375
+  - distance: 3.5
+    value: 225
+  - distance: 9.4
+    value: 350
+  - distance: 0
+    value: 50
   Distance: 0
   Output: 0
 --- !u!114 &6946170415961078116
@@ -46102,20 +46139,23 @@ MonoBehaviour:
   targetWhen: 1
   targetOuttake:
     canBeSelected:
-    - Transfer
+    - Shoot
     selectedIndex: 0
-    selectedName: Transfer
-  targetPosition: {x: -5.2, y: 9, z: 2}
-  SetpointName: Pass2
+    selectedName: Shoot
+  targetPosition: {x: 0, y: 0, z: 0}
+  useAllianceTargets: 1
+  blueTargetPosition: {x: -8, y: 6, z: 2.54}
+  redTargetPosition: {x: 8, y: 6, z: 2.54}
+  SetpointName: PassRight
   connectedTo: Hood
   extraTargets: []
   interpolationTable:
-  - distance: 2.2
-    value: 275
-  - distance: 4.1
-    value: 325
-  - distance: 6.6
-    value: 375
+  - distance: 3.5
+    value: 225
+  - distance: 9.4
+    value: 350
+  - distance: 0
+    value: 50
   Distance: 0
   Output: 0
 --- !u!1 &8970642108895963781
@@ -46170,7 +46210,7 @@ MonoBehaviour:
   LoadedPartRotation: {x: 0, y: 0, z: 0, w: 1}
   LoadedPartScale: {x: 1, y: 1, z: 1}
   wheelType: 5
-  shouldCollide: 1
+  shouldCollide: 0
 --- !u!1 &8981030848049596639
 GameObject:
   m_ObjectHideFlags: 0
@@ -46308,6 +46348,7 @@ MonoBehaviour:
   targetVelocity: 0
   targetModuleAngle: 0
   lateralFrictionMultiplier: 1
+  tractionCoefficient: 1.1
   _rb: {fileID: 0}
 --- !u!1 &9004450569641403954
 GameObject:
@@ -46512,7 +46553,7 @@ MonoBehaviour:
   LoadedPartRotation: {x: 0, y: 0, z: 0, w: 1}
   LoadedPartScale: {x: 1, y: 1, z: 1}
   wheelType: 1
-  shouldCollide: 1
+  shouldCollide: 0
 --- !u!1 &9032462186067128646
 GameObject:
   m_ObjectHideFlags: 0
@@ -46799,7 +46840,7 @@ MeshCollider:
   m_LayerOverridePriority: 0
   m_IsTrigger: 0
   m_ProvidesContacts: 0
-  m_Enabled: 1
+  m_Enabled: 0
   serializedVersion: 5
   m_Convex: 1
   m_CookingOptions: 30
@@ -47039,7 +47080,7 @@ MeshCollider:
   m_LayerOverridePriority: 0
   m_IsTrigger: 0
   m_ProvidesContacts: 0
-  m_Enabled: 1
+  m_Enabled: 0
   serializedVersion: 5
   m_Convex: 1
   m_CookingOptions: 30
@@ -47117,7 +47158,7 @@ Transform:
   m_GameObject: {fileID: 9131601721654336118}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 0.024, z: 0}
+  m_LocalPosition: {x: 0, y: -0.009, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -47142,7 +47183,7 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 0.7, y: 0.2, z: 0.7}
+  m_Size: {x: 0.7, y: 0.01, z: 0.7}
   m_Center: {x: 0, y: 0, z: 0}
 --- !u!1 &9137103676350796607
 GameObject:
@@ -47281,7 +47322,7 @@ MonoBehaviour:
   LoadedPartRotation: {x: 0, y: 0, z: 0, w: 1}
   LoadedPartScale: {x: 1, y: 1, z: 1}
   wheelType: 1
-  shouldCollide: 1
+  shouldCollide: 0
 --- !u!1 &9168994637129984235
 GameObject:
   m_ObjectHideFlags: 0
@@ -47621,7 +47662,7 @@ MeshCollider:
   m_LayerOverridePriority: 0
   m_IsTrigger: 0
   m_ProvidesContacts: 0
-  m_Enabled: 1
+  m_Enabled: 0
   serializedVersion: 5
   m_Convex: 1
   m_CookingOptions: 30

@@ -74,6 +74,22 @@ crashlytics-build.properties
 /[Aa]ssets/[Ss]treamingAssets/aa.meta
 /[Aa]ssets/[Ss]treamingAssets/aa/*
 
+Assets/Resources/Parts/Assembly/67 SIGMA REAL HOOD ASSEMBLY (1).fbx
+Assets/Resources/Parts/Assembly/67 SIGMA REAL HOOD ASSEMBLY (3).fbx
+Assets/Resources/Parts/Assembly/IntakeSlapdown.fbx
+Assets/Resources/Parts/Assembly/IntakeBase.fbx
+Assets/Resources/Parts/Assembly/Serializer (1).fbx
+Assets/Resources/Parts/Assembly/Turret Assembly (1).fbx
+Assets/Resources/Parts/Assembly/67 SIGMA REAL HOOD ASSEMBLY (1).fbx.meta
+Assets/Resources/Parts/Assembly/67 SIGMA REAL HOOD ASSEMBLY (3).fbx.meta
+Assets/Resources/Parts/Assembly/IntakeBase.fbx.meta
+Assets/Resources/Parts/Assembly/IntakeSlapdown.fbx.meta
+Assets/Resources/Parts/Assembly/Serializer (1).fbx.meta
+Assets/Resources/Parts/Assembly/Turret Assembly (1).fbx.meta
+Assets/Imports/Robots/3674.fbx
+Assets/Imports/Robots/3674RebuiltGood.fbx
+Assets/Imports/Robots/6696.fbx
+Assets/Imports/Robots/6696Pt2.fbx
+Assets/Imports/Robots/Climber.fbx
 Assets/Imports/Robots/robotAssembly.obj
 Assets/Imports/Robots/robotAssembly.obj.meta
-/Assets/Resources/Parts/Assembly

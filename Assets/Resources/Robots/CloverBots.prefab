@@ -606,6 +606,7 @@ MonoBehaviour:
   targetVelocity: 0
   targetModuleAngle: 0
   lateralFrictionMultiplier: 1
+  tractionCoefficient: 1.1
   _rb: {fileID: 0}
 --- !u!1 &80575920958728693
 GameObject:
@@ -1150,6 +1151,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 241732688201904667}
+  - component: {fileID: 3652417481685829848}
   m_Layer: 0
   m_Name: Shooter
   m_TagString: Untagged
@@ -1172,8 +1174,67 @@ Transform:
   m_Children:
   - {fileID: 5220273844801003352}
   - {fileID: 1829449258030423100}
+  - {fileID: 660414636188242729}
   m_Father: {fileID: 5140508131213590302}
   m_LocalEulerAnglesHint: {x: -75, y: 0, z: 0}
+--- !u!114 &3652417481685829848
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 192787913492974762}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e82d393aa64423b4caa1c8a30e5b0f1f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  setPoints:
+  - setpointName: 
+    controlType: 2
+    sequenceType: 0
+    sequenceTo: 
+    delay: 0
+    persist: 0
+    point: 0
+    shouldScaleToUnits: 0
+    units: 0
+    controllerButton: 3
+    keyboardButton: 17
+  - setpointName: PassLeft
+    controlType: 2
+    sequenceType: 0
+    sequenceTo: 
+    delay: 0
+    persist: 0
+    point: 0
+    shouldScaleToUnits: 0
+    units: 0
+    controllerButton: 2
+    keyboardButton: 16
+  - setpointName: PassRight
+    controlType: 2
+    sequenceType: 0
+    sequenceTo: 
+    delay: 0
+    persist: 0
+    point: 0
+    shouldScaleToUnits: 0
+    units: 0
+    controllerButton: 1
+    keyboardButton: 20
+  armModel: 3
+  units: 0
+  length: 2
+  width: 0
+  armWeight: 1
+  useNoWrapPoint: 0
+  noWrapAngle: 180
+  useAdvancedSettings: 0
+  max: 20
+  kP: 0.5
+  kI: 0
+  kD: 0.0005
 --- !u!1 &194124775339495371
 GameObject:
   m_ObjectHideFlags: 0
@@ -3650,6 +3711,8 @@ GameObject:
   - component: {fileID: 5220273844801003352}
   - component: {fileID: 59407194508821780}
   - component: {fileID: 936042635707070857}
+  - component: {fileID: 5227652223334746109}
+  - component: {fileID: 5550482650148814864}
   m_Layer: 0
   m_Name: LeftShooter
   m_TagString: Untagged
@@ -3686,14 +3749,14 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   currentGamePiece: {fileID: 0}
   Preload: 0
-  intakeSize: {x: 13, y: 7, z: 5}
-  pieceName: 2
-  currentState: 3
+  intakeSize: {x: 3, y: 3, z: 3}
+  pieceName: 0
+  currentState: 0
   Actions:
-  - Name: Outake
+  - Name: Shoot
     Type: 2
     Animate: 0
-    Speed: 260
+    Speed: 275
     HpRandomizer: 25
     AngularSpeed: 0
     MoveTo: {fileID: 0}
@@ -3701,7 +3764,7 @@ MonoBehaviour:
     Spin: {x: 0, y: 0, z: 0}
     DelayTimer: 0
     PieceType: 2
-    ControlType: 0
+    ControlType: 2
     performTimer: 0
     InputRequired: 1
     ControllerButton: 9
@@ -3722,24 +3785,90 @@ MonoBehaviour:
   targetWhen: 0
   targetOuttake:
     canBeSelected:
-    - Outake
+    - Shoot
+    - ShootNode
     selectedIndex: 0
-    selectedName: Outake
+    selectedName: Shoot
   targetPosition: {x: 0, y: 0, z: 0}
-  SetpointName: Shoot
-  connectedTo: none
+  useAllianceTargets: 0
+  blueTargetPosition: {x: 0, y: 0, z: 0}
+  redTargetPosition: {x: 0, y: 0, z: 0}
+  SetpointName: 
+  connectedTo: Shooter
   extraTargets: []
   interpolationTable:
   - distance: 2
-    value: 250
-  - distance: 2.5
-    value: 285
-  - distance: 3
-    value: 310
-  - distance: 4
-    value: 350
-  - distance: 5
-    value: 390
+    value: 275
+  - distance: 6
+    value: 425
+  - distance: 10
+    value: 475
+  Distance: 3.6914508
+  Output: 306.38168
+--- !u!114 &5227652223334746109
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 561346412836100185}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6a39b5aa0d074eadaffcae99211418b5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  targetType: 2
+  targetWhen: 1
+  targetOuttake:
+    canBeSelected:
+    - Shoot
+    selectedIndex: 0
+    selectedName: Shoot
+  targetPosition: {x: 0, y: 0, z: 0}
+  useAllianceTargets: 1
+  blueTargetPosition: {x: -8, y: 6, z: -2.54}
+  redTargetPosition: {x: 8, y: 6, z: -2.54}
+  SetpointName: PassLeft
+  connectedTo: Shooter
+  extraTargets: []
+  interpolationTable:
+  - distance: 1.75
+    value: 275
+  - distance: 4.7
+    value: 400
+  Distance: 0
+  Output: 0
+--- !u!114 &5550482650148814864
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 561346412836100185}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6a39b5aa0d074eadaffcae99211418b5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  targetType: 2
+  targetWhen: 1
+  targetOuttake:
+    canBeSelected:
+    - Shoot
+    selectedIndex: 0
+    selectedName: Shoot
+  targetPosition: {x: 0, y: 0, z: 0}
+  useAllianceTargets: 1
+  blueTargetPosition: {x: -8, y: 6, z: 2.54}
+  redTargetPosition: {x: 8, y: 6, z: 2.54}
+  SetpointName: PassRight
+  connectedTo: Shooter
+  extraTargets: []
+  interpolationTable:
+  - distance: 1.75
+    value: 275
+  - distance: 4.7
+    value: 400
   Distance: 0
   Output: 0
 --- !u!1 &571888409081060694
@@ -13634,7 +13763,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 34aa690c6732d4c47bdc242f2dc3c417, type: 2}
+  - {fileID: 2100000, guid: 2526334cdb5769c42bf983bd9b5cf72d, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -19228,6 +19357,7 @@ MonoBehaviour:
   targetVelocity: 0
   targetModuleAngle: 0
   lateralFrictionMultiplier: 1
+  tractionCoefficient: 1.1
   _rb: {fileID: 0}
 --- !u!1 &2694686759489373110
 GameObject:
@@ -26360,7 +26490,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 34aa690c6732d4c47bdc242f2dc3c417, type: 2}
+  - {fileID: 2100000, guid: 2526334cdb5769c42bf983bd9b5cf72d, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -26605,6 +26735,7 @@ MonoBehaviour:
   targetVelocity: 0
   targetModuleAngle: 0
   lateralFrictionMultiplier: 1
+  tractionCoefficient: 1.1
   _rb: {fileID: 0}
 --- !u!1 &3925220129532419622
 GameObject:
@@ -30421,7 +30552,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 34aa690c6732d4c47bdc242f2dc3c417, type: 2}
+  - {fileID: 2100000, guid: 2526334cdb5769c42bf983bd9b5cf72d, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -32889,6 +33020,8 @@ GameObject:
   - component: {fileID: 1829449258030423100}
   - component: {fileID: 9074210750639131937}
   - component: {fileID: 4401679947944965045}
+  - component: {fileID: 8742510911589148995}
+  - component: {fileID: 7247635324636025485}
   m_Layer: 0
   m_Name: RightShooter
   m_TagString: Untagged
@@ -32925,14 +33058,14 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   currentGamePiece: {fileID: 0}
   Preload: 0
-  intakeSize: {x: 13, y: 7, z: 5}
-  pieceName: 2
-  currentState: 3
+  intakeSize: {x: 3, y: 3, z: 3}
+  pieceName: 0
+  currentState: 0
   Actions:
-  - Name: Outake
+  - Name: Shoot
     Type: 2
     Animate: 0
-    Speed: 260
+    Speed: 275
     HpRandomizer: 25
     AngularSpeed: 0
     MoveTo: {fileID: 0}
@@ -32940,7 +33073,7 @@ MonoBehaviour:
     Spin: {x: 0, y: 0, z: 0}
     DelayTimer: 0
     PieceType: 2
-    ControlType: 0
+    ControlType: 2
     performTimer: 0
     InputRequired: 1
     ControllerButton: 9
@@ -32961,24 +33094,90 @@ MonoBehaviour:
   targetWhen: 0
   targetOuttake:
     canBeSelected:
-    - Outake
+    - Shoot
+    - ShootNode
     selectedIndex: 0
-    selectedName: Outake
+    selectedName: Shoot
   targetPosition: {x: 0, y: 0, z: 0}
-  SetpointName: Shoot
-  connectedTo: none
+  useAllianceTargets: 0
+  blueTargetPosition: {x: 0, y: 0, z: 0}
+  redTargetPosition: {x: 0, y: 0, z: 0}
+  SetpointName: 
+  connectedTo: Shooter
   extraTargets: []
   interpolationTable:
   - distance: 2
-    value: 250
-  - distance: 2.5
-    value: 285
-  - distance: 3
-    value: 310
-  - distance: 4
-    value: 350
-  - distance: 5
-    value: 390
+    value: 275
+  - distance: 6
+    value: 425
+  - distance: 10
+    value: 475
+  Distance: 3.6914508
+  Output: 306.38168
+--- !u!114 &8742510911589148995
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4850134109379849118}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6a39b5aa0d074eadaffcae99211418b5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  targetType: 2
+  targetWhen: 1
+  targetOuttake:
+    canBeSelected:
+    - Shoot
+    selectedIndex: 0
+    selectedName: Shoot
+  targetPosition: {x: 0, y: 0, z: 0}
+  useAllianceTargets: 1
+  blueTargetPosition: {x: -8, y: 6, z: -2.54}
+  redTargetPosition: {x: 8, y: 6, z: -2.54}
+  SetpointName: PassLeft
+  connectedTo: Shooter
+  extraTargets: []
+  interpolationTable:
+  - distance: 1.75
+    value: 275
+  - distance: 4.7
+    value: 400
+  Distance: 0
+  Output: 0
+--- !u!114 &7247635324636025485
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4850134109379849118}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6a39b5aa0d074eadaffcae99211418b5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  targetType: 2
+  targetWhen: 1
+  targetOuttake:
+    canBeSelected:
+    - Shoot
+    selectedIndex: 0
+    selectedName: Shoot
+  targetPosition: {x: 0, y: 0, z: 0}
+  useAllianceTargets: 1
+  blueTargetPosition: {x: -8, y: 6, z: 2.54}
+  redTargetPosition: {x: 8, y: 6, z: 2.54}
+  SetpointName: PassRight
+  connectedTo: Shooter
+  extraTargets: []
+  interpolationTable:
+  - distance: 1.75
+    value: 275
+  - distance: 4.7
+    value: 400
   Distance: 0
   Output: 0
 --- !u!1 &4852362689578645874
@@ -36690,7 +36889,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 34aa690c6732d4c47bdc242f2dc3c417, type: 2}
+  - {fileID: 2100000, guid: 2526334cdb5769c42bf983bd9b5cf72d, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -36891,7 +37090,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 34aa690c6732d4c47bdc242f2dc3c417, type: 2}
+  - {fileID: 2100000, guid: 2526334cdb5769c42bf983bd9b5cf72d, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -42732,6 +42931,7 @@ MonoBehaviour:
   targetVelocity: 0
   targetModuleAngle: 0
   lateralFrictionMultiplier: 1
+  tractionCoefficient: 1.1
   _rb: {fileID: 0}
 --- !u!1 &6266323685414861231
 GameObject:
@@ -44952,7 +45152,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 34aa690c6732d4c47bdc242f2dc3c417, type: 2}
+  - {fileID: 2100000, guid: 2526334cdb5769c42bf983bd9b5cf72d, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -46201,7 +46401,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 34aa690c6732d4c47bdc242f2dc3c417, type: 2}
+  - {fileID: 2100000, guid: 2526334cdb5769c42bf983bd9b5cf72d, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -49463,7 +49663,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 34aa690c6732d4c47bdc242f2dc3c417, type: 2}
+  - {fileID: 2100000, guid: 2526334cdb5769c42bf983bd9b5cf72d, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -54914,6 +55114,8 @@ GameObject:
   - component: {fileID: 6666151271875490856}
   - component: {fileID: 1859845113495924443}
   - component: {fileID: 6679338637093697338}
+  - component: {fileID: -4287705863185954033}
+  - component: {fileID: 8863773900988636091}
   m_Layer: 0
   m_Name: CloverBots
   m_TagString: Untagged
@@ -54961,7 +55163,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   units: 0
   frameSize: {x: 27.2, y: 27.2}
-  robotWeight: 60
+  robotWeight: 80
   gearRatio: 6.75
   moduleType: 0
   generateBumpers: 0
@@ -55000,7 +55202,7 @@ MonoBehaviour:
     d: 0
     max: 0
   requireInsideRegion: 1
-  positionReference: {fileID: 5140508131213590302}
+  bumperRoot: {fileID: 4177444603528076525}
   allowedRegions: 0000000001000000
   Distance: 0
   Output: 0
@@ -55038,7 +55240,7 @@ MonoBehaviour:
     d: 0
     max: 0
   requireInsideRegion: 0
-  positionReference: {fileID: 0}
+  bumperRoot: {fileID: 0}
   allowedRegions: 
   Distance: 0
   Output: 0
@@ -55076,12 +55278,43 @@ MonoBehaviour:
     d: 0
     max: 0
   requireInsideRegion: 0
-  positionReference: {fileID: 0}
+  bumperRoot: {fileID: 0}
   allowedRegions: 
   Distance: 0
   Output: 0
   CurrentAngle: 0
   TargetAngle: 0
+--- !u!114 &-4287705863185954033
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8110467424436964118}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0cde580fb7bc8074696700cb48d073fd, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  bumperRoot: {fileID: 4177444603528076525}
+  blueAimRegion: 0
+  redAimRegion: 1
+  penalizedPieces: 02000000
+--- !u!114 &8863773900988636091
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8110467424436964118}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 616fae521da3a5f458801865231ddd5a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  teamNumber: 3674
+  displayNameOverride: CloverBots
+  teamIcon: {fileID: 21300000, guid: ea4a1b21475223b4d8ae516c238d111d, type: 3}
 --- !u!1 &8117581541875224389
 GameObject:
   m_ObjectHideFlags: 0
@@ -55428,7 +55661,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 34aa690c6732d4c47bdc242f2dc3c417, type: 2}
+  - {fileID: 2100000, guid: 2526334cdb5769c42bf983bd9b5cf72d, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -60580,6 +60813,37 @@ Transform:
   - {fileID: 3007595460716410700}
   - {fileID: 1304573026078757883}
   m_Father: {fileID: 5140508131213590302}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &8956672223380910196
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 660414636188242729}
+  m_Layer: 0
+  m_Name: Model
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &660414636188242729
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8956672223380910196}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 241732688201904667}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &8959190776619034531
 GameObject:

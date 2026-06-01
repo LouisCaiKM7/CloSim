@@ -35,6 +35,14 @@ public class FMS : MonoBehaviour
 
     private LoadMatch matchLoader;
     private TextMeshProUGUI timer;
+    private TextMeshProUGUI hubTimer;
+    private RebuiltShifts hubShifts;
+    private TextMeshProUGUI startCountdownText;
+    private Coroutine startCountdownCoroutine;
+    private bool startCountdownActive;
+    private bool scheduledMatchActive;
+    private double scheduledMatchStartServerTime = -1d;
+    private Func<double> scheduledServerTimeProvider;
 
     private bool playedStartMatch;
     private bool playedAutoEnd;
@@ -66,12 +74,23 @@ public class FMS : MonoBehaviour
 
         previousMatchTimer = MatchTimer;
 
-        if (RobotState == RobotState.enabled)
+        if (scheduledMatchActive)
         {
-            MatchTimer -= Time.deltaTime;
+            ApplyScheduledState();
+        }
+        else
+        {
+            if (RobotState == RobotState.enabled && !startCountdownActive)
+            {
+                MatchTimer -= Time.deltaTime;
+            }
+
+            if (!startCountdownActive)
+            {
+                UpdateMatchState();
+            }
         }
 
-        UpdateMatchState();
         HandleSounds();
 
         previousMatchState = MatchState;
@@ -124,7 +143,7 @@ public class FMS : MonoBehaviour
     {
         float autoEndTime = matchTime - autoTime;
 
-        if (!playedStartMatch)
+        if (!playedStartMatch && !startCountdownActive)
         {
             PlaySound(StartMatch);
             playedStartMatch = true;
@@ -240,6 +259,24 @@ public class FMS : MonoBehaviour
 
     public void Restart()
     {
+        Restart(0f);
+    }
+
+    public void Restart(float startCountdownSeconds)
+    {
+        scheduledMatchActive = false;
+        scheduledMatchStartServerTime = -1d;
+        scheduledServerTimeProvider = null;
+
+        if (startCountdownCoroutine != null)
+        {
+            StopCoroutine(startCountdownCoroutine);
+            startCountdownCoroutine = null;
+        }
+
+        startCountdownActive = false;
+        HideStartCountdown();
+
         if (audioSource == null)
         {
             audioSource = GetComponent<AudioSource>();
@@ -258,14 +295,14 @@ public class FMS : MonoBehaviour
 
         matchLoader = Utils.FindParentObjectComponent<LoadMatch>(gameObject);
         matchLoader.SetFms(this);
-
+        hubShifts = GetComponentInChildren<RebuiltShifts>(true);
         MatchTimer = matchTime;
         previousMatchTimer = matchTime;
         teleopStartMatchTimer = matchTime - autoTime;
 
         previousMatchState = MatchState.auto;
         MatchState = MatchState.auto;
-        RobotState = RobotState.enabled;
+        RobotState = startCountdownSeconds > 0f ? RobotState.disabled : RobotState.enabled;
 
         autoToTeleopPauseStarted = false;
         matchEndPauseStarted = false;
@@ -279,6 +316,217 @@ public class FMS : MonoBehaviour
         playedShift85 = false;
         playedEndgame = false;
         playedMatchEnd = false;
+
+        if (startCountdownSeconds > 0f)
+        {
+            startCountdownCoroutine = StartCoroutine(StartCountdown(startCountdownSeconds));
+        }
+    }
+
+    public bool HasScheduledMatch => scheduledMatchActive;
+    
+    public float ScheduledTeleopElapsedSeconds
+    {
+        get
+        {
+            if (!scheduledMatchActive)
+                return 0f;
+
+            double teleopStartTime = scheduledMatchStartServerTime + autoTime + autoDisableTime;
+            return Mathf.Max(0f, (float)(GetScheduledServerTime() - teleopStartTime));
+        }
+    }
+
+    public float ScheduledSecondsUntilEndgame
+    {
+        get
+        {
+            if (!scheduledMatchActive)
+                return Mathf.Max(0f, MatchTimer - endgameTime);
+
+            double endgameStartTime = scheduledMatchStartServerTime + autoTime + autoDisableTime + (matchTime - autoTime - endgameTime);
+            return Mathf.Max(0f, (float)(endgameStartTime - GetScheduledServerTime()));
+        }
+    }
+
+    private void ApplyScheduledState()
+    {
+        double now = GetScheduledServerTime();
+        double matchStartTime = scheduledMatchStartServerTime;
+        double autoEndTime = matchStartTime + autoTime;
+        double teleopStartTime = autoEndTime + autoDisableTime;
+        double endgameStartTime = teleopStartTime + (matchTime - autoTime - endgameTime);
+        double matchEndTime = teleopStartTime + (matchTime - autoTime);
+        double finishedTime = matchEndTime + matchDisabledTime;
+
+        if (now < matchStartTime)
+        {
+            MatchTimer = matchTime;
+            MatchState = MatchState.auto;
+            RobotState = RobotState.disabled;
+            startCountdownActive = true;
+            ShowStartCountdown(Mathf.CeilToInt((float)(matchStartTime - now)).ToString());
+            return;
+        }
+
+        if (startCountdownActive)
+        {
+            HideStartCountdown();
+            startCountdownActive = false;
+        }
+
+        if (!playedStartMatch)
+        {
+            PlaySound(StartMatch);
+            playedStartMatch = true;
+        }
+
+        if (now < autoEndTime)
+        {
+            MatchTimer = Mathf.Max(0f, matchTime - (float)(now - matchStartTime));
+            MatchState = MatchState.auto;
+            RobotState = RobotState.enabled;
+            return;
+        }
+
+        if (now < teleopStartTime)
+        {
+            MatchTimer = matchTime - autoTime;
+            MatchState = MatchState.auto;
+            RobotState = RobotState.disabled;
+            return;
+        }
+
+        if (!playedBeginTeleop)
+        {
+            MatchTimer = matchTime - autoTime;
+            teleopStartMatchTimer = MatchTimer;
+            PlaySound(BeginTeleop);
+            playedBeginTeleop = true;
+        }
+
+        if (now < endgameStartTime)
+        {
+            MatchTimer = Mathf.Max(0f, matchTime - autoTime - (float)(now - teleopStartTime));
+            MatchState = MatchState.teleop;
+            RobotState = RobotState.enabled;
+            return;
+        }
+
+        if (now < matchEndTime)
+        {
+            MatchTimer = Mathf.Max(0f, matchTime - autoTime - (float)(now - teleopStartTime));
+            MatchState = MatchState.endgame;
+            RobotState = RobotState.enabled;
+            return;
+        }
+
+        MatchTimer = 0f;
+        RobotState = now < finishedTime ? RobotState.disabled : RobotState.enabled;
+        MatchState = now < finishedTime ? MatchState.endgame : MatchState.finished;
+    }
+
+    private double GetScheduledServerTime()
+    {
+        return scheduledServerTimeProvider != null
+            ? scheduledServerTimeProvider()
+            : Time.realtimeSinceStartup;
+    }
+    
+    private IEnumerator StartCountdown(float seconds)
+    {
+        startCountdownActive = true;
+        MatchState = MatchState.auto;
+        RobotState = RobotState.disabled;
+
+        PlaySound(StartMatch);
+        playedStartMatch = true;
+
+        float remaining = Mathf.Max(0f, seconds);
+        while (remaining > 0f)
+        {
+            ShowStartCountdown(Mathf.CeilToInt(remaining).ToString());
+            yield return null;
+            remaining -= Time.unscaledDeltaTime;
+        }
+
+        HideStartCountdown();
+        startCountdownActive = false;
+        RobotState = RobotState.enabled;
+        previousMatchTimer = MatchTimer;
+        startCountdownCoroutine = null;
+    }
+
+    private void ShowStartCountdown(string text)
+    {
+        EnsureStartCountdownDisplay();
+
+        if (startCountdownText == null)
+            return;
+
+        startCountdownText.text = text;
+        startCountdownText.gameObject.SetActive(true);
+    }
+
+    private void HideStartCountdown()
+    {
+        if (startCountdownText != null)
+        {
+            startCountdownText.text = string.Empty;
+            startCountdownText.gameObject.SetActive(false);
+        }
+    }
+
+    private void EnsureStartCountdownDisplay()
+    {
+        if (startCountdownText != null)
+            return;
+
+        GameObject existing = GameObject.Find("MatchStartCountdownDisplay");
+        if (existing != null)
+        {
+            startCountdownText = existing.GetComponent<TextMeshProUGUI>();
+            if (startCountdownText != null)
+                return;
+        }
+
+        Canvas canvas = timer != null ? timer.GetComponentInParent<Canvas>() : FindAnyObjectByType<Canvas>();
+        if (canvas == null)
+            return;
+
+        GameObject countdownObject = new GameObject(
+            "MatchStartCountdownDisplay",
+            typeof(RectTransform),
+            typeof(CanvasRenderer),
+            typeof(TextMeshProUGUI));
+        countdownObject.transform.SetParent(canvas.transform, false);
+
+        RectTransform rectTransform = countdownObject.GetComponent<RectTransform>();
+        rectTransform.anchorMin = Vector2.zero;
+        rectTransform.anchorMax = Vector2.one;
+        rectTransform.pivot = new Vector2(0.5f, 0.5f);
+        rectTransform.offsetMin = Vector2.zero;
+        rectTransform.offsetMax = Vector2.zero;
+
+        startCountdownText = countdownObject.GetComponent<TextMeshProUGUI>();
+        startCountdownText.raycastTarget = false;
+        startCountdownText.text = string.Empty;
+        startCountdownText.color = Color.white;
+        startCountdownText.alignment = TextAlignmentOptions.Center;
+        startCountdownText.enableAutoSizing = true;
+        startCountdownText.fontSizeMin = 96f;
+        startCountdownText.fontSizeMax = 260f;
+        startCountdownText.fontStyle = FontStyles.Bold;
+        startCountdownText.outlineWidth = 0.25f;
+        startCountdownText.outlineColor = Color.black;
+
+        if (timer != null)
+        {
+            startCountdownText.font = timer.font;
+            startCountdownText.fontSharedMaterial = timer.fontSharedMaterial;
+        }
+
+        countdownObject.SetActive(false);
     }
 }
 
