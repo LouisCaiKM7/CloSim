@@ -1,118 +1,181 @@
 # CloSim
 
-CloSim is a Unity-based simulation project for the 2026 FRC **Rebuilt** game. It is built from MoSimBuilder, so this README focuses on CloSim-specific additions and workflow differences.
+CloSim is a Unity-based FIRST Robotics Competition simulator built from [MoSimBuilder](https://github.com/masonmm3/MoSimBuilder). It keeps the MoSimBuilder robot-building workflow, then adds CloSim-specific match flow, local multiplayer, robot selection, game setup, human-player behavior, and season-specific field integration.
 
-For general robot-building setup, use the MoSim / MoSimBuilder documentation as the source of truth. CloSim assumes robots are still created through the MoSimBuilder workflow, then imported into CloSim for Rebuilt match play, local multiplayer, human players, and field/game integration.
+CloSim currently supports two FRC-style game environments:
+
+- **Rebuilt**
+- **Reefscape**
+
+The project is intended for local simulation, robot testing, driver practice, and importing compatible Builder Bot / MoSimBuilder robots into CloSim match scenes.
 
 ## Built from MoSimBuilder
 
-CloSim started from [MoSimBuilder](https://github.com/masonmm3/MoSimBuilder). MoSimBuilder provides the base robot-building framework, robot mechanisms, input framework, and Unity project structure. CloSim adds a match environment and runtime systems on top of that foundation.
+CloSim is derived from MoSimBuilder by Mason Morgan / Cascade Studios. MoSimBuilder provides the base robot-building framework, robot mechanisms, drivetrain systems, input architecture, and Unity project structure.
 
-## Major CloSim additions
+CloSim builds on that foundation with:
 
-### Rebuilt match menu
+- Game-specific match scenes
+- Main menu and game selection flow
+- Runtime game setup menus
+- Local multiplayer support
+- Split-screen camera management
+- Robot-selection UI
+- Per-player control preferences
+- Human-player systems
+- Rebuilt and Reefscape-specific integration
 
-CloSim adds an in-game match menu for selecting game mode, camera mode, frame rate, window mode, alliance, robots, spawn positions, human-player mode, controls, and credits. The menu can reset the field after settings are applied and temporarily disables robot input while open.
+For general robot-building concepts, use the MoSimBuilder documentation. For importing a finished Builder Bot into CloSim, use the CloSim modding documentation.
 
-The match menu supports:
+## Major features
 
-- Singleplayer
-- Local multiplayer: 2v0
-- Local multiplayer: 1v1
-- Blue / red alliance selection when applicable
-- Robot selection panels
+### Main menu and game selection
+
+CloSim includes a main menu with game selection, settings, credits, scene transitions, controller navigation support, and startup/splash behavior.
+
+From the menu, players can select a supported game scene, currently Rebuilt or Reefscape. Game selection data is passed into the match scene so the selected game can initialize with the proper settings.
+
+### Match setup menu
+
+Each match scene has an in-game setup menu for configuring the match before play. The menu can pause runtime robot input, reset the field, apply new match settings, and then resume play.
+
+The setup menu supports:
+
+- Game mode selection
+- Robot selection
 - Spawn-position selection
-- Camera mode selection
+- Alliance selection when applicable
 - Human-player mode selection
-- Frame-rate and window-mode settings
+- Camera mode selection
+- Driver-station camera selection
+- Vanity bumper toggle when available
+- Ready states for required players
+- Back-to-main-menu flow
 
-### Local multiplayer
+### Supported play modes
 
-CloSim supports local multiplayer through Unity’s Input System. Robots are spawned from selected prefabs and paired to available input devices at runtime.
+CloSim supports local play modes for one to four players:
 
-Supported input setups:
+- **Singleplayer**
+- **Multiplayer: 2v0**
+- **Multiplayer: 1v1**
+- **Multiplayer: 3v0**
+- **Multiplayer: 2v2**
+
+In same-alliance modes, players can be placed on the selected alliance. In versus modes, players are split between blue and red alliances.
+
+### Local multiplayer and input devices
+
+CloSim uses Unity's Input System for local multiplayer. Robots are spawned from selected prefabs and paired to keyboard or gamepad devices at runtime.
+
+Supported input setups include:
 
 - Singleplayer with keyboard
-- Singleplayer with controller
-- Multiplayer with one controller and one keyboard
-- Multiplayer with two controllers
+- Singleplayer with gamepad
+- Multiplayer with keyboard and gamepad
+- Multiplayer with multiple gamepads
+- Up to four local player slots, depending on selected play mode
 
-For two-robot modes, CloSim spawns two robots and configures split-screen cameras. One robot can be placed on each alliance in 1v1 mode, or both can be placed on the same alliance in 2v0 mode.
+Player control preferences are saved through `PlayerPrefs`, including:
 
-### All builder bots
+- Preferred input device per player
+- Preferred gamepad index per player
+- Binding overrides per player
 
-CloSim loads available robot prefabs from `Resources/Robots`, allowing all compatible builder bots to appear in the robot-selection UI. Robot preview sprites can also be loaded from `Resources/RobotPreviews` when available. 
+### Settings menu
 
-### Shift sounds and shift UI
+CloSim includes a settings menu for display and control configuration.
 
-CloSim includes Rebuilt-specific match timing, match sounds, shift sounds, endgame sounds, and match-end sounds through the FMS controller.
+Display settings include:
 
-The shift UI displays blue and red shift indicators based on the active shift state. It can show both arrows during auto, transition, and endgame, and hide the indicators when the match is finished.
+- Frame-rate cap
+- Resolution
+- Window mode
+- Graphics quality
+
+Control settings include:
+
+- Player selection
+- Keyboard/gamepad preference
+- Gamepad index selection
+- Per-command binding presets
+- Per-player reset/default behavior
+
+### Robot selection UI
+
+CloSim builds the robot-selection grid from robot prefabs stored in game-specific `Resources` folders. The robot metadata is configured through the `RobotIdentity` component. This controls team number, display name override, team icon, and robot preview image.
+
+### Camera modes
+
+Players can select camera behavior during match setup.
+
+Supported camera modes include:
+
+- Third Person
+- First Person
+- Driver Station
+
+CloSim also configures split-screen viewports automatically based on the selected play mode. In four-player modes, cameras are arranged into four quadrants. In some modes, an additional field camera can be used when appropriate.
 
 ### Human players
 
-CloSim adds selectable human-player behavior. The runtime state tracks whether the selected human-player type is active for blue and/or red, and whether the dumper is allowed for a given alliance.
+CloSim includes selectable human-player behavior for certain games.
 
-The match menu supports two human-player modes:
+Current human-player modes in:
 
-- Certified Bucket
-- Certified Dumper
+- **Certified Bucket**
+- **Certified Dumper**
 
-Outpost dumper HPs can be assigned to a player slot and controlled through the owning robot’s input. The dumper can move fuel to a target transform, wait, and return it back to the playing field.
+Human-player behavior can be assigned to the proper alliance/player slot at runtime. Dumper-style human-player objects can be controlled through the owning robot's input when the selected game supports it.
+
+### Rebuilt-specific systems
+
+Rebuilt support includes Rebuilt field logic, match integration, game-piece behavior, human-player behavior, launch-zone penalty checks, aim-region support, and Rebuilt-specific robot commands.
+
+Rebuilt robot imports may require:
+
+- `LaunchZonePenalty` setup
+- Correct bumper collider root assignment
+- Hub/passing aim-region configuration
+- Rebuilt command remapping, such as `Shoot`, `Intake`, `PassLeft`, `PassRight`, `Hub`, `RobotSpecial`, and `HumanPlayerDump`
+
+### Reefscape-specific systems
+
+Reefscape support includes Reefscape field logic, robot command mapping, and Reefscape-specific mechanisms such as climbing and scoring controls.
+
+Reefscape robot imports may require:
+
+- `ClimberComponent` placement on the climber root
+- Reefscape command remapping, such as `AutoAlign`, `L1`, `L2`, `L3`, `L4`, `Barge`, `AlgaeHigh`, `AlgaeLow`, `AlgaeHold`, and `Climb`
 
 ### Aim regions
 
-CloSim adds manually placed aim regions. Each region is a `BoxCollider` marked as blue alliance, red alliance, or neutral. Auto-aim and mechanism-aim systems can require the robot or another reference transform to be inside an allowed region before aiming activates.
+CloSim supports manually placed aim regions. Aim regions can be associated with:
 
-## How to import a MoSimBuilder robot into CloSim
+- Blue alliance
+- Red alliance
+- Neutral zones
 
-Use the normal MoSimBuilder process to create and export/build your robot first. CloSim does not replace the builder workflow; it adds a Rebuilt match environment around builder-compatible robot prefabs.
+Auto-aim and mechanism-aim components can require the robot bumper root or another reference transform to be inside an allowed region before aiming activates. This is used for alliance-specific aiming, hub targeting, and optional passing restrictions.
 
-### 1. Build or prepare the robot in MoSimBuilder
+## Documentation
 
-Create the robot using the MoSimBuilder documentation and workflow. Keep the robot compatible with the standard builder setup, especially the drivetrain, mechanisms, controls, and `PlayerInput` assumptions.
+```text
+Documentation/Importing_Builder_Bots_to_CloSim.md
+```
 
-### 2. Add the robot prefab to CloSim
+## Credits
 
-Place the finished robot prefab in:
-
-`Assets/Resources/Robots` 
-
-CloSim scans `Resources/Robots` at runtime and adds every robot prefab it finds to the robot-selection list.
-
-### 3. Add an optional robot preview image
-
-To show a preview image in the match menu, add a sprite with the same name as the robot prefab to:
-
-`Assets/Resources/RobotPreviews`
-
-For example:
-
-`Assets/Resources/Robots/MyRobot.prefab`
-`Assets/Resources/RobotPreviews/MyRobot.png`
-
-Be sure to set the .png to be a "Sprite".
-
-If no matching preview sprite exists, CloSim will still load the robot, but the UI may show a placeholder.
-
-### 4. Check input compatibility
-
-CloSim expects robot input to use the configured robot action map used in Builder. The match loader can add or configure PlayerInput at runtime if the robot prefab is missing it, but the project still needs a valid input actions asset assigned in the match loader.
-
-### 5. Test in the match menu
-
-Start CloSim, open the match menu, and select the robot from the robot panel. Choose the desired mode:
-
-Singleplayer
-Multiplayer: 2v0
-Multiplayer: 1v1
-
-Then select the spawn position, camera mode, alliance settings, human-player mode, and apply the settings. The field will reset using the selected configuration.
-
-# License
-This project is derived from MoSimBuilder by Mason Morgan / Cascade Studios.
+CloSim is derived from MoSimBuilder by Mason Morgan / Cascade Studios.
 
 Original project:
-https://github.com/masonmm3/MoSimBuilder
 
-CloSim modifications are made from the 2026 FRC Rebuilt project.
+```text
+https://github.com/masonmm3/MoSimBuilder
+```
+
+CloSim modifications and game-specific additions are maintained as part of the CloSim project.
+
+## License
+
+This project is derived from MoSimBuilder. Follow the license terms of the original project (e.g. Available upon request).

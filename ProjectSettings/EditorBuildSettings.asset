@@ -6,10 +6,19 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
-    path: Assets/Scenes/SplashScene.unity
+    path: Assets/Scenes/Splash_Scene.unity
     guid: 5822f3e2efa809643a5827c25a46723a
   - enabled: 1
-    path: Assets/Scenes/FieldScene.unity
+    path: Assets/Scenes/Main_Menu.unity
+    guid: bb356dc945c1ab44e8486cf5f35446b7
+  - enabled: 1
+    path: Assets/Scenes/Game_Reefscape.unity
+    guid: d80cc1ba4c12aaa4b826b10f2e632159
+  - enabled: 1
+    path: Assets/Scenes/Game_Rebuilt.unity
     guid: 9fc0d4010bbf28b4594072e72b8655ab
+  - enabled: 1
+    path: Assets/Scenes/Game_Unhinged.unity
+    guid: c3a2df9c90de6f5499ae5591553958aa
   m_configObjects: {}
   m_UseUCBPForAssetBundles: 0

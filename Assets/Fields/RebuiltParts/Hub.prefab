@@ -55248,8 +55248,8 @@ MonoBehaviour:
   - {fileID: 8575839193608252746}
   - {fileID: 3846938028700996971}
   - {fileID: 8538819163080610667}
-  countsAsFuel: 1
-  fuelPerScoredPiece: 1
+  counterType: 1
+  counterAmountPerPiece: 1
   currentShift: 0
   deactivationCountingGraceTime: 3
   endDisableScoreTime: 3

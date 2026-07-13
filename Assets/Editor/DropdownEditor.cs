@@ -1,7 +1,7 @@
 using System;
 using UnityEditor;
 using UnityEngine;
-using Util;
+using Utilities;
 
 namespace Editor
 {
