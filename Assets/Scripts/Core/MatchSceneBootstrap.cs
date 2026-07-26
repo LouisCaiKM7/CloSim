@@ -40,6 +40,10 @@ namespace Core
                 // owns a robot (RobotNetworkController.SetupLocalOwner's AddOnlineCamera already covers
                 // it) and never runs offline — see SpectatorCameraController's own online-state guard.
                 Online.Sync.SpectatorCameraController.RunForScene(loadMatch);
+
+                // Replay recording (ADDITIVE): host-only, no-ops on pure clients (checks NetworkServer.active
+                // internally) and is never reached at all offline, since we're already inside the online branch.
+                Online.Replay.Recorder.MatchReplayRecorderRunner.RunForScene(loadMatch);
                 return;
             }
 

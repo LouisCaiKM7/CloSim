@@ -160,11 +160,11 @@ Auto-aim and mechanism-aim components can require the robot bumper root or anoth
 
 ## Online Multiplayer (Rooms)
 
-> Status: in development. This section describes the online multiplayer capability being added on top of the existing local split-screen play. Local/offline play is unchanged.
+> Status: core functionality merged (netcode, rooms/lobby, gameplay sync, master-server backend + in-game Server List UI, and replays). This section describes the online multiplayer capability added on top of the existing local split-screen play. Local/offline play is unchanged.
 
-CloSim is gaining **online multiplayer** using [Mirror](https://github.com/MirrorNetworking/Mirror) (MIT), pulled in via OpenUPM (`com.mirrornetworking.mirror`, with the Unity Asset Store package as a fallback). Any player can **host a server directly from the client** (a player-hosted listen-server) — no dedicated server is required. Other players can find and join through an in-game **Server List**, connect **directly by IP/port**, or play over **LAN**.
+CloSim has **online multiplayer** using [Mirror](https://github.com/MirrorNetworking/Mirror) (MIT), pulled in via OpenUPM (`com.mirrornetworking.mirror`, with the Unity Asset Store package as a fallback). Any player can **host a server directly from the client** (a player-hosted listen-server) — no dedicated server is required. Other players can find and join through an in-game **Server List**, connect **directly by IP/port**, or play over **LAN**.
 
-**Implementation status:** the netcode foundation (host/client connect, LAN discovery, direct-IP connect, token + protocol-version gating) and the master-server backend + AWS deployment infrastructure are built. The in-game room lobby, networked gameplay sync, and the Server List UI screen are still in progress. Local/offline split-screen play is unaffected either way.
+**Implementation status:** the netcode foundation (host/client connect, LAN discovery, direct-IP connect, token + protocol-version gating), the in-game room lobby, networked gameplay sync, the master-server backend + AWS deployment infrastructure, and the in-game Server List UI are all built and merged. Local/offline split-screen play is unaffected either way.
 
 Public hosting has no relay in this version — a host who wants to be reachable from the public internet needs to port-forward (or otherwise expose) the game's UDP port; LAN play needs no such setup. Connecting to a host running an incompatible build is always rejected outright; a listed public room with a mismatched version instead shows up greyed out in the Server List rather than being hidden. Spectator slots are view-only — no robot control, no scoring input.
 
@@ -194,9 +194,9 @@ Public rooms register with a lightweight **master server** (a backend directory 
 
 The master-server hosting endpoint is **user-supplied**: it is left blank in the project and must be configured by whoever runs the directory. Public browsing and hosting are unavailable until that endpoint is provided. Direct-IP and LAN play work without it. The backend itself — a small Node.js/Express service plus AWS deployment scripts (Terraform, container-based) — lives in `Server/`; see `Server/README.md` for how to run or deploy it. It ships with every endpoint, region, and credential blank until you fill them in.
 
-### Replays (in development)
+### Replays
 
-CloSim is also gaining a **replay** feature: an in-game recorder captures **deterministic state snapshots** of a match (not a video recording), which can be stored remotely (AWS S3-backed, via the same backend used for the master server) and played back later through an in-game **Replays** browser/viewer — again, entirely native in-game UI, no web page. Like the master server, the replay storage endpoint/credentials are left blank until supplied. See `Documentation/online/architecture.md` for the full design.
+CloSim also has a **replay** feature: a host-side in-game recorder captures **deterministic state snapshots** of a match (not a video recording), which are stored remotely (AWS S3-backed, via the same backend used for the master server) and played back later through an in-game **Replays list** — again, entirely native in-game UI, no web page. Playback reconstructs the match kinematically (robot positions/rotations only in this first pass; game pieces are a planned follow-up) with play/pause, keyframe stepping, and a speed multiplier. Like the master server, the replay storage endpoint/credentials are left blank until supplied. See `Documentation/online/architecture.md` for the full design.
 
 For contributor-facing details (architecture, interface contracts, phased plan), see `CLAUDE.md`, `AGENTS.md`, and `Documentation/online/`.
 

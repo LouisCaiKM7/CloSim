@@ -24,6 +24,8 @@ namespace UI.MainMenu
         [Tooltip("Optional. Opens the online multiplayer lobby (native in-game overlay). " +
                  "Leave unassigned to hide multiplayer.")]
         [SerializeField] private Button multiplayerButton;
+        [Tooltip("Optional. Opens the Replays list (native in-game overlay). Leave unassigned to hide replays.")]
+        [SerializeField] private Button replaysButton;
         [SerializeField] private Button settingsButton;
         [SerializeField] private Button creditsButton;
         [SerializeField] private Button quitButton;
@@ -125,6 +127,9 @@ namespace UI.MainMenu
             if (multiplayerButton != null)
                 multiplayerButton.onClick.AddListener(OpenMultiplayer);
 
+            if (replaysButton != null)
+                replaysButton.onClick.AddListener(OpenReplays);
+
             if (settingsButton != null)
                 settingsButton.onClick.AddListener(ShowSettings);
 
@@ -174,6 +179,14 @@ namespace UI.MainMenu
         private void OpenMultiplayer()
         {
             Online.UI.Lobby.OnlineLobbyMenuController.OpenLobby(
+                onClosed: () => SelectImmediate(_currentFirstSelected));
+        }
+
+        // Replays entry point. Same self-contained native-Unity overlay pattern as OpenMultiplayer above
+        // (Online.Replay.UI.ReplaysMenuController) — no scene root needed; restores main-menu focus on close.
+        private void OpenReplays()
+        {
+            Online.Replay.UI.ReplaysMenuController.OpenReplays(
                 onClosed: () => SelectImmediate(_currentFirstSelected));
         }
 
