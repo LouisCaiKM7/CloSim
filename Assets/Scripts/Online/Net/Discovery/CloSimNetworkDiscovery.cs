@@ -78,7 +78,24 @@ namespace Online.Net.Discovery
             EnsureInitialized();
             _advertisedRoom = room;
             _hasAdvertisedRoom = true;
-            AdvertiseServer(); // Mirror: opens the UDP listen socket and answers client probes.
+
+            // Mirror: opens the UDP listen socket and answers client probes. Binding can fail with a
+            // SocketException if the discovery port is already in use — most commonly when a second CloSim
+            // instance runs on the same machine (the standard host + client-on-one-PC test), or a stale
+            // socket lingers in TIME_WAIT. LAN discovery is an optional convenience (clients can still join
+            // via direct IP or the master-server list), so a bind failure must NOT abort hosting: log it and
+            // continue with discovery-advertising disabled.
+            try
+            {
+                AdvertiseServer();
+            }
+            catch (System.Net.Sockets.SocketException e)
+            {
+                _hasAdvertisedRoom = false;
+                Debug.LogWarning($"[CloSimNetworkDiscovery] LAN discovery advertising is unavailable " +
+                                 $"(UDP port in use): {e.Message}. Hosting continues; clients can still join " +
+                                 $"via direct IP or the Server List.");
+            }
         }
 
         /// <summary>Update the advertised room payload in place (e.g. player count changed) without
