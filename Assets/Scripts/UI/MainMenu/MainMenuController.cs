@@ -63,6 +63,7 @@ namespace UI.MainMenu
         {
             SceneTransitionManager.EnsureExists();
 
+            EnsureOnlineEntryButtons();
             WireButtons();
         
             _cancelAction = new InputAction("UI_Cancel", InputActionType.Button);
@@ -117,6 +118,51 @@ namespace UI.MainMenu
         {
             _cancelAction?.Dispose();
             _activeTransition?.Kill();
+        }
+
+        // ADDITIVE: the Multiplayer / Replays entry buttons are optional serialized fields. If a scene did
+        // not wire them (the common case — they were added after the Main_Menu scene was authored), create
+        // them at runtime by cloning the Play button so the online lobby (Create Room / Join / Server List /
+        // mode select) and the Replays list are reachable in every build without manual Inspector wiring.
+        // No-op for any button already assigned, and a no-op entirely if there is no Play button to clone.
+        // Runs before WireButtons() so the freshly created buttons get their onClick handlers there.
+        private void EnsureOnlineEntryButtons()
+        {
+            if (playButton == null)
+                return;
+
+            if (multiplayerButton == null)
+                multiplayerButton = CloneMenuButton(playButton, playButton, "MULTIPLAYER", "MultiplayerButton");
+
+            if (replaysButton == null)
+            {
+                Button anchor = multiplayerButton != null ? multiplayerButton : playButton;
+                replaysButton = CloneMenuButton(playButton, anchor, "REPLAYS", "ReplaysButton");
+            }
+        }
+
+        // Clones <paramref name="template"/> into the same parent, inserts it right after <paramref name="anchor"/>,
+        // relabels it, and clears inherited click handlers (WireButtons attaches the correct one).
+        private Button CloneMenuButton(Button template, Button anchor, string label, string objectName)
+        {
+            if (template == null || template.transform.parent == null)
+                return null;
+
+            Button clone = Instantiate(template, template.transform.parent);
+            clone.name = objectName;
+            if (anchor != null && anchor.transform.parent == clone.transform.parent)
+                clone.transform.SetSiblingIndex(anchor.transform.GetSiblingIndex() + 1);
+
+            clone.onClick.RemoveAllListeners();
+
+            // Retarget the label (supports TextMeshPro and legacy UI Text button labels).
+            var tmp = clone.GetComponentInChildren<TMPro.TMP_Text>(true);
+            if (tmp != null) tmp.text = label;
+            var legacy = clone.GetComponentInChildren<Text>(true);
+            if (legacy != null) legacy.text = label;
+
+            clone.gameObject.SetActive(true);
+            return clone;
         }
 
         private void WireButtons()
