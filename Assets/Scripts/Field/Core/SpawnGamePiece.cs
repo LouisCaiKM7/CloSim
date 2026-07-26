@@ -68,12 +68,22 @@ namespace Field.Core
 
         private void SpawnPiece(PieceNames pieceTypeEnum, float velocityValue, Vector3 spawnPosition)
         {
-            if (!CanSpawn() || !_piecesMap.TryGetValue(pieceTypeEnum, out GameObject piecePrefab)) 
+            if (!CanSpawn() || !_piecesMap.TryGetValue(pieceTypeEnum, out GameObject piecePrefab))
+                return;
+
+            // ONLINE: host-authoritative game pieces (Online.Sync.GamePieceNetworkRegistrar). A client-only
+            // instance must not spawn its own local piece -- the host owns creation and replicates it via
+            // Mirror. Offline (no network session) this is always false, so behavior is unchanged.
+            if (Online.Sync.GamePieceNetworkRegistrar.SuppressLocalSpawn)
                 return;
 
             var item = Instantiate(piecePrefab, spawnPosition, transform.rotation, transform)
                 .GetComponent<GamePiece>();
-    
+
+            // ONLINE: publish the host-spawned piece to clients via NetworkServer.Spawn. No-op offline
+            // and on clients (see GamePieceNetworkRegistrar.RegisterSpawned).
+            Online.Sync.GamePieceNetworkRegistrar.RegisterSpawned(item.gameObject);
+
             // Use local directions transformed to world space
             Vector3 finalVelocity;
     
