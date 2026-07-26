@@ -86,6 +86,15 @@ namespace Core
         public bool useBlueAlliance = true;
         public TrackingType trackingType = TrackingType.TrackRobot;
 
+        // --- Online count model (ADDITIVE for A4 gameplay sync) ---
+        // Offline play leaves these at their defaults, so GetPlayerCount()/IsPlayerBlue() fall through
+        // to the legacy PlayMode switch and behave EXACTLY as before. Online play (Online.Sync) sets
+        // useNetworkCounts = true with (networkBlueCount, networkRedCount) resolved from NetworkMatchConfig.
+        // Slot ordering is blue-first: slots [0..networkBlueCount-1] are blue, the remainder are red.
+        public bool useNetworkCounts;
+        public int networkBlueCount;
+        public int networkRedCount;
+
         public MatchSettings Clone()
         {
             var clone = new MatchSettings
@@ -93,13 +102,18 @@ namespace Core
                 playMode = playMode,
                 useBlueAlliance = useBlueAlliance,
                 trackingType = trackingType,
+                useNetworkCounts = useNetworkCounts,
+                networkBlueCount = networkBlueCount,
+                networkRedCount = networkRedCount,
                 players = new List<PlayerMatchSettings>()
             };
 
             for (int i = 0; i < players.Count; i++)
                 clone.players.Add(players[i].Clone());
 
-            while (clone.players.Count < 4)
+            // Pad to at least 4 (offline default stays byte-identical) but never truncate 5–6 online slots.
+            int targetCount = Mathf.Max(4, players.Count);
+            while (clone.players.Count < targetCount)
                 clone.players.Add(new PlayerMatchSettings());
 
             return clone;
@@ -107,10 +121,12 @@ namespace Core
 
         public PlayerMatchSettings GetPlayer(int index)
         {
-            while (players.Count < 4)
+            // Pad to cover the requested index while always keeping the offline 4-slot default.
+            int targetCount = Mathf.Max(4, index + 1);
+            while (players.Count < targetCount)
                 players.Add(new PlayerMatchSettings());
 
-            return players[Mathf.Clamp(index, 0, 3)];
+            return players[Mathf.Clamp(index, 0, players.Count - 1)];
         }
     }
 
@@ -151,9 +167,26 @@ namespace Core
         private readonly HashSet<PlayerInput> _runtimeInputAssetsCloned = new();
 
         private GameObject _fieldHolder;
-        private readonly GameObject[] _activeRobots = new GameObject[4];
-        private readonly GameObject[] _spawnedCameras = new GameObject[4];
-        private readonly Cameras[] _runtimeViews = new Cameras[4];
+        // ADDITIVE (A4): these were fixed [4] arrays. They now grow to the resolved slot count (up to 6)
+        // via EnsureSlotArrays(). Offline SlotCapacity() is always 4, so the arrays stay length-4 and
+        // all offline indexing/looping is byte-identical.
+        private GameObject[] _activeRobots = new GameObject[4];
+        private GameObject[] _spawnedCameras = new GameObject[4];
+        private Cameras[] _runtimeViews = new Cameras[4];
+
+        // --- Online gameplay-sync state (ADDITIVE; offline path never sets these) ---
+        private bool _onlineMode;
+        private int _localOwnedSlot = -1;
+
+        /// <summary>Fired (online only) once the field + human objects are ready and Online.Sync may
+        /// server-spawn networked robots. Never fired offline.</summary>
+        public event Action OnOnlineFieldReady;
+
+        /// <summary>True when the match is being driven by the online (server-authoritative) path.</summary>
+        public bool OnlineMode => _onlineMode;
+
+        /// <summary>The local client's owned robot slot in online play (-1 offline / spectator).</summary>
+        public int LocalOwnedSlot => _localOwnedSlot;
 
         private GameObject _fieldCamera;
         private GameObject _activeCam;
@@ -240,8 +273,9 @@ namespace Core
         private void SanitizeSettings()
         {
             int robotCount = _availableRobots.Count;
+            int slots = SlotCapacity();
 
-            for (int i = 0; i < 4; i++)
+            for (int i = 0; i < slots; i++)
             {
                 PlayerMatchSettings player = _settings.GetPlayer(i);
 
@@ -266,7 +300,9 @@ namespace Core
 
         private void SanitizeSpawnSettings()
         {
-            for (int i = 0; i < 4; i++)
+            int slots = SlotCapacity();
+
+            for (int i = 0; i < slots; i++)
             {
                 PlayerMatchSettings player = _settings.GetPlayer(i);
 
@@ -340,6 +376,12 @@ namespace Core
 
         private int GetPlayerCount()
         {
+            // ONLINE source: count model resolved from NetworkMatchConfig (1..6). One resolution point;
+            // downstream keeps calling GetPlayerCount()/IsPlayerBlue() without switching on PlayMode.
+            if (_settings.useNetworkCounts)
+                return Mathf.Clamp(_settings.networkBlueCount + _settings.networkRedCount, 1, 6);
+
+            // OFFLINE source: legacy PlayMode switch — unchanged.
             return _settings.playMode switch
             {
                 PlayMode.OneVsZero => 1,
@@ -351,8 +393,18 @@ namespace Core
             };
         }
 
-        private bool IsPlayerBlue(int playerIndex)
+        /// <summary>
+        /// Slot -> alliance query. PUBLIC (A4) so the season scorers resolve alliance from the single
+        /// source here instead of duplicating the PlayMode switch (which broke for online slots 5/6).
+        /// Offline returns exactly what the legacy private switch returned.
+        /// </summary>
+        public bool IsPlayerBlue(int playerIndex)
         {
+            // ONLINE source: blue-first slot ordering — slots [0..networkBlueCount-1] are blue.
+            if (_settings.useNetworkCounts)
+                return playerIndex < _settings.networkBlueCount;
+
+            // OFFLINE source: legacy PlayMode switch — unchanged.
             return _settings.playMode switch
             {
                 PlayMode.OneVsZero => _settings.useBlueAlliance,
@@ -364,6 +416,172 @@ namespace Core
 
                 _ => true
             };
+        }
+
+        // ADDITIVE (A4): resolved slot capacity. Offline this is always 4 (Max(4, 1..4)), so the fixed
+        // arrays and old `for (i < 4)` loops behave exactly as before; online it grows to 5–6.
+        private int SlotCapacity() => Mathf.Max(4, GetPlayerCount());
+
+        // ADDITIVE (A4): grow the per-slot arrays to the resolved capacity. Never shrinks below 4, so
+        // offline is untouched. Safe to call repeatedly.
+        private void EnsureSlotArrays()
+        {
+            int capacity = SlotCapacity();
+            if (_activeRobots.Length < capacity) Array.Resize(ref _activeRobots, capacity);
+            if (_spawnedCameras.Length < capacity) Array.Resize(ref _spawnedCameras, capacity);
+            if (_runtimeViews.Length < capacity) Array.Resize(ref _runtimeViews, capacity);
+        }
+
+        // ==================== Online gameplay-sync API (ADDITIVE, A4 — consumed by Online.Sync) ====================
+        // None of this runs offline: SetOnlineMode(false) (the default) leaves every offline code path intact.
+
+        /// <summary>
+        /// Switch this LoadMatch into online (server-authoritative) mode. In online mode ResetField loads
+        /// the field + human objects but does NOT locally spawn robots / split-screen cameras / pair local
+        /// devices — Online.Sync drives those server-authoritatively via the methods below.
+        /// </summary>
+        public void SetOnlineMode(bool online, int localOwnedSlot = -1)
+        {
+            _onlineMode = online;
+            _localOwnedSlot = localOwnedSlot;
+        }
+
+        /// <summary>Catalog prefab for a network-safe robotIndex (host spawns by index, never by prefab ref).</summary>
+        public GameObject GetNetworkRobotPrefab(int robotIndex)
+        {
+            EnsureRobotCatalogLoaded();
+            return GetRobotPrefabBySelection(robotIndex);
+        }
+
+        /// <summary>
+        /// Resolve the world spawn pose for a slot from this scene's blue/red spawn lists (blue-first
+        /// ordering). Used host-side to place networked robots. Returns false if no spawn is available.
+        /// </summary>
+        public bool TryGetSpawnForSlot(int slot, GameObject robotPrefab, out Vector3 position, out Quaternion rotation)
+        {
+            position = Vector3.zero;
+            rotation = Quaternion.identity;
+
+            Transform spawn = GetSpawnPointForRobot(slot);
+            if (spawn == null)
+                return false;
+
+            position = spawn.position;
+            rotation = GetSpawnRotationForRobot(spawn, robotPrefab);
+            return true;
+        }
+
+        /// <summary>
+        /// Register an already-network-spawned robot into a slot (called on every machine by the robot's
+        /// network controller) and run the same per-robot local configuration the offline spawner runs
+        /// (input asset, drive mode, alliance/vanity bumpers, outpost ownership). Does NOT instantiate.
+        /// </summary>
+        public void RegisterNetworkedRobot(int slot, GameObject robot)
+        {
+            if (robot == null || slot < 0)
+                return;
+
+            EnsureSlotArrays();
+            if (slot >= _activeRobots.Length)
+                return;
+
+            _activeRobots[slot] = robot;
+
+            EnsurePlayerInputConfigured(robot);
+            ConfigureRobotDriveMode(robot, slot);
+
+            PlayerMatchSettings player = _settings.GetPlayer(slot);
+            GameObject prefab = GetRobotPrefabBySelection(player.robotIndex);
+            if (prefab != null)
+                StartCoroutine(ConfigureRobotBumpersWhenReady(robot, prefab, slot, player.useVanityBumpers));
+
+            ConfigureOutpostReleaseOwnership(robot, slot);
+        }
+
+        /// <summary>
+        /// Online single-view camera for the locally-owned robot: reuses the offline camera pipeline but
+        /// forces a full-screen viewport and enables the one AudioListener (this client's view owns it).
+        /// </summary>
+        public GameObject AddOnlineCamera(int ownedSlot, Cameras view)
+        {
+            if (ownedSlot < 0)
+                return null;
+
+            EnsureSlotArrays();
+            if (ownedSlot >= _activeRobots.Length)
+                return null;
+
+            GameObject robot = _activeRobots[ownedSlot];
+            if (robot == null)
+                return null;
+
+            _runtimeViews[ownedSlot] = view;
+
+            Transform spawn = GetSpawnPointForRobot(ownedSlot);
+            GameObject cam = CreateCameraForRobot(robot, spawn, ownedSlot, view);
+            ConfigureOnlineCameraViewport(cam);
+            _spawnedCameras[ownedSlot] = cam;
+            return cam;
+        }
+
+        private void ConfigureOnlineCameraViewport(GameObject cameraObject)
+        {
+            if (cameraObject == null)
+                return;
+
+            Rect full = new Rect(0f, 0f, 1f, 1f);
+
+            Camera[] cameras = cameraObject.GetComponentsInChildren<Camera>(true);
+            foreach (Camera cam in cameras)
+            {
+                cam.rect = full;
+                cam.depth = 0f;
+            }
+
+            // Exactly one AudioListener: the local client's single full-screen view owns it.
+            AudioListener[] listeners = cameraObject.GetComponentsInChildren<AudioListener>(true);
+            for (int i = 0; i < listeners.Length; i++)
+                listeners[i].enabled = i == 0;
+        }
+
+        /// <summary>
+        /// Pair local input to ONLY the locally-owned robot online (remote robots are network-driven and
+        /// get DisableRobotInput). Mirrors the per-slot device-preference logic used by offline PairInputs.
+        /// </summary>
+        public void PairLocalInput(int ownedSlot)
+        {
+            if (ownedSlot < 0)
+                return;
+
+            EnsureSlotArrays();
+            if (ownedSlot >= _activeRobots.Length)
+                return;
+
+            GameObject robot = _activeRobots[ownedSlot];
+            if (robot == null)
+                return;
+
+            EnsurePlayerInputConfigured(robot);
+
+            ReadOnlyArray<Gamepad> pads = Gamepad.all;
+            HashSet<int> usedGamepadIndices = new();
+
+            PlayerInputDevicePreference preference = GetPlayerInputDevicePreference(ownedSlot);
+            switch (preference)
+            {
+                case PlayerInputDevicePreference.Keyboard:
+                    BindPreferredKeyboard(robot, ownedSlot);
+                    break;
+
+                case PlayerInputDevicePreference.Gamepad:
+                    BindPreferredGamepad(robot, ownedSlot, pads, usedGamepadIndices);
+                    break;
+
+                case PlayerInputDevicePreference.Auto:
+                default:
+                    BindAutomatically(robot, ownedSlot, pads, usedGamepadIndices, false);
+                    break;
+            }
         }
 
         private bool UsesFourWaySplit()
@@ -379,6 +597,7 @@ namespace Core
 
             _settings = newSettings.Clone();
 
+            EnsureSlotArrays();
             CheckRobots();
             SanitizeSettings();
             SanitizeSpawnSettings();
@@ -463,7 +682,10 @@ namespace Core
 
         private void SetRuntimeCameraViewsFromSettings()
         {
-            for (int i = 0; i < 4; i++)
+            EnsureSlotArrays();
+
+            int slots = SlotCapacity();
+            for (int i = 0; i < slots; i++)
                 _runtimeViews[i] = _settings.GetPlayer(i).view;
 
             _runtimeCameraViewsInitialized = true;
@@ -535,13 +757,28 @@ namespace Core
             LoadField();
             CacheHumanPlayerOutposts();
 
-            SpawnRobots();
-            AddSplitScreenCameras();
+            if (_onlineMode)
+            {
+                // ONLINE (server-authoritative): robots are NOT instantiated locally from settings here.
+                // Online.Sync (IMatchLauncher / spawn manager) server-spawns N networked robots and each
+                // robot's network controller calls RegisterNetworkedRobot() + AddOnlineCamera() /
+                // PairLocalInput() (owned) or DisableRobotInput() (remote). Local split-screen cameras and
+                // local device pairing (SetupInputsWhenReady) are intentionally skipped online.
+                EnsureSlotArrays();
+                OnOnlineFieldReady?.Invoke();
+            }
+            else
+            {
+                SpawnRobots();
+                AddSplitScreenCameras();
+            }
+
             ApplyHumanPlayerObjects();
 
             Utils.ResetParentCache();
 
-            _inputSetupCoroutine = StartCoroutine(SetupInputsWhenReady(_setupVersion));
+            if (!_onlineMode)
+                _inputSetupCoroutine = StartCoroutine(SetupInputsWhenReady(_setupVersion));
 
             FieldScorer.ResetCounters();
 
@@ -609,6 +846,7 @@ namespace Core
 
         private void SpawnRobots()
         {
+            EnsureSlotArrays();
             Array.Clear(_activeRobots, 0, _activeRobots.Length);
 
             if (_availableRobots.Count == 0)
@@ -1133,7 +1371,9 @@ namespace Core
             }
         }
 
-        private void DisableRobotInput(GameObject robot)
+        // PUBLIC (A4): Online.Sync disables local device input on remote-owned robots (they are driven
+        // by replicated network state, not local devices).
+        public void DisableRobotInput(GameObject robot)
         {
             if (robot == null)
                 return;
@@ -1313,9 +1553,10 @@ namespace Core
         return;
 #endif
 
-            GameObject[] selectedPrefabs = new GameObject[4];
+            int slots = SlotCapacity();
+            GameObject[] selectedPrefabs = new GameObject[slots];
 
-            for (int i = 0; i < 4; i++)
+            for (int i = 0; i < slots; i++)
             {
                 PlayerMatchSettings player = _settings.GetPlayer(i);
 
@@ -1336,7 +1577,7 @@ namespace Core
 
             _availableRobots.Sort(CompareRobotPrefabsByTeamNumber);
 
-            for (int i = 0; i < 4; i++)
+            for (int i = 0; i < slots; i++)
             {
                 if (selectedPrefabs[i] == null)
                     continue;
