@@ -1,0 +1,20 @@
+{
+  "name": "closim-master-server",
+  "version": "1.0.0",
+  "description": "CloSim online-multiplayer master server: a backend room-directory API whose only client is CloSim.exe. No web UI.",
+  "type": "module",
+  "main": "src/server.js",
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js",
+    "test": "node --test"
+  },
+  "dependencies": {
+    "express": "^4.21.2"
+  },
+  "license": "GPL-3.0-or-later",
+  "private": true
+}

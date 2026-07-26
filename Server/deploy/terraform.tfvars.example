@@ -1,0 +1,39 @@
+# terraform.tfvars.example
+# ---------------------------------------------------------------------------
+# Copy to terraform.tfvars and fill in every blank. terraform.tfvars is
+# gitignored; this .example file is committed.
+# ---------------------------------------------------------------------------
+
+aws_region   = "" # TODO: user provides (e.g. "us-east-1")
+project_name = "closim-master"
+
+# --- Container image -------------------------------------------------------
+# On the first apply, keep create_ecr_repo = true and leave ecr_image_uri
+# blank ONLY if you split the apply (repo first, then image). Simplest path:
+# create the repo, build+push the image, then set ecr_image_uri and apply.
+create_ecr_repo = true
+ecr_image_uri   = "" # TODO: user provides (e.g. "123456789012.dkr.ecr.us-east-1.amazonaws.com/closim-master:latest")
+
+# --- Service runtime config ------------------------------------------------
+# Leave client_api_keys blank here — set the real value in Secrets Manager
+# out-of-band (see README). Provided here only for completeness.
+client_api_keys   = "" # TODO: user provides (set in Secrets Manager instead)
+room_ttl_seconds  = 45
+heartbeat_seconds = 15
+max_rooms         = 5000
+region_label      = "" # TODO: user provides (e.g. "us-east")
+log_level         = "info"
+container_port    = 8080
+bind_host         = "0.0.0.0"
+
+# --- App Runner sizing + scaling -------------------------------------------
+cpu             = "0.25 vCPU"
+memory          = "0.5 GB"
+min_size        = 1
+max_size        = 5
+max_concurrency = 100
+
+# --- Optional custom domain ------------------------------------------------
+custom_domain = "" # TODO: user provides (optional, e.g. "master.example.com")
+
+tags = {} # e.g. { Environment = "prod" }
