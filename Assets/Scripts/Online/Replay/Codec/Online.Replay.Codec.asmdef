@@ -1,0 +1,17 @@
+{
+    "name": "Online.Replay.Codec",
+    "rootNamespace": "Online.Replay.Codec",
+    "references": [
+        "Online.Contracts",
+        "Online.Replay.Contracts"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": true
+}

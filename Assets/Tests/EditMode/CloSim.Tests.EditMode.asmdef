@@ -4,7 +4,9 @@
     "references": [
         "UnityEngine.TestRunner",
         "UnityEditor.TestRunner",
-        "Online.Contracts"
+        "Online.Contracts",
+        "Online.Replay.Contracts",
+        "Online.Replay.Codec"
     ],
     "includePlatforms": [
         "Editor"
