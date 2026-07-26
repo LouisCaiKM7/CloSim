@@ -506,22 +506,10 @@ namespace Field.Scoring
 
         private bool IsRobotSlotBlue(int robotSlot)
         {
-            switch (loadMatch.GetPlayMode())
-            {
-                case PlayMode.OneVsZero:
-                case PlayMode.TwoVsZero:
-                case PlayMode.ThreeVsZero:
-                    return loadMatch.UsesBlueAlliance();
-
-                case PlayMode.OneVsOne:
-                    return robotSlot == 0;
-
-                case PlayMode.TwoVsTwo:
-                    return robotSlot < 2;
-
-                default:
-                    return true;
-            }
+            // A4 correctness fix: resolve alliance from LoadMatch's single source of truth instead of a
+            // local PlayMode switch (which returned true for online-only slots 5/6). Offline behavior is
+            // identical (LoadMatch.IsPlayerBlue reproduces this exact switch); scoring math is unchanged.
+            return loadMatch.IsPlayerBlue(robotSlot);
         }
 
         private static bool IsUsableRobotCollider(Collider collider)
