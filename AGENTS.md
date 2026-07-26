@@ -62,7 +62,7 @@ All feature branches are cut from `feature/online-multiplayer`. Merges go back t
 | **A4** | `Assets/Scripts/Online/Sync/**`, **`Assets/Scripts/Core/LoadMatch.cs`** (de-hardcode 4→N — sole editor), minimal touches to `MatchSceneBootstrap.cs` / `Fms.cs` / `FieldScorer.cs` for sync hooks (additive; coordinate via A1) | `Online/Contracts/**`, `Online/Net/**`, `Online/Rooms/**` |
 | **A5** | `Server/**` (backend + IaC) — **merged**, `Assets/Scripts/Online/UI/ServerList/**` (namespace `Online.UI.ServerList`) — not yet merged, Server List scenes/prefabs | `Online/Contracts/**`, `Online/Net/**` |
 | **replay-design** | Replay design/contracts inside `Documentation/online/architecture.md` (its owned section) | everything (read-only outside its section); does not edit `CLAUDE.md`/`README.md`/`AGENTS.md` |
-| **replay-backend** | `Assets/Scripts/Online/Replay/**` (namespace `Online.Replay` — recorder + Replays browser/viewer), replay storage additions under `Server/**` (AWS S3-backed) | `Online/Contracts/**`, `Online/Net/**`, architecture.md replay contracts |
+| **replay-backend** | `Assets/Scripts/Online/Replay/**` (namespaces `Online.Contracts.Replay`, `Online.Replay.Codec`, `Online.Replay.Service`, `Online.Replay.Recorder`, `Online.Replay.UI` — recorder + Replays list/viewer, never "browser" per golden rule 3's naming convention), replay storage additions under `Server/**` (AWS S3-backed) | `Online/Contracts/**`, `Online/Net/**`, architecture.md replay contracts |
 | **docs-sync** | `CLAUDE.md`, `README.md`, `AGENTS.md` only | everything (read-only) |
 
 **Conflict-sensitive files:**
@@ -86,9 +86,9 @@ All feature branches are cut from `feature/online-multiplayer`. Merges go back t
 
 **A5:** `Server/` backend implements register/heartbeat/deregister/list/token with **config blank** and **no web UI** (game-client-only, gated by client credential); AWS IaC with blank placeholders; in-game **Server List** UI (native Unity) lists public rooms and connects via A2's API + direct-IP/token; written run + editor test steps; endpoint never hardcoded. *(Backend half of this DoD is met — merged. Server List UI half is still outstanding.)*
 
-**replay-design:** replay design/contracts documented in `Documentation/online/architecture.md` (deterministic state-snapshot model, not video; recorder + Replays browser/viewer contracts; AWS S3 storage seam); reconciles with A2 connection/session lifecycle and A4 gameplay state without requiring game-content changes.
+**replay-design:** replay design/contracts documented in `Documentation/online/architecture.md` (deterministic state-snapshot model, not video; recorder + Replays list/viewer contracts; AWS S3 storage seam); reconciles with A2 connection/session lifecycle and A4 gameplay state without requiring game-content changes.
 
-**replay-backend:** in-game recorder + Replays browser/viewer under `Assets/Scripts/Online/Replay/**` (`Online.Replay`); AWS S3-backed storage integration (bucket/region/credentials **blank** — `// TODO: user provides`) added to `Server/**` following A5's existing config-blank + gated pattern; written editor test steps; offline unaffected.
+**replay-backend:** in-game recorder + Replays list/viewer under `Assets/Scripts/Online/Replay/**` (`Online.Contracts.Replay` / `Online.Replay.*`); AWS S3-backed storage integration (bucket/region/credentials **blank** — `// TODO: user provides`) added to `Server/**` following A5's existing config-blank + gated pattern; written editor test steps; offline unaffected. *(Merged: contracts, codec, service client, backend storage, recorder, and the in-game Replays list/playback UI are all landed.)*
 
 **docs-sync:** `CLAUDE.md`, `README.md`, `AGENTS.md` kept in sync with merged reality (namespaces, resolved decisions, blank-config inventory) after each merge round; never edits `architecture.md`, code, or `Server/**`.
 
