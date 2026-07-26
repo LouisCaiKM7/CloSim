@@ -140,3 +140,76 @@ variable "tags" {
   type        = map(string)
   default     = {}
 }
+
+# --- Replay persistence (S3 blobs + optional DynamoDB metadata) -------------
+# See replays.tf. All names default from project_name; override if you need
+# specific names. Set enable_replays = false to run without replay storage.
+
+variable "enable_replays" {
+  description = "Create the replay S3 bucket + grant the service access. false => replays disabled (service uses its in-memory dev stores; REPLAY_S3_BUCKET injected blank)."
+  type        = bool
+  default     = true
+}
+
+variable "create_replay_table" {
+  description = "Create the DynamoDB metadata table (and grant access). false => the service uses its in-memory metadata store. Only meaningful when enable_replays = true."
+  type        = bool
+  default     = true
+}
+
+variable "replay_bucket_name" {
+  description = <<-EOT
+    Global-unique S3 bucket name for replay blobs. Blank => derived as
+    "<project_name>-replays-<account_id>". # TODO: user provides (optional)
+  EOT
+  type        = string
+  default     = "" # TODO: user provides (optional; blank => auto-derived)
+}
+
+variable "replay_table_name" {
+  description = "DynamoDB table name for replay metadata. Blank => \"<project_name>-replays\"."
+  type        = string
+  default     = "" # TODO: user provides (optional; blank => auto-derived)
+}
+
+variable "replay_s3_prefix" {
+  description = "Key prefix under which replay blobs are stored (REPLAY_S3_PREFIX). Must match the app default."
+  type        = string
+  default     = "replays/"
+}
+
+variable "replay_expiry_days" {
+  description = "Auto-delete replay blobs after N days via an S3 lifecycle rule. 0 => keep forever (no lifecycle rule)."
+  type        = number
+  default     = 0
+}
+
+variable "replay_cors_allowed_origins" {
+  description = "CORS allowed origins for direct presigned PUT/GET from the client. Presigned URLs are the real gate; \"*\" is acceptable."
+  type        = list(string)
+  default     = ["*"]
+}
+
+variable "replay_table_pitr" {
+  description = "Enable DynamoDB point-in-time recovery on the metadata table."
+  type        = bool
+  default     = false
+}
+
+variable "replay_upload_url_ttl_seconds" {
+  description = "TTL (seconds) of presigned upload (PUT) URLs (REPLAY_UPLOAD_URL_TTL_SECONDS)."
+  type        = number
+  default     = 900
+}
+
+variable "replay_download_url_ttl_seconds" {
+  description = "TTL (seconds) of presigned download (GET) URLs (REPLAY_DOWNLOAD_URL_TTL_SECONDS)."
+  type        = number
+  default     = 900
+}
+
+variable "replay_max_size_bytes" {
+  description = "Hard cap on a declared replay blob size in bytes (REPLAY_MAX_SIZE_BYTES). Default 50 MiB."
+  type        = number
+  default     = 52428800
+}

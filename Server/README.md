@@ -9,9 +9,10 @@ public listen-servers advertise themselves so other players can find and join th
 > returns JSON, and the directory is gated by a client API key so it isn't casually browsable. `GET /`
 > is a JSON `404`, not a landing page.
 
-- **Scope:** register / heartbeat / deregister / list public rooms. That's it. Gameplay is
+- **Scope:** register / heartbeat / deregister / list public rooms, **plus persistent match
+  replays** (upload / list / download of compact state files — NOT video). Gameplay is
   server-authoritative on the Mirror listen-server (handled elsewhere); this service only tracks the
-  room **directory**, never game state.
+  room **directory** and the replay **catalog**, never live game state.
 - **No join tokens here.** Token gating for private/token rooms happens in the Mirror auth handshake,
   not this API. `RoomInfo` only exposes `requiresToken` (a boolean) — the token itself is never sent
   to or stored by the directory.
@@ -27,10 +28,17 @@ Chosen over ASP.NET minimal API because:
   scales to zero when no one is hosting.
 - **Ubiquitous ops** — trivial to run locally (`npm start`) and to deploy as a container on AWS.
 
-State is **in-memory with TTL** (no database). Public rooms are ephemeral — they exist only while a
-listen-server is up and heartbeating — so a durable store is unnecessary for v1. The `RoomStore`
+Room state is **in-memory with TTL** (no database). Public rooms are ephemeral — they exist only while
+a listen-server is up and heartbeating — so a durable store is unnecessary for v1. The `RoomStore`
 class is the seam to swap for **DynamoDB (native item TTL)** or **Redis (`EXPIRE`)** if the directory
 ever needs to scale horizontally across instances.
+
+**Replays, by contrast, PERSIST.** The opaque replay **blob** lives in **Amazon S3**; the small,
+queryable **metadata** lives in a **pluggable store** (in-memory by default for local dev, DynamoDB in
+production). Large blobs never stream through this API — the client uploads/downloads them **directly**
+via short-lived **presigned S3 URLs**. When `REPLAY_S3_BUCKET` is blank the service degrades gracefully
+to an in-memory dev blob store (volatile, single-process) so the rest of the service still runs with
+**no AWS configured**. See `blobStore.js` / `replayStore.js` (the two seams) and the API reference below.
 
 ---
 
@@ -43,10 +51,14 @@ Server/
 │  ├─ app.js         # Express app factory — the HTTP wire contract (routes)
 │  ├─ auth.js        # X-Api-Key gating middleware (constant-time key compare)
 │  ├─ roomStore.js   # in-memory room directory + TTL expiry
+│  ├─ replays.js     # replay routes (create+presign / list / get+presign / delete) + dev blob endpoints
+│  ├─ blobStore.js   # replay BLOB storage: S3 (presigned URLs) | in-memory dev fallback
+│  ├─ replayStore.js # replay METADATA store (pluggable): in-memory | DynamoDB
 │  └─ config.js      # env-driven config + boot validation (refuses to run ungated)
 ├─ test/
-│  └─ wire.test.js   # contract + TTL tests (node --test, no external deps)
-├─ deploy/           # AWS Terraform IaC (all endpoints/secrets are blank placeholders)
+│  ├─ wire.test.js     # room contract + TTL tests (node --test)
+│  └─ replays.test.js  # replay contract, presign flow, mocked-S3 tests (node --test)
+├─ deploy/           # AWS Terraform IaC (all endpoints/secrets/names are blank placeholders)
 ├─ Dockerfile        # container image (config injected via env at runtime)
 ├─ .env.example      # BLANK config template — copy to .env and fill in
 ├─ package.json
@@ -168,8 +180,92 @@ Query params (all optional), matching `RoomQuery`:
 
 ```jsonc
 { "ok":true, "service":"closim-master-server", "status":"healthy",
-  "rooms":3, "region":"", "roomTtlSeconds":45, "heartbeatSeconds":15, "uptimeSeconds":1234 }
+  "rooms":3, "replays":12, "replayStorage":"s3", "region":"", "roomTtlSeconds":45,
+  "heartbeatSeconds":15, "uptimeSeconds":1234 }
 ```
+
+`replayStorage` is `"s3"` (persistent) or `"memory"` (dev fallback); `replays` is the in-memory
+metadata count (omitted/undefined when a DynamoDB store is used).
+
+---
+
+## Replay API reference (persistent)
+
+Replays persist (unlike rooms). This is the **exact wire** the in-game replay recorder/uploader
+speaks. Same auth: every route requires `X-Api-Key`. The opaque replay **blob** is uploaded/downloaded
+**directly to/from S3** via short-lived **presigned URLs** — it never streams through this API.
+
+**Metadata shape** (aligned with the client contract; the server is authoritative for `replayId`,
+`createdAt`, and `schemaVersion`):
+
+```jsonc
+{ "replayId":"<uuid>", "userId":"user-alice", "gameId":"Reefscape",
+  "mode":{ "blue":3, "red":3 }, "sceneName":"Reefscape", "durationSec":150,
+  "finalScore":{ "blue":88, "red":74 }, "sizeBytes":40960,
+  "createdAt":"2026-07-26T16:00:00.000Z", "schemaVersion":1,
+  "roomId":"room-1" }   // roomId optional — stored + usable as a list filter when present
+```
+
+### `POST /replays` — create metadata + get a presigned upload URL (preferred two-step flow)
+
+Body = the replay **metadata** JSON (no blob). `userId` and `gameId` are required; `sizeBytes` must be
+≤ `REPLAY_MAX_SIZE_BYTES`. The server mints `replayId`, stamps `createdAt`, stores the metadata, and
+returns a short-lived presigned **PUT** URL. The client then PUTs the opaque blob straight to `upload.url`.
+
+```jsonc
+// 200 response
+{ "ok": true, "replayId": "b1c2...",
+  "upload": { "url": "https://<bucket>.s3.<region>.amazonaws.com/replays/b1c2....bin?X-Amz-...",
+              "method": "PUT",
+              "headers": { "Content-Type": "application/octet-stream" },
+              "expiresInSec": 900 } }
+```
+
+Then, from the client:
+
+```
+PUT <upload.url>           # body = raw opaque replay bytes; send the Content-Type from upload.headers
+```
+
+Failure: `400 { "ok":false, "error":"..." }` (missing `userId`/`gameId`, or `sizeBytes` over the cap).
+
+### `GET /replays?userId&gameId&roomId&limit` — list (newest first)
+
+All filters optional; `limit` defaults to 50 (hard cap 200). Returns metadata only (no URLs).
+
+```jsonc
+{ "replays": [ { /* metadata, newest first */ }, ... ] }
+```
+
+### `GET /replays/{id}` — metadata + a presigned download URL
+
+```jsonc
+// 200 response
+{ "ok": true,
+  "replay": { /* metadata */ },
+  "download": { "url": "https://<bucket>.s3...amazonaws.com/replays/<id>.bin?X-Amz-...",
+                "method": "GET", "expiresInSec": 900 } }
+```
+
+`404 { "ok":false, "error":"replay not found" }` for an unknown id. The client GETs the blob directly
+from `download.url`.
+
+### `DELETE /replays/{id}` — delete (idempotent, owner-gated)
+
+Owner-gated: the caller asserts ownership via `?userId=<id>` (or an `X-User-Id` header) that must match
+the replay's recorded `userId`. Deleting a non-existent replay is a success (idempotent). Best-effort
+deletes the S3 blob too.
+
+- `200 { "ok":true }` — deleted, or already gone.
+- `403 { "ok":false, "error":"..." }` — missing owner claim, or claim doesn't match the owner.
+
+### Dev-only blob endpoints (in-memory mode only)
+
+When `REPLAY_S3_BUCKET` is blank, the presigned URLs point back at this API's own
+`PUT|GET /replays/blob/{id}?op&exp&sig` endpoints (self-signed, **unauthenticated by X-Api-Key** —
+gated by the URL signature, exactly like a real S3 presigned URL). These exist **only** in the
+in-memory dev store and never in an S3 deployment. This makes the full upload/download flow work
+locally with no AWS.
 
 ---
 
@@ -198,10 +294,17 @@ In-memory store, per-room TTL. Values match the game client's cadence
 Every endpoint / secret / region is a **blank placeholder** — nothing is hardcoded:
 
 - **[`.env.example`](./.env.example)** — the runtime env template (`PORT`, `BIND_HOST`,
-  `CLIENT_API_KEYS`, `ROOM_TTL_SECONDS`, `HEARTBEAT_SECONDS`, `MAX_ROOMS`, `REGION_LABEL`, `LOG_LEVEL`).
-  Copy to `.env` and fill in. `.env` is gitignored; only `.env.example` is tracked.
+  `CLIENT_API_KEYS`, `ROOM_TTL_SECONDS`, `HEARTBEAT_SECONDS`, `MAX_ROOMS`, `REGION_LABEL`, `LOG_LEVEL`,
+  and the replay block: `REPLAY_S3_BUCKET`, `REPLAY_S3_REGION`, `REPLAY_S3_PREFIX`, `REPLAY_TABLE`,
+  `REPLAY_UPLOAD_URL_TTL_SECONDS`, `REPLAY_DOWNLOAD_URL_TTL_SECONDS`, `REPLAY_MAX_SIZE_BYTES`,
+  `MAX_REPLAYS`). Every replay value is **blank** → the service runs in-memory (no AWS) until you fill
+  them. Copy to `.env` and fill in. `.env` is gitignored; only `.env.example` is tracked.
 - **[`deploy/terraform.tfvars.example`](./deploy/terraform.tfvars.example)** — the AWS deploy inputs
-  (region, image URI, domain, etc.), all `# TODO: user provides`.
+  (region, image URI, domain, replay bucket/table names + toggles, etc.), all `# TODO: user provides`.
+- **AWS credentials/region** for the S3 + DynamoDB clients come from the standard AWS chain
+  (env / instance role), never from this repo. In production the App Runner instance role grants access
+  (see `deploy/replays.tf`). The AWS SDK packages are `optionalDependencies` — only loaded (lazily) when
+  a bucket/table is configured, so local dev needs neither the SDK loaded nor AWS running.
 - The client-side endpoint/key live in the Unity contract `MasterServerConfig` (`MasterServerUrl=""`,
   `ClientApiKey=""`) — also blank; the user fills them after deploying.
 
@@ -249,7 +352,12 @@ a single stateless HTTP service), pulling its image from **ECR**, with the clien
    uses (with the key in `X-Api-Key`). Verify with `curl "$(terraform output -raw service_url)/healthz"`.
 
 The service is configured entirely through env vars injected by Terraform (`PORT`, `BIND_HOST`,
-`ROOM_TTL_SECONDS`, `HEARTBEAT_SECONDS`, `MAX_ROOMS`, `REGION_LABEL`, `LOG_LEVEL`) plus
-`CLIENT_API_KEYS` from Secrets Manager. Rotate the key by updating the secret and triggering a new App
-Runner deployment. Tear down with `terraform destroy`.
+`ROOM_TTL_SECONDS`, `HEARTBEAT_SECONDS`, `MAX_ROOMS`, `REGION_LABEL`, `LOG_LEVEL`, plus the replay
+block `REPLAY_S3_BUCKET` / `REPLAY_S3_REGION` / `REPLAY_TABLE` / `REPLAY_*_URL_TTL_SECONDS` /
+`REPLAY_MAX_SIZE_BYTES`) plus `CLIENT_API_KEYS` from Secrets Manager. The stack also provisions a
+**private S3 bucket** (replay blobs) and an optional **DynamoDB table** (replay metadata), and grants
+the App Runner instance role least-privilege access to both — see
+[`deploy/replays.tf`](./deploy/replays.tf) and [`deploy/README.md`](./deploy/README.md). Set
+`enable_replays = false` to deploy without replay storage. Rotate the API key by updating the secret
+and triggering a new App Runner deployment. Tear down with `terraform destroy`.
 <!-- END deploy section -->

@@ -15,6 +15,12 @@
   "dependencies": {
     "express": "^4.21.2"
   },
+  "optionalDependencies": {
+    "@aws-sdk/client-dynamodb": "^3.632.0",
+    "@aws-sdk/client-s3": "^3.632.0",
+    "@aws-sdk/lib-dynamodb": "^3.632.0",
+    "@aws-sdk/s3-request-presigner": "^3.632.0"
+  },
   "license": "GPL-3.0-or-later",
   "private": true
 }

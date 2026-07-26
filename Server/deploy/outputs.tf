@@ -24,3 +24,20 @@ output "custom_domain" {
   description = "Custom domain associated with the service, if any. Empty when unused. Fetch DNS validation records via the AWS console/API after apply."
   value       = var.custom_domain != "" ? var.custom_domain : ""
 }
+
+# --- Replay persistence ----------------------------------------------------
+
+output "replay_bucket_name" {
+  description = "S3 bucket holding replay blobs (empty when replays are disabled)."
+  value       = local.replay_enabled ? aws_s3_bucket.replays[0].bucket : ""
+}
+
+output "replay_bucket_arn" {
+  description = "ARN of the replay S3 bucket (empty when disabled)."
+  value       = local.replay_enabled ? aws_s3_bucket.replays[0].arn : ""
+}
+
+output "replay_table_name" {
+  description = "DynamoDB table holding replay metadata (empty when using the in-memory store)."
+  value       = local.replay_table ? aws_dynamodb_table.replays[0].name : ""
+}

@@ -5,6 +5,8 @@
 
 import { loadConfig, validateConfig } from './config.js';
 import { RoomStore } from './roomStore.js';
+import { createBlobStore } from './blobStore.js';
+import { createReplayMetaStore } from './replayStore.js';
 import { createApp, SERVICE_NAME } from './app.js';
 
 function log(cfg, level, msg, extra) {
@@ -31,7 +33,12 @@ function main() {
     maxRooms: config.maxRooms,
   });
 
-  const app = createApp({ store, config });
+  // Replay persistence: S3 blobs + pluggable metadata store. Blank config => in-memory dev stores,
+  // so the service boots with no AWS. See config.js / .env.example (all REPLAY_* are blank).
+  const replayMetaStore = createReplayMetaStore(config);
+  const blobStore = createBlobStore(config);
+
+  const app = createApp({ store, config, replayMetaStore, blobStore });
 
   const server = app.listen(config.port, config.bindHost, () => {
     log(config, 'info', `${SERVICE_NAME} listening`, {
@@ -41,9 +48,18 @@ function main() {
       insecureDevMode: config.clientApiKeys.length === 0 && config.allowInsecureNoAuth,
       roomTtlSeconds: config.roomTtlSeconds,
       heartbeatSeconds: config.heartbeatSeconds,
+      replayStorage: blobStore.mode, // 's3' (persistent) | 'memory' (dev)
+      replayMetadata: config.replayTable ? 'dynamodb' : 'memory',
     });
     if (config.clientApiKeys.length === 0 && config.allowInsecureNoAuth) {
       log(config, 'warn', 'Running WITHOUT auth (ALLOW_INSECURE_NO_AUTH) — local dev only.');
+    }
+    if (blobStore.mode === 'memory') {
+      log(
+        config,
+        'warn',
+        'REPLAY_S3_BUCKET is blank — replay blobs use the IN-MEMORY dev store (volatile, single-process). Set REPLAY_S3_BUCKET for persistent storage.'
+      );
     }
   });
 

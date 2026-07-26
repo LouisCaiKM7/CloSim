@@ -14,7 +14,19 @@ Runner** pulling its image from **ECR**, with the client API key stored in
   health-checking `GET /healthz`, with autoscaling. App Runner supplies managed
   HTTPS and a public URL.
 - **IAM roles**: an access role (App Runner pulls from ECR) and an instance role
-  (the running service reads the secret at runtime).
+  (the running service reads the secret at runtime **and** accesses the replay
+  bucket/table).
+- **Replay persistence** (`replays.tf`, additive, toggleable):
+  - a **private S3 bucket** for opaque replay blobs (all public access blocked,
+    SSE-AES256, CORS for direct presigned PUT/GET, optional lifecycle expiry),
+  - an optional **DynamoDB table** for replay metadata (on-demand billing,
+    `replayId` partition key + `userId-index` / `gameId-index` GSIs),
+  - an inline IAM policy granting the instance role least-privilege access to
+    exactly those (`s3:GetObject/PutObject/DeleteObject` on the prefix,
+    `dynamodb:PutItem/GetItem/DeleteItem/Query/Scan` on the table + indexes).
+  Set `enable_replays = false` to skip all of it (the service then uses its
+  in-memory dev stores); `create_replay_table = false` keeps the bucket but uses
+  the in-memory metadata store.
 - Optional **custom domain** association.
 
 > Alternative architecture (see comments in `main.tf`): ECS Fargate + ALB. Not
@@ -121,6 +133,8 @@ curl "$(terraform output -raw service_url)/healthz"
 - `service_url` — public HTTPS URL of the App Runner service
 - `ecr_repository_url` — where to push the image
 - `secret_arn` — the CLIENT_API_KEYS secret to populate
+- `replay_bucket_name` / `replay_bucket_arn` — S3 bucket for replay blobs (empty if disabled)
+- `replay_table_name` — DynamoDB metadata table (empty if using the in-memory store)
 - `service_arn`, `custom_domain`
 
 ## Teardown
