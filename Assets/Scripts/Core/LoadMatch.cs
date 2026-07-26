@@ -844,6 +844,17 @@ namespace Core
             return _fieldHolder;
         }
 
+        /// <summary>
+        /// ADDITIVE (spectator overview camera, Online.Sync): read-only lookup of the same field camera
+        /// anchor AddFieldCamera() uses for the offline 3v0 "4th quadrant" field camera. Exposed so an
+        /// online-only coordinator can place a spectator overview camera without duplicating or guessing
+        /// the configured anchor name. Does not spawn or modify anything.
+        /// </summary>
+        public Transform GetFieldCameraAnchor()
+        {
+            return FindFieldCameraAnchor();
+        }
+
         private void SpawnRobots()
         {
             EnsureSlotArrays();

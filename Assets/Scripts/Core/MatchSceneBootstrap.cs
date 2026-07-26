@@ -34,6 +34,12 @@ namespace Core
             if (Mirror.NetworkServer.active || Mirror.NetworkClient.active)
             {
                 Online.Sync.MatchSpawnManager.RunForScene(loadMatch);
+
+                // ADDITIVE: gives any client that ends up owning no robot (spectator, or otherwise
+                // robot-less) a field-overview camera once spawning settles. No-op for a client that
+                // owns a robot (RobotNetworkController.SetupLocalOwner's AddOnlineCamera already covers
+                // it) and never runs offline — see SpectatorCameraController's own online-state guard.
+                Online.Sync.SpectatorCameraController.RunForScene(loadMatch);
                 return;
             }
 
