@@ -10,11 +10,24 @@
 //
 // The core netcode agent (CloSimNetworkManager) wires an instance of this component into
 // NetworkManager.authenticator and configures it before StartHost / StartClient.
+//
+// ── INTEGRATION DECISION (A2 seam reconciliation) ─────────────────────────────────────────────
+// CANONICAL handshake state lives on CloSimNetworkManager (namespace Online.Net), NOT on this
+// component:
+//     host-side   → manager.ExpectedJoinToken / manager.ExpectedVersion
+//     client-side → manager.PendingJoinToken  / manager.PendingClientVersion
+// OnlineConnection writes those fields; this authenticator READS them at handshake time via
+// NetworkManager.singleton cast to CloSimNetworkManager. The public ExpectedToken/ClientToken
+// fields below are kept ONLY as an inspector/standalone fallback used when no CloSimNetworkManager
+// singleton is present; ConfigureAsHost/ConfigureAsClient forward into the manager when it exists.
+// Protocol version is a STRING sourced from Online.Net.NetcodeProtocol.Version (single source of
+// truth); server-side compatibility is decided by NetcodeProtocol.IsCompatible(...).
 
 using System;
 using System.Collections;
 using Mirror;
 using Online.Contracts;
+using Online.Net;
 using UnityEngine;
 
 namespace Online.Net.Auth
@@ -112,21 +125,35 @@ namespace Online.Net.Auth
         public event Action<byte, string> OnClientAuthResponse;
 
         // ---------------------------------------------------------------------
-        // Protocol version source.
+        // Protocol version source + canonical handshake state accessor.
         // ---------------------------------------------------------------------
 
         /// <summary>
-        /// The protocol version this build speaks. Both host and client read the same value, so two
-        /// builds from the same source agree and a mismatched build is rejected.
+        /// The protocol version this build speaks, as a STRING. Both host and client read the same
+        /// value, so two builds from the same source agree and a mismatched build is rejected.
         ///
-        /// INTEGRATION: this references <c>Online.Net.Core.CloSimProtocol.Version</c>, defined by the
-        /// core netcode agent under Assets/Scripts/Online/Net/Core/. It is assumed to be an
-        /// <see cref="int"/> constant. If the core defines it with a different name or type (e.g. a
-        /// string build id), reconcile by changing this ONE property — it is the only reference.
-        /// Until the core file lands in this branch, this symbol is intentionally unresolved (the whole
-        /// module also depends on Mirror, which the core agent adds), and resolves on integration.
+        /// SOURCE OF TRUTH: <see cref="Online.Net.NetcodeProtocol.Version"/> (Core, A2). This is the
+        /// only reference; do not duplicate the literal elsewhere.
         /// </summary>
-        protected virtual int ProtocolVersion => Online.Net.Core.CloSimProtocol.Version;
+        protected virtual string ProtocolVersion => NetcodeProtocol.Version;
+
+        /// <summary>The CloSim manager that holds the canonical handshake state, or null if the active
+        /// NetworkManager is not a CloSimNetworkManager (standalone/inspector use).</summary>
+        private CloSimNetworkManager Manager => NetworkManager.singleton as CloSimNetworkManager;
+
+        /// <summary>Host: the join token this server expects. Canonical = manager.ExpectedJoinToken;
+        /// falls back to the inspector <see cref="ExpectedToken"/> when no manager is present.</summary>
+        private string ExpectedTokenValue => Manager != null ? (Manager.ExpectedJoinToken ?? string.Empty) : (ExpectedToken ?? string.Empty);
+
+        /// <summary>Host: the protocol version this server accepts. Canonical = manager.ExpectedVersion.</summary>
+        private string ExpectedVersionValue => Manager != null && !string.IsNullOrEmpty(Manager.ExpectedVersion) ? Manager.ExpectedVersion : ProtocolVersion;
+
+        /// <summary>Client: the join token to present. Canonical = manager.PendingJoinToken;
+        /// falls back to the inspector <see cref="ClientToken"/> when no manager is present.</summary>
+        private string ClientTokenValue => Manager != null ? (Manager.PendingJoinToken ?? string.Empty) : (ClientToken ?? string.Empty);
+
+        /// <summary>Client: the protocol version to present. Canonical = manager.PendingClientVersion.</summary>
+        private string ClientVersionValue => Manager != null && !string.IsNullOrEmpty(Manager.PendingClientVersion) ? Manager.PendingClientVersion : ProtocolVersion;
 
         // ---------------------------------------------------------------------
         // Auth handshake messages.
@@ -137,7 +164,7 @@ namespace Online.Net.Auth
         public struct AuthRequestMessage : NetworkMessage
         {
             public string token;
-            public int protocolVersion;
+            public string protocolVersion;
         }
 
         /// <summary>Server -> client: accept/reject verdict with a machine code + reason string.</summary>
@@ -177,9 +204,10 @@ namespace Online.Net.Auth
                 return;
 
             // 1) Protocol/version compatibility — checked first so an outdated build never gets a
-            //    misleading "wrong password" result.
-            int serverVersion = ProtocolVersion;
-            if (msg.protocolVersion != serverVersion)
+            //    misleading "wrong password" result. Compatibility is decided by the Core protocol
+            //    (NetcodeProtocol.IsCompatible, which treats empty as "local version").
+            string serverVersion = ExpectedVersionValue;
+            if (!NetcodeProtocol.IsCompatible(msg.protocolVersion, serverVersion))
             {
                 RejectConnection(conn, CodeVersionMismatch,
                     $"Version mismatch (server {serverVersion}, client {msg.protocolVersion}).");
@@ -205,10 +233,11 @@ namespace Online.Net.Auth
         /// client token must match exactly (ordinal, case-sensitive).</summary>
         bool TokenMatches(string clientToken)
         {
-            if (string.IsNullOrWhiteSpace(ExpectedToken))
+            string expected = ExpectedTokenValue;
+            if (string.IsNullOrWhiteSpace(expected))
                 return true; // public / un-gated room
 
-            return string.Equals(ExpectedToken, clientToken ?? string.Empty, StringComparison.Ordinal);
+            return string.Equals(expected, clientToken ?? string.Empty, StringComparison.Ordinal);
         }
 
         void RejectConnection(NetworkConnectionToClient conn, byte code, string reason)
@@ -253,8 +282,8 @@ namespace Online.Net.Auth
         {
             NetworkClient.Send(new AuthRequestMessage
             {
-                token = ClientToken ?? string.Empty,
-                protocolVersion = ProtocolVersion
+                token = ClientTokenValue,
+                protocolVersion = ClientVersionValue
             });
         }
 
@@ -268,12 +297,18 @@ namespace Online.Net.Auth
             {
                 if (logAuthDecisions)
                     Debug.Log("[CloSimAuth] Server accepted this client.");
+                // NOTE: success is surfaced exactly once by CloSimNetworkManager.OnClientConnect
+                // (ClientOnly mode) → ReportClientConnectResult(Success). We deliberately do NOT
+                // report it here to avoid double-reporting.
                 ClientAccept();
             }
             else
             {
                 if (logAuthDecisions)
                     Debug.Log($"[CloSimAuth] Server rejected this client: {msg.code} {msg.message}");
+                // Surface the PRECISE reject reason (BadToken / Version / ...) before the transport
+                // tears the connection down, so the façade raises OnClientConnected with it.
+                Manager?.ReportClientConnectResult(MapToConnectResult(msg.code));
                 ClientReject();
             }
         }
@@ -283,17 +318,23 @@ namespace Online.Net.Auth
         // =====================================================================
 
         /// <summary>Configure this authenticator on the host. Pass <c>HostStartOptions.joinToken</c>
-        /// ("" / null => public, un-gated room).</summary>
+        /// ("" / null => public, un-gated room). Writes to the canonical manager location when a
+        /// CloSimNetworkManager is active; also keeps the inspector fallback in sync.</summary>
         public void ConfigureAsHost(string expectedToken)
         {
             ExpectedToken = expectedToken ?? string.Empty;
+            if (Manager != null)
+                Manager.ExpectedJoinToken = ExpectedToken;
         }
 
         /// <summary>Configure this authenticator on the client. Pass <c>ConnectEndpoint.joinToken</c>
-        /// ("" / null when joining a public room).</summary>
+        /// ("" / null when joining a public room). Writes to the canonical manager location when a
+        /// CloSimNetworkManager is active; also keeps the inspector fallback in sync.</summary>
         public void ConfigureAsClient(string token)
         {
             ClientToken = token ?? string.Empty;
+            if (Manager != null)
+                Manager.PendingJoinToken = ClientToken;
         }
 
         /// <summary>Map an auth response code to the UI-facing <see cref="ConnectResult"/>. The core

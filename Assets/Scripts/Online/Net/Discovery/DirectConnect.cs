@@ -24,6 +24,7 @@
 
 using Mirror;
 using Online.Contracts;
+using Online.Net;
 
 namespace Online.Net.Discovery
 {
@@ -33,16 +34,22 @@ namespace Online.Net.Discovery
     /// </summary>
     public static class DirectConnect
     {
+        // ── INTEGRATION DECISION (A2 seam reconciliation) ─────────────────────────────────────────
+        // The CANONICAL staging location for the client's join token/version is the
+        // CloSimNetworkManager (PendingJoinToken / PendingClientVersion) — that is what
+        // CloSimNetworkAuthenticator reads at handshake time. The static properties below are kept as
+        // a convenience MIRROR for callers that connect via DirectConnect directly (not through
+        // OnlineConnection); Join(ConnectEndpoint) writes BOTH the manager (canonical) and these.
+
         /// <summary>
-        /// Join token to present on the NEXT client connect. Staged here so the transport/auth boundary
-        /// (the separate <c>CloSimNetworkAuthenticator</c>) can read it when building its AuthRequest.
-        /// Set automatically by <see cref="Join(ConnectEndpoint)"/>; cleared after a successful read is
-        /// the authenticator's job. "" = no token.
+        /// Mirror of the join token to present on the NEXT client connect. The authoritative value the
+        /// authenticator reads is <c>CloSimNetworkManager.PendingJoinToken</c>; this static is kept in
+        /// sync by <see cref="Join(ConnectEndpoint)"/> for direct callers. "" = no token.
         /// </summary>
         public static string PendingJoinToken { get; set; } = string.Empty;
 
-        /// <summary>Client protocol/version to present on the next connect (for the authenticator's
-        /// optional version gate). "" = unspecified.</summary>
+        /// <summary>Mirror of the client protocol/version to present on the next connect. Authoritative
+        /// value is <c>CloSimNetworkManager.PendingClientVersion</c>. "" = unspecified.</summary>
         public static string PendingVersion { get; set; } = string.Empty;
 
         /// <summary>
@@ -73,12 +80,26 @@ namespace Online.Net.Discovery
 
         /// <summary>
         /// Connect using a full <see cref="ConnectEndpoint"/> (address/port/token/version). Stages the
-        /// token + version for the authenticator, then delegates to <see cref="Join(string, ushort)"/>.
+        /// token + version into the CANONICAL manager location (and the static mirror), then delegates
+        /// to <see cref="Join(string, ushort)"/>.
         /// </summary>
         public static ConnectResult Join(ConnectEndpoint endpoint)
         {
-            PendingJoinToken = endpoint.joinToken ?? string.Empty;
-            PendingVersion = endpoint.version ?? string.Empty;
+            string token = endpoint.joinToken ?? string.Empty;
+            string version = endpoint.version ?? string.Empty;
+
+            // Static mirror (for direct callers) …
+            PendingJoinToken = token;
+            PendingVersion = version;
+
+            // … and the CANONICAL location the authenticator actually reads.
+            if (NetworkManager.singleton is CloSimNetworkManager m)
+            {
+                m.PendingJoinToken = token;
+                if (!string.IsNullOrEmpty(version))
+                    m.PendingClientVersion = version;
+            }
+
             return Join(endpoint.address, (ushort)endpoint.port);
         }
 

@@ -4,24 +4,28 @@
 // The single seam through which Rooms (A3), Gameplay (A4) and the Server List (A5) start/stop and
 // observe connections. It wraps CloSimNetworkManager and never leaks Mirror types to callers.
 //
-// SWARM INTEGRATION SEAMS (helper classes on sibling branches; merged into feat/netcode-foundation later):
-//   * `CloSimNetworkAuthenticator` — assigned to the manager's `authenticator`; it reads the handshake
-//     state we set on CloSimNetworkManager (ExpectedJoinToken/ExpectedVersion/PendingJoinToken/
-//     PendingClientVersion) and calls manager.ReportClientConnectResult(...) for reject reasons.
-//   * `CloSimNetworkDiscovery` — LAN advertise/find. Assumed API (verify at merge):
-//         void AdvertiseServer(Online.Contracts.RoomInfo room);
+// SWARM INTEGRATION SEAMS (helper classes merged into feat/netcode-foundation — APIs RECONCILED):
+//   * `CloSimNetworkAuthenticator` (Online.Net.Auth) — assigned to the manager's `authenticator`; it
+//     reads the handshake state we set on CloSimNetworkManager (ExpectedJoinToken/ExpectedVersion/
+//     PendingJoinToken/PendingClientVersion) and calls manager.ReportClientConnectResult(...) for
+//     reject reasons.
+//   * `CloSimNetworkDiscovery` (Online.Net.Discovery) — LAN advertise/find. ACTUAL API:
+//         void AdvertiseRoom(Online.Contracts.RoomInfo room);   // host advertise
+//         void UpdateAdvertisedRoom(Online.Contracts.RoomInfo room);
 //         void StopAdvertising();
-//         void StartDiscovery();          // client search
-//         void StopDiscovery();
-//         event System.Action<Online.Contracts.RoomInfo> OnServerFound;
-//   * `DirectConnect` — direct-IP client connect. Assumed API (verify at merge):
-//         static void Join(string ip, ushort port);   // sets networkAddress + port, calls StartClient()
+//         void StartFinding(System.Action<RoomInfo> onFound = null); // client search
+//         void StopFinding();
+//         event System.Action<Online.Contracts.RoomInfo> OnRoomDiscovered;
+//   * `DirectConnect` (Online.Net.Discovery) — direct-IP client connect. ACTUAL API:
+//         static ConnectResult Join(string ip, ushort port);   // sets networkAddress + port, StartClient()
 
 using System;
 using System.Net;
 using System.Net.Sockets;
 using Mirror;
 using Online.Contracts;
+using Online.Net.Auth;
+using Online.Net.Discovery;
 using UnityEngine;
 
 namespace Online.Net
@@ -113,7 +117,7 @@ namespace Online.Net
             _manager.ClientDisconnected += HandleClientDisconnected;
 
             if (_discovery != null)
-                _discovery.OnServerFound += HandleServerFound; // INTEGRATION
+                _discovery.OnRoomDiscovered += HandleRoomDiscovered; // INTEGRATION
         }
 
         private void Unsubscribe()
@@ -128,7 +132,7 @@ namespace Online.Net
             }
 
             if (_discovery != null)
-                _discovery.OnServerFound -= HandleServerFound; // INTEGRATION
+                _discovery.OnRoomDiscovered -= HandleRoomDiscovered; // INTEGRATION
         }
 
         // ---------------------------------------------------------------- Host lifecycle
@@ -150,7 +154,7 @@ namespace Online.Net
 
             // Advertise on LAN for BOTH public and private rooms (private relies on it entirely).
             // INTEGRATION: CloSimNetworkDiscovery broadcasts this RoomInfo to LAN searchers.
-            _discovery?.AdvertiseServer(BuildAdvertisedRoom(options));
+            _discovery?.AdvertiseRoom(BuildAdvertisedRoom(options));
         }
 
         public void StopHost()
@@ -189,12 +193,12 @@ namespace Online.Net
         public void StartLanDiscovery()
         {
             EnsureManager();
-            _discovery?.StartDiscovery(); // INTEGRATION
+            _discovery?.StartFinding(); // INTEGRATION: client probe; rooms arrive via OnRoomDiscovered
         }
 
         public void StopLanDiscovery()
         {
-            _discovery?.StopDiscovery(); // INTEGRATION
+            _discovery?.StopFinding(); // INTEGRATION
         }
 
         // ---------------------------------------------------------------- Manager event handlers
@@ -232,7 +236,7 @@ namespace Online.Net
             OnClientDisconnected?.Invoke();
         }
 
-        private void HandleServerFound(RoomInfo room) // INTEGRATION
+        private void HandleRoomDiscovered(RoomInfo room) // INTEGRATION
         {
             OnLanRoomDiscovered?.Invoke(room);
         }
