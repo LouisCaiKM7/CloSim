@@ -162,7 +162,11 @@ Auto-aim and mechanism-aim components can require the robot bumper root or anoth
 
 > Status: in development. This section describes the online multiplayer capability being added on top of the existing local split-screen play. Local/offline play is unchanged.
 
-CloSim is gaining **online multiplayer** using [Mirror](https://github.com/MirrorNetworking/Mirror) (MIT). Any player can **host a server directly from the client** (a player-hosted listen-server) — no dedicated server is required. Other players can find and join through an in-game **Server List**, connect **directly by IP/port**, or play over **LAN**.
+CloSim is gaining **online multiplayer** using [Mirror](https://github.com/MirrorNetworking/Mirror) (MIT), pulled in via OpenUPM (`com.mirrornetworking.mirror`, with the Unity Asset Store package as a fallback). Any player can **host a server directly from the client** (a player-hosted listen-server) — no dedicated server is required. Other players can find and join through an in-game **Server List**, connect **directly by IP/port**, or play over **LAN**.
+
+**Implementation status:** the netcode foundation (host/client connect, LAN discovery, direct-IP connect, token + protocol-version gating) and the master-server backend + AWS deployment infrastructure are built. The in-game room lobby, networked gameplay sync, and the Server List UI screen are still in progress. Local/offline split-screen play is unaffected either way.
+
+Public hosting has no relay in this version — a host who wants to be reachable from the public internet needs to port-forward (or otherwise expose) the game's UDP port; LAN play needs no such setup. Connecting to a host running an incompatible build is always rejected outright; a listed public room with a mismatched version instead shows up greyed out in the Server List rather than being hidden. Spectator slots are view-only — no robot control, no scoring input.
 
 Everything happens inside the game. The room system — the Server List, creating a room, joining, the room lobby, and mode selection — is **native in-game UI**. There is no website or browser involved.
 
@@ -186,9 +190,13 @@ Same-alliance / co-op modes (1v0, 2v0, 3v0) remain available. Remaining capacity
 
 ### Public discovery (AWS master server)
 
-Public rooms register with a lightweight **master server** (a backend directory the game uses to list public rooms). The master server is a backend service only — its sole client is the game itself; there is no web page to visit.
+Public rooms register with a lightweight **master server** (a backend directory the game uses to list public rooms). The master server is a backend service only — its sole client is the game itself; there is no web page to visit, and every request is gated by a client API key. Room listings are held in memory with a short TTL (rooms drop out shortly after a host stops heartbeating, well under a minute) — there's no database to manage.
 
-The master-server hosting endpoint is **user-supplied**: it is left blank in the project and must be configured by whoever runs the directory. Public browsing and hosting are unavailable until that endpoint is provided. Direct-IP and LAN play work without it.
+The master-server hosting endpoint is **user-supplied**: it is left blank in the project and must be configured by whoever runs the directory. Public browsing and hosting are unavailable until that endpoint is provided. Direct-IP and LAN play work without it. The backend itself — a small Node.js/Express service plus AWS deployment scripts (Terraform, container-based) — lives in `Server/`; see `Server/README.md` for how to run or deploy it. It ships with every endpoint, region, and credential blank until you fill them in.
+
+### Replays (in development)
+
+CloSim is also gaining a **replay** feature: an in-game recorder captures **deterministic state snapshots** of a match (not a video recording), which can be stored remotely (AWS S3-backed, via the same backend used for the master server) and played back later through an in-game **Replays** browser/viewer — again, entirely native in-game UI, no web page. Like the master server, the replay storage endpoint/credentials are left blank until supplied. See `Documentation/online/architecture.md` for the full design.
 
 For contributor-facing details (architecture, interface contracts, phased plan), see `CLAUDE.md`, `AGENTS.md`, and `Documentation/online/`.
 
@@ -197,7 +205,9 @@ For contributor-facing details (architecture, interface contracts, phased plan),
 ```text
 Documentation/Importing_Builder_Bots_to_CloSim.md
 Documentation/online/architecture.md
+Documentation/online/integration-checklist.md
 Documentation/online/agents/
+Server/README.md
 ```
 
 ## Credits

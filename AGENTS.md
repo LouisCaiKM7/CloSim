@@ -1,22 +1,26 @@
 # AGENTS.md — CloSim Online Multiplayer Team Roster & Working Agreement
 
-This is the working agreement for the 5-agent team building online multiplayer for CloSim.
+This is the working agreement for the core 5-agent team building online multiplayer for CloSim, plus the
+additive agents that have since joined the effort (replay feature, docs sync).
 Rules live in `CLAUDE.md`. Interface contracts (the source of truth) live in `Documentation/online/architecture.md`.
-Each agent also has a focused brief in `Documentation/online/agents/`.
+Each core agent also has a focused brief in `Documentation/online/agents/`.
 
 ---
 
 ## Team & branches
 
-| Agent | Role | Branch | Brief |
-|-------|------|--------|-------|
-| **A1** | Architect / Tech Lead | `feature/online-multiplayer` (integration) | this file + `CLAUDE.md` + `architecture.md` |
-| **A2** | Netcode Foundation | `feat/netcode-foundation` | `Documentation/online/agents/A2-netcode-foundation.md` |
-| **A3** | Rooms & Modes | `feat/rooms-lobby` | `Documentation/online/agents/A3-rooms-modes.md` |
-| **A4** | Gameplay Sync | `feat/gameplay-sync` | `Documentation/online/agents/A4-gameplay-sync.md` |
-| **A5** | Master Server + Server List | `feat/master-server` | `Documentation/online/agents/A5-master-server.md` |
+| Agent | Role | Branch | Brief | Status |
+|-------|------|--------|-------|--------|
+| **A1** | Architect / Tech Lead | `feature/online-multiplayer` (integration) | this file + `CLAUDE.md` + `architecture.md` | ongoing |
+| **A2** | Netcode Foundation | `feat/netcode-foundation` | `Documentation/online/agents/A2-netcode-foundation.md` | ✅ merged (landed as `Online.Net.*`, not `Online.Netcode`) |
+| **A3** | Rooms & Modes | `feat/rooms-lobby` | `Documentation/online/agents/A3-rooms-modes.md` | not yet merged |
+| **A4** | Gameplay Sync | `feat/gameplay-sync` | `Documentation/online/agents/A4-gameplay-sync.md` | not yet merged |
+| **A5** | Master Server + Server List | `feat/master-server` | `Documentation/online/agents/A5-master-server.md` | backend ✅ merged (`Server/`); Server List UI not yet merged |
+| **replay-design** | Replay feature architect (design/contracts) | `feat/replay-design` | `Documentation/online/architecture.md` (owns the replay design/contracts section) | in progress |
+| **replay-backend** | Replay storage backend (AWS S3-backed) | `feat/replay-backend` | design doc above | in progress |
+| **docs-sync** | Keeps `CLAUDE.md` / `README.md` / `AGENTS.md` accurate vs. merged reality | `feat/docs-sync` | this file | recurring/as-needed |
 
-All feature branches are cut from `feature/online-multiplayer`. Merges go back through **A1** (PR-style review). `main` is never touched in this effort.
+All feature branches are cut from `feature/online-multiplayer`. Merges go back through **A1** (PR-style review). `main` is never touched in this effort. The replay agents and the docs-sync agent are **additive** to the original 4-phase plan — they don't change A2–A5's ownership below except where noted (new `Online.Replay` rows).
 
 ---
 
@@ -44,18 +48,28 @@ All feature branches are cut from `feature/online-multiplayer`. Merges go back t
 
 > Rule: **only touch files your row lists.** Anything under `Assets/Scripts/Online/Contracts/` is **A1-owned** — request changes via A1, don't edit in place. Shared existing files (esp. `LoadMatch.cs`) have a single owner for edits (A4) to avoid conflicts.
 
+> **Namespace note:** the netcode foundation landed under **`Online.Net.*`** (`Online.Net`, `Online.Net.Auth`,
+> `Online.Net.Discovery`, `Online.Net.MasterClient`) — earlier planning referred to this as `Online.Netcode`;
+> that name is superseded. Rooms use `Online.Rooms` / `Online.UI.Lobby`; gameplay sync uses `Online.Sync`;
+> the Server List UI uses `Online.UI.ServerList`; the new replay feature uses `Online.Replay`. Update any
+> stale `Online.Netcode` reference you find to `Online.Net.*`.
+
 | Agent | Owns (create/edit here) | May read (do not edit) |
 |-------|--------------------------|------------------------|
 | **A1** | `CLAUDE.md`, `AGENTS.md`, `Documentation/online/**`, `Assets/Scripts/Online/Contracts/**`, `Packages/manifest.json` (conflict-arbiter), integration merges | everything |
-| **A2** | `Assets/Scripts/Online/Netcode/**`, `Packages/manifest.json` (add Mirror — coordinate with A1), a test bootstrap scene under `Assets/Scenes/Online/` | `Online/Contracts/**`, existing gameplay |
-| **A3** | `Assets/Scripts/Online/Rooms/**`, `Assets/Scripts/Online/UI/Lobby/**`, lobby scenes/prefabs under `Assets/**/Online/Lobby/` | `Online/Contracts/**`, `Online/Netcode/**`, `LoadMatch.cs` |
-| **A4** | `Assets/Scripts/Online/Sync/**`, **`Assets/Scripts/Core/LoadMatch.cs`** (de-hardcode 4→N — sole editor), minimal touches to `MatchSceneBootstrap.cs` / `Fms.cs` / `FieldScorer.cs` for sync hooks (additive; coordinate via A1) | `Online/Contracts/**`, `Online/Netcode/**`, `Online/Rooms/**` |
-| **A5** | `Server/**` (backend + IaC), `Assets/Scripts/Online/Master/**`, `Assets/Scripts/Online/UI/ServerList/**`, Server List scenes/prefabs | `Online/Contracts/**`, `Online/Netcode/**` |
+| **A2** | `Assets/Scripts/Online/Net/**` (`Online.Net`, `Online.Net.Auth`, `Online.Net.Discovery`, `Online.Net.MasterClient`) — **merged**, `Packages/manifest.json` (added Mirror via OpenUPM `com.mirrornetworking.mirror` 96.6.4 — coordinate with A1), a test bootstrap scene under `Assets/Scenes/Online/` | `Online/Contracts/**`, existing gameplay |
+| **A3** | `Assets/Scripts/Online/Rooms/**`, `Assets/Scripts/Online/UI/Lobby/**`, lobby scenes/prefabs under `Assets/**/Online/Lobby/` | `Online/Contracts/**`, `Online/Net/**`, `LoadMatch.cs` |
+| **A4** | `Assets/Scripts/Online/Sync/**`, **`Assets/Scripts/Core/LoadMatch.cs`** (de-hardcode 4→N — sole editor), minimal touches to `MatchSceneBootstrap.cs` / `Fms.cs` / `FieldScorer.cs` for sync hooks (additive; coordinate via A1) | `Online/Contracts/**`, `Online/Net/**`, `Online/Rooms/**` |
+| **A5** | `Server/**` (backend + IaC) — **merged**, `Assets/Scripts/Online/UI/ServerList/**` (namespace `Online.UI.ServerList`) — not yet merged, Server List scenes/prefabs | `Online/Contracts/**`, `Online/Net/**` |
+| **replay-design** | Replay design/contracts inside `Documentation/online/architecture.md` (its owned section) | everything (read-only outside its section); does not edit `CLAUDE.md`/`README.md`/`AGENTS.md` |
+| **replay-backend** | `Assets/Scripts/Online/Replay/**` (namespace `Online.Replay` — recorder + Replays browser/viewer), replay storage additions under `Server/**` (AWS S3-backed) | `Online/Contracts/**`, `Online/Net/**`, architecture.md replay contracts |
+| **docs-sync** | `CLAUDE.md`, `README.md`, `AGENTS.md` only | everything (read-only) |
 
 **Conflict-sensitive files:**
 - `Packages/manifest.json` — A2 adds Mirror; any other package change routes through A1.
 - `Assets/Scripts/Core/LoadMatch.cs` — **A4 only**. A3/others read it, never edit.
 - `Assets/Scripts/Online/Contracts/**` — **A1 only**. Signature changes are PRs to A1 that also update `architecture.md`.
+- `Documentation/online/architecture.md` — **A1**, and for the replay section specifically, the **replay-design** agent. Other agents propose changes via PR rather than editing directly.
 - Scenes/prefabs (`.unity`, `.prefab`) — Unity YAML merges badly; keep new online scenes/prefabs separate per agent, never co-edit one scene.
 
 ---
@@ -70,7 +84,13 @@ All feature branches are cut from `feature/online-multiplayer`. Merges go back t
 
 **A4:** `LoadMatch` de-hardcoded 4→N (up to 6) with offline 4-default preserved; server-authoritative robot spawn from the shared catalog by `robotIndex` with per-client ownership; `NetworkTransform`/sync on robots + game pieces; `FieldScorer` + `Fms` server-authoritative (reuse `Fms` scheduled server-time start hook); online single-view camera, offline split-screen intact; `IMatchLauncher` implemented; **no game-rule changes**; offline regression passes; written editor test steps.
 
-**A5:** `Server/` backend implements register/heartbeat/deregister/list/token with **config blank** and **no web UI** (game-client-only, gated by client credential); AWS IaC with blank placeholders; in-game **Server List** UI (native Unity) lists public rooms and connects via A2's API + direct-IP/token; written run + editor test steps; endpoint never hardcoded.
+**A5:** `Server/` backend implements register/heartbeat/deregister/list/token with **config blank** and **no web UI** (game-client-only, gated by client credential); AWS IaC with blank placeholders; in-game **Server List** UI (native Unity) lists public rooms and connects via A2's API + direct-IP/token; written run + editor test steps; endpoint never hardcoded. *(Backend half of this DoD is met — merged. Server List UI half is still outstanding.)*
+
+**replay-design:** replay design/contracts documented in `Documentation/online/architecture.md` (deterministic state-snapshot model, not video; recorder + Replays browser/viewer contracts; AWS S3 storage seam); reconciles with A2 connection/session lifecycle and A4 gameplay state without requiring game-content changes.
+
+**replay-backend:** in-game recorder + Replays browser/viewer under `Assets/Scripts/Online/Replay/**` (`Online.Replay`); AWS S3-backed storage integration (bucket/region/credentials **blank** — `// TODO: user provides`) added to `Server/**` following A5's existing config-blank + gated pattern; written editor test steps; offline unaffected.
+
+**docs-sync:** `CLAUDE.md`, `README.md`, `AGENTS.md` kept in sync with merged reality (namespaces, resolved decisions, blank-config inventory) after each merge round; never edits `architecture.md`, code, or `Server/**`.
 
 ---
 
