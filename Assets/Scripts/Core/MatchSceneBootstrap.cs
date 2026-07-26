@@ -27,6 +27,16 @@ namespace Core
             if (loadMatch == null)
                 return;
 
+            // ONLINE (ADDITIVE, T2): when a networked session is live, the server-authoritative launcher
+            // (Online.Sync.MatchLauncher / MatchSpawnManager) drives online mode + robot spawn instead of the
+            // local GameSessionManager path. Clients must NOT apply local launch settings. Offline play (no
+            // connection) is 100% unchanged and falls through to the original path below.
+            if (Mirror.NetworkServer.active || Mirror.NetworkClient.active)
+            {
+                Online.Sync.MatchSpawnManager.RunForScene(loadMatch);
+                return;
+            }
+
             GameSessionManager session = GameSessionManager.Instance;
             MatchLaunchData launchData = session != null ? session.CurrentLaunchData : null;
 
