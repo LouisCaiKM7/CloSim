@@ -26,6 +26,12 @@ namespace Field.Core
         public static MatchState MatchState;
         public MatchState state;
 
+        // ONLINE (additive): when true, this Fms is under network authority and must NOT run the
+        // independent client-side countdown in Update(). It is set by the Online.Sync flow layer
+        // (MatchFlowSync) on every networked machine and reset to false when leaving the network.
+        // Offline this stays false, so the legacy countdown branch runs exactly as before.
+        public static bool NetworkAuthoritative;
+
         [Header("Match Sounds")]
         public AudioSource audioSource;
         [FormerlySerializedAs("StartMatch")] public AudioClip startMatch;
@@ -81,8 +87,12 @@ namespace Field.Core
             {
                 ApplyScheduledState();
             }
-            else
+            else if (!NetworkAuthoritative)
             {
+                // Offline / non-networked path (byte-identical to legacy behavior): advance the local
+                // countdown independently. When NetworkAuthoritative is true but the scheduled match has
+                // not started yet, we intentionally do NOTHING here so clients never independently drive
+                // match state — authoritative timing arrives via StartScheduled()/ApplyScheduledState().
                 if (RobotState == RobotState.Enabled && !_startCountdownActive)
                 {
                     MatchTimer -= Time.deltaTime;
@@ -316,6 +326,20 @@ namespace Field.Core
             {
                 _startCountdownCoroutine = StartCoroutine(StartCountdown(startCountdownSeconds));
             }
+        }
+
+        /// <summary>
+        /// ONLINE (additive): activates the existing server-time scheduled-start path. Called on every
+        /// networked machine (host and clients) by the Online.Sync flow layer with the SAME
+        /// <paramref name="serverStartTime"/> and a provider that reads the synchronized network clock,
+        /// so <see cref="ApplyScheduledState"/> produces identical timer/state everywhere with no parallel
+        /// timer. Does not alter any scoring/match-rule math. Restart() clears these fields back to inactive.
+        /// </summary>
+        public void StartScheduled(double serverStartTime, Func<double> serverTimeProvider)
+        {
+            _scheduledMatchActive = true;
+            _scheduledMatchStartServerTime = serverStartTime;
+            _scheduledServerTimeProvider = serverTimeProvider;
         }
 
         public bool HasScheduledMatch => _scheduledMatchActive;

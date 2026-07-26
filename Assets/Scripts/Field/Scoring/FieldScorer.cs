@@ -4,6 +4,7 @@ using Core;
 using Field.Core;
 using Field.SeasonSpecific;
 using Field.SeasonSpecific.Rebuilt;
+using Mirror;
 using MyBox;
 using Robot.Runtime;
 using UnityEngine;
@@ -122,8 +123,35 @@ namespace Field.Scoring
             _pieceMask = LayerMask.GetMask("Piece");
         }
 
+        // ONLINE (additive): true offline (no client active) and on the host/server; false on pure
+        // clients. Score is server-authoritative online, so all score-MUTATING paths are gated behind
+        // this. Offline this is always true, so behavior is byte-identical to before.
+        private static bool ServerControlsScore()
+        {
+            return !NetworkClient.active || NetworkServer.active;
+        }
+
+        // ONLINE (additive): pure clients receive authoritative counter totals from Online.Sync (ScoreSync)
+        // and push them into the private statics here. Never called on the server; does not touch score math.
+        public static void ApplyReplicatedCounters(
+            int blueFuel, int redFuel,
+            int blueCoral, int redCoral,
+            int blueAlgae, int redAlgae)
+        {
+            BlueFuel = blueFuel;
+            RedFuel = redFuel;
+            BlueCoral = blueCoral;
+            RedCoral = redCoral;
+            BlueAlgae = blueAlgae;
+            RedAlgae = redAlgae;
+        }
+
         public static void ResetCounters()
         {
+            // ONLINE: clients never reset authoritative counters; they arrive via ScoreSync.
+            if (!ServerControlsScore())
+                return;
+
             BlueFuel = 0;
             RedFuel = 0;
 
@@ -136,6 +164,11 @@ namespace Field.Scoring
 
         protected void ScorePoints(int multiplayer = 1)
         {
+            // ONLINE: only the server/host mutates score (this also gates ApplyG407PenaltiesForScoredPieces
+            // and ScoreCounter, which are reached only from here). Pure clients get score via ScoreSync.
+            if (!ServerControlsScore())
+                return;
+
             bool auto = Fms.MatchState == MatchState.Auto;
             bool matchOver = Fms.MatchState == MatchState.Finished;
 
