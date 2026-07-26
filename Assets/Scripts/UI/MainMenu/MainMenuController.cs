@@ -21,6 +21,9 @@ namespace UI.MainMenu
 
         [Header("Main Buttons")]
         [SerializeField] private Button playButton;
+        [Tooltip("Optional. Opens the online multiplayer lobby (native in-game overlay). " +
+                 "Leave unassigned to hide multiplayer.")]
+        [SerializeField] private Button multiplayerButton;
         [SerializeField] private Button settingsButton;
         [SerializeField] private Button creditsButton;
         [SerializeField] private Button quitButton;
@@ -119,6 +122,9 @@ namespace UI.MainMenu
             if (playButton != null)
                 playButton.onClick.AddListener(ShowGameSelect);
 
+            if (multiplayerButton != null)
+                multiplayerButton.onClick.AddListener(OpenMultiplayer);
+
             if (settingsButton != null)
                 settingsButton.onClick.AddListener(ShowSettings);
 
@@ -161,6 +167,15 @@ namespace UI.MainMenu
         }
 
         private void ShowGameSelect() => Navigate(gameSelectRoot, gameSelectFirstSelected);
+
+        // Online multiplayer entry point. The lobby is a self-contained native-Unity overlay canvas
+        // built entirely in code (Online.UI.Lobby.OnlineLobbyMenuController), so it needs no scene root;
+        // when the user backs out of the lobby home screen we simply restore main-menu focus.
+        private void OpenMultiplayer()
+        {
+            Online.UI.Lobby.OnlineLobbyMenuController.OpenLobby(
+                onClosed: () => SelectImmediate(_currentFirstSelected));
+        }
 
         private void ShowSettings() => Navigate(settingsRoot, settingsFirstSelected);
 
