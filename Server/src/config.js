@@ -57,7 +57,25 @@ export function loadConfig(env = process.env) {
     regionLabel: env.REGION_LABEL && env.REGION_LABEL !== '' ? env.REGION_LABEL : '',
 
     logLevel: env.LOG_LEVEL && env.LOG_LEVEL !== '' ? env.LOG_LEVEL : 'info',
+
+    // --- Replay persistence (blobs in S3, metadata in a pluggable store) ------------------------
+    // ALL blank by default. Blank bucket => in-memory dev blob store; blank table => in-memory
+    // metadata store. The service boots and runs with NO AWS configured (graceful degrade).
+    // Credentials/region for the AWS SDK come from the standard chain (env / instance role), not here.
+    replayS3Bucket: strEnv(env, 'REPLAY_S3_BUCKET', ''), // TODO: user provides (S3 bucket for replay blobs)
+    replayS3Region: strEnv(env, 'REPLAY_S3_REGION', ''), // TODO: user provides (e.g. us-east-1)
+    replayS3Prefix: strEnv(env, 'REPLAY_S3_PREFIX', 'replays/'),
+    replayTable: strEnv(env, 'REPLAY_TABLE', ''), // TODO: user provides (optional DynamoDB table; blank => in-memory)
+    replayUploadUrlTtlSeconds: parseIntEnv('REPLAY_UPLOAD_URL_TTL_SECONDS', 900),
+    replayDownloadUrlTtlSeconds: parseIntEnv('REPLAY_DOWNLOAD_URL_TTL_SECONDS', 900),
+    replayMaxSizeBytes: parseIntEnv('REPLAY_MAX_SIZE_BYTES', 50 * 1024 * 1024), // 50 MiB cap on declared blob size
+    maxReplays: parseIntEnv('MAX_REPLAYS', 10000), // safety cap on the in-memory metadata store only
   };
+}
+
+function strEnv(env, name, fallback) {
+  const raw = env[name];
+  return raw !== undefined && raw !== '' ? raw : fallback;
 }
 
 // Validate config at boot. Throws with an actionable message if the server would run ungated.

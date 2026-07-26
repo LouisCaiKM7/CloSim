@@ -181,6 +181,17 @@ resource "aws_apprunner_service" "this" {
           MAX_ROOMS        = tostring(var.max_rooms)
           REGION_LABEL     = var.region_label
           LOG_LEVEL        = var.log_level
+
+          # --- Replay persistence (see replays.tf) ---
+          # Blank bucket => the service uses its in-memory dev blob store (no persistence).
+          REPLAY_S3_BUCKET                = local.replay_enabled ? aws_s3_bucket.replays[0].bucket : ""
+          REPLAY_S3_REGION                = var.aws_region
+          REPLAY_S3_PREFIX                = var.replay_s3_prefix
+          # Blank table => in-memory metadata store.
+          REPLAY_TABLE                    = local.replay_table ? aws_dynamodb_table.replays[0].name : ""
+          REPLAY_UPLOAD_URL_TTL_SECONDS   = tostring(var.replay_upload_url_ttl_seconds)
+          REPLAY_DOWNLOAD_URL_TTL_SECONDS = tostring(var.replay_download_url_ttl_seconds)
+          REPLAY_MAX_SIZE_BYTES           = tostring(var.replay_max_size_bytes)
         }
 
         # Secret injected by reference — App Runner resolves it at runtime
@@ -215,6 +226,7 @@ resource "aws_apprunner_service" "this" {
   depends_on = [
     aws_iam_role_policy_attachment.apprunner_ecr_access,
     aws_iam_role_policy.apprunner_read_secret,
+    aws_iam_role_policy.apprunner_replays_access,
     aws_secretsmanager_secret_version.client_api_keys,
   ]
 }

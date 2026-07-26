@@ -7,28 +7,47 @@
 //   POST   /rooms/{id}/heartbeat   body = {}                         -> { ok } (refreshes TTL)
 //   DELETE /rooms/{id}                                               -> { ok } (idempotent)
 //   GET    /rooms?gameId&region&hideFull&hidePrivate                 -> { rooms: [RoomInfo, ...] }
+//   POST   /replays                body = replay metadata (JSON)     -> { ok, replayId, upload } (presigned PUT)
+//   GET    /replays?userId&gameId&roomId&limit                       -> { replays: [<metadata>...] }
+//   GET    /replays/{id}                                             -> { ok, replay, download } (presigned GET)
+//   DELETE /replays/{id}                                             -> { ok } (idempotent, owner-gated)
 //   GET    /healthz                (no auth)                         -> { ok, ... } JSON health
 //
-// Auth: every route except /healthz requires a valid X-Api-Key (see auth.js).
-// There is intentionally NO web UI / HTML route: the only client is the game exe. GET / is 404 JSON.
+// Auth: every route except /healthz (and the signature-gated /replays/blob/* dev endpoints) requires
+// a valid X-Api-Key (see auth.js). There is intentionally NO web UI / HTML route: the only client is
+// the game exe. GET / is 404 JSON. Presigned S3 URLs are storage, not a browsable web console.
 
 import express from 'express';
 import { makeApiKeyAuth } from './auth.js';
+import { createBlobStore } from './blobStore.js';
+import { createReplayMetaStore } from './replayStore.js';
+import { mountMemoryBlobRoutes, registerReplayRoutes } from './replays.js';
 
 const SERVICE_NAME = 'closim-master-server';
 
 /**
- * @param {{ store: import('./roomStore.js').RoomStore, config: object, startedAt?: number }} deps
+ * @param {{ store: import('./roomStore.js').RoomStore, config: object, startedAt?: number,
+ *           replayMetaStore?: object, blobStore?: object }} deps
  */
-export function createApp({ store, config, startedAt = Date.now() }) {
+export function createApp({ store, config, startedAt = Date.now(), replayMetaStore, blobStore }) {
   const app = express();
   app.disable('x-powered-by');
   app.disable('etag');
 
-  // Parse JSON bodies (RoomInfo register payload, {} heartbeat). Small cap — rooms are tiny.
+  // Replay persistence stores. Constructed here from config if not injected (tests inject mocks).
+  // Blank REPLAY_S3_BUCKET => in-memory dev blob store; blank REPLAY_TABLE => in-memory metadata.
+  const metaStore = replayMetaStore || createReplayMetaStore(config);
+  const blobs = blobStore || createBlobStore(config);
+
+  // ---- Memory-mode blob endpoints (dev/tests): signature-gated, UNAUTH, BEFORE the JSON parser --
+  // No-op in S3 mode (blobs go straight to S3, never through this API). Mounted before express.json
+  // so the raw opaque bytes are readable, and before the auth gate (the URL carries its own signature).
+  mountMemoryBlobRoutes(app, blobs, config);
+
+  // Parse JSON bodies (RoomInfo register payload, {} heartbeat, replay metadata). Small cap.
   app.use(
     express.json({
-      limit: '16kb',
+      limit: '64kb',
       // Tolerate an empty body on POSTs that don't need one (heartbeat sometimes sends "{}").
       type: ['application/json', 'application/*+json', 'text/json'],
     })
@@ -41,6 +60,8 @@ export function createApp({ store, config, startedAt = Date.now() }) {
       service: SERVICE_NAME,
       status: 'healthy',
       rooms: store.size,
+      replays: metaStore.size, // number, or undefined for a DynamoDB-backed store
+      replayStorage: blobs.mode, // 's3' (persistent) | 'memory' (dev)
       region: config.regionLabel,
       roomTtlSeconds: config.roomTtlSeconds,
       heartbeatSeconds: config.heartbeatSeconds,
@@ -93,6 +114,9 @@ export function createApp({ store, config, startedAt = Date.now() }) {
     const rooms = store.list(query);
     return res.status(200).json({ rooms }); // object form (client also tolerates a bare array)
   });
+
+  // ---- Replays (persistent): create+presign-upload / list / get+presign-download / delete -------
+  registerReplayRoutes(app, { metaStore, blobStore: blobs, config });
 
   // ---- No web UI: unknown routes and GET / are JSON 404, never an HTML page --------------------
   app.use((req, res) => {

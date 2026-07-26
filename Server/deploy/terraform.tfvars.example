@@ -36,4 +36,20 @@ max_concurrency = 100
 # --- Optional custom domain ------------------------------------------------
 custom_domain = "" # TODO: user provides (optional, e.g. "master.example.com")
 
+# --- Replay persistence (S3 blobs + optional DynamoDB metadata) -------------
+# Replays persist (unlike ephemeral rooms). Defaults create a private S3 bucket
+# and a DynamoDB metadata table, and grant the service least-privilege access.
+# Set enable_replays = false to run without replay storage (in-memory dev stores).
+enable_replays      = true
+create_replay_table = true
+replay_bucket_name  = "" # TODO: user provides (optional; blank => "<project>-replays-<account_id>")
+replay_table_name   = "" # TODO: user provides (optional; blank => "<project>-replays")
+replay_s3_prefix    = "replays/"
+replay_expiry_days  = 0 # 0 => keep replays forever; e.g. 30 to auto-expire after 30 days
+replay_cors_allowed_origins     = ["*"]
+replay_table_pitr               = false
+replay_upload_url_ttl_seconds   = 900
+replay_download_url_ttl_seconds = 900
+replay_max_size_bytes           = 52428800 # 50 MiB
+
 tags = {} # e.g. { Environment = "prod" }
