@@ -126,7 +126,9 @@ namespace Field.Scoring
         // ONLINE (additive): true offline (no client active) and on the host/server; false on pure
         // clients. Score is server-authoritative online, so all score-MUTATING paths are gated behind
         // this. Offline this is always true, so behavior is byte-identical to before.
-        private static bool ServerControlsScore()
+        // internal (not private): ClimbScorer / ReefscapeEndgameParkScorer / ReefscapeAutoLeaveScorer
+        // reuse this exact guard for their own ScoreHolder mutations instead of duplicating the check.
+        internal static bool ServerControlsScore()
         {
             return !NetworkClient.active || NetworkServer.active;
         }

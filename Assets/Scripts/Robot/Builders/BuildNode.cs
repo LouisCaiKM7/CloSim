@@ -191,12 +191,21 @@ namespace Robot.Builders
         {
             if (!preload) return;
 
+            // ONLINE: host-authoritative game pieces (Online.Sync.GamePieceNetworkRegistrar). A client-only
+            // instance of a networked robot must not spawn its own local preload piece -- the host owns
+            // creation and replicates it via Mirror. Offline (no network session) this is always false.
+            if (Online.Sync.GamePieceNetworkRegistrar.SuppressLocalSpawn)
+                return;
+
             foreach (var piece in pieces)
             {
                 if (piece.name != gamePieceName) continue;
 
                 currentGamePiece = Instantiate(piece, transform.position, transform.rotation, transform)
                     .GetComponent<GamePiece>();
+
+                // ONLINE: publish the host-spawned preload piece to clients. No-op offline and on clients.
+                Online.Sync.GamePieceNetworkRegistrar.RegisterSpawned(currentGamePiece.gameObject);
 
                 currentState = NodeState.Stowing;
                 return;

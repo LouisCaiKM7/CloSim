@@ -498,6 +498,11 @@ namespace Field.Scoring
 
         private void AddPointsForRobotSlot(int robotSlot, int points)
         {
+            // ONLINE: score is server-authoritative (same gate as FieldScorer.ScorePoints). Pure clients
+            // must not mutate the shared ScoreHolder. Offline this is always true, so behavior is unchanged.
+            if (!FieldScorer.ServerControlsScore())
+                return;
+
             if (IsRobotSlotBlue(robotSlot))
                 ScoreHolder.BlueScore += points;
             else

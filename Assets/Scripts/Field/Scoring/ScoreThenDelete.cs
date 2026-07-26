@@ -37,7 +37,9 @@ namespace Field.Scoring
                     piece.rb.detectCollisions = false;
                 }
 
-                Destroy(piece.gameObject);
+                // ONLINE: host-authoritative game pieces (Online.Sync.GamePieceNetworkRegistrar). Falls back
+                // to a plain Destroy offline / for non-networked pieces, so this is behavior-preserving.
+                Online.Sync.GamePieceNetworkRegistrar.Despawn(piece.gameObject);
             }
 
             ScorePoints(_scoredCount);
