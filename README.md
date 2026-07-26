@@ -158,10 +158,46 @@ CloSim supports manually placed aim regions. Aim regions can be associated with:
 
 Auto-aim and mechanism-aim components can require the robot bumper root or another reference transform to be inside an allowed region before aiming activates. This is used for alliance-specific aiming, hub targeting, and optional passing restrictions.
 
+## Online Multiplayer (Rooms)
+
+> Status: in development. This section describes the online multiplayer capability being added on top of the existing local split-screen play. Local/offline play is unchanged.
+
+CloSim is gaining **online multiplayer** using [Mirror](https://github.com/MirrorNetworking/Mirror) (MIT). Any player can **host a server directly from the client** (a player-hosted listen-server) — no dedicated server is required. Other players can find and join through an in-game **Server List**, connect **directly by IP/port**, or play over **LAN**.
+
+Everything happens inside the game. The room system — the Server List, creating a room, joining, the room lobby, and mode selection — is **native in-game UI**. There is no website or browser involved.
+
+### Room and mode matrix
+
+Online rooms hold up to **6 players**, with a maximum of **3 per alliance**. The host picks the mode in the room lobby. Supported versus shapes (asymmetric allowed):
+
+| Blue \ Red | 1     | 2     | 3     |
+|------------|-------|-------|-------|
+| **1**      | 1v1   | 1v2   | 1v3   |
+| **2**      | 2v1   | 2v2   | 2v3   |
+| **3**      | 3v1   | 3v2   | 3v3   |
+
+Same-alliance / co-op modes (1v0, 2v0, 3v0) remain available. Remaining capacity can optionally be filled by **spectator** slots.
+
+### Hosting, joining, and browsing
+
+- **Host a room** from the client. Choose **Public** (listed for anyone to find) or **Private** (not listed; shared by IP or over LAN).
+- **Join** by picking a room from the in-game **Server List**, by entering a host's **IP and port** directly, or by **LAN discovery** on the same network.
+- **Private rooms** are gated by a **join token / password** so only invited players can connect. A public room may also set a token if the host wants a listed-but-locked room.
+
+### Public discovery (AWS master server)
+
+Public rooms register with a lightweight **master server** (a backend directory the game uses to list public rooms). The master server is a backend service only — its sole client is the game itself; there is no web page to visit.
+
+The master-server hosting endpoint is **user-supplied**: it is left blank in the project and must be configured by whoever runs the directory. Public browsing and hosting are unavailable until that endpoint is provided. Direct-IP and LAN play work without it.
+
+For contributor-facing details (architecture, interface contracts, phased plan), see `CLAUDE.md`, `AGENTS.md`, and `Documentation/online/`.
+
 ## Documentation
 
 ```text
 Documentation/Importing_Builder_Bots_to_CloSim.md
+Documentation/online/architecture.md
+Documentation/online/agents/
 ```
 
 ## Credits
