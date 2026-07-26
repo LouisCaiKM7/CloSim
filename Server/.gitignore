@@ -1,0 +1,16 @@
+# Dependencies
+node_modules/
+
+# Local env (NEVER commit real endpoints/keys — only .env.example is tracked)
+.env
+.env.local
+*.env
+!.env.example
+
+# Logs / runtime
+*.log
+npm-debug.log*
+
+# OS / editor
+.DS_Store
+Thumbs.db

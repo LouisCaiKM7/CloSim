@@ -1,0 +1,21 @@
+# Terraform
+.terraform/
+.terraform.lock.hcl
+*.tfstate
+*.tfstate.*
+crash.log
+crash.*.log
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+.terraformrc
+terraform.rc
+
+# Variable files may contain secrets — ignore all except the committed example.
+*.tfvars
+*.tfvars.json
+!terraform.tfvars.example
+
+# Plan output
+*.tfplan
