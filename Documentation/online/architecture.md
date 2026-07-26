@@ -458,4 +458,196 @@ These are the concrete integration points A3/A4 refactor. **Additive-first; mini
 3. **Version/protocol compatibility policy.** `RoomInfo.version` filtering — hard block on mismatch, or warn? Affects browser UX (A5) and connect rejection (A2).
 4. **Human player + spectators over network.** Existing `HumanPlayerType` (Bucket/Dumper) is tied to alliance slots. Do spectators get any human-player control, or are they pure observers? Assumed pure observers.
 5. **Persistence of the master directory.** In-memory vs. durable store (DynamoDB/SQLite). Recommend a simple in-memory + TTL store for v1 since rooms are ephemeral; confirm with A5.
+
+---
+
+## 11. Replay System
+
+> **Owner:** Replay Design agent. **Additive; NO game-content changes.** The replay backend + AWS/S3
+> config stay **blank** (same discipline as the master server). This section owns the replay format and
+> the `Online.Contracts.Replay` contracts under `Assets/Scripts/Online/Replay/Contracts/`.
+
+### 11.0 What a replay is (and is not)
+
+A CloSim replay is a **deterministic state-snapshot stream — NOT a video**. The recorder samples the
+**host's server-authoritative** state (robot + game-piece transforms, scores, events) at a low rate and
+serializes it to a compact, versioned, opaque **blob**. A viewer **reconstructs** the match by spawning
+robots from the **existing robot catalog** (`LoadMatch` → `RobotCatalogEntry`, keyed by `robotIndex`)
+and driving their transforms from the decoded frames. No prefabs, meshes, or assets are stored in the
+blob — only indices and quantized numbers. This keeps files tiny and immune to asset changes, at the
+cost of requiring the same game build's catalog to play back (guarded by `schemaVersion` + `gameId`).
+
+The backend is a **byte store + directory** only: it holds metadata (small JSON) and serves the blob via
+**presigned S3 URLs**. It never parses the blob. Its only client is `CloSim.exe` (no web UI), exactly
+like the master server.
+
+### 11.1 Assembly / where it lives
+
+New files under `Assets/Scripts/Online/Replay/Contracts/`, namespace **`Online.Contracts.Replay`**, in a
+**new** asmdef **`Online.Replay.Contracts`** that *references* `Online.Contracts` (reusing `RoomAlliance`)
+and sets `noEngineReferences: true` — the contracts are pure C# (JSON/Mirror/portable-friendly, no
+`UnityEngine` types). This mirrors the existing `Online.Contracts` split and keeps the format testable in
+isolation. The existing `Online.Contracts.asmdef` is **not** modified. The recorder/viewer *implementations*
+(A4-adjacent, in `Assembly-CSharp`) convert `UnityEngine` transforms ↔ the quantized primitives here.
+
+### 11.2 Blob layout (binary, little-endian)
+
 ```
+┌─ HEADER (once) ─────────────────────────────────────────────────────────────┐
+│ magic      u32   0x43_4C_53_52  "CLSR"                                        │
+│ schemaVer  u16   ReplayFormat.SchemaVersion (=1)                             │
+│ flags      u8    bit0=gzip payload, bit1=JSON-fallback payload               │
+│ gameId     str   "Rebuilt" | "Reefscape"      (len-prefixed UTF-8)           │
+│ sceneName  str   scene to reconstruct into                                    │
+│ mode       {u8 blue, u8 red}                                                  │
+│ tickRate   u8    frames/sec (default 15)                                      │
+│ kfInterval u16   frames between keyframes (default 30 → every 2 s)           │
+│ durationSec f32  filled at finalize                                           │
+│ finalScore {i32 blue, i32 red}                                               │
+│ createdAt  i64   unix epoch ms (UTC)                                          │
+│ roster[]   count u8, then per slot:                                          │
+│            { slotIndex u8, robotIndex i32, alliance u8, teamNumber i32,       │
+│              displayName str }                                                │
+├─ TIMELINE (payload; gzip'd when flags.bit0) ────────────────────────────────┤
+│ frameCount u32                                                                │
+│ FRAME × frameCount:                                                           │
+│   timestampMs u32   (match-relative)                                          │
+│   kind        u8    0=Delta, 1=Keyframe                                       │
+│   snapCount   u16                                                             │
+│   SNAPSHOT × snapCount:                                                       │
+│     kind u8 (0 Robot / 1 Piece)                                              │
+│     entityId  varint  (robot: slotIndex; piece: stable id)                   │
+│     posX,posY,posZ    KEYFRAME: i16 abs mm ; DELTA: zig-zag varint mm        │
+│     rotEnc u8 (0 Yaw16 / 1 SmallestThree32)                                  │
+│     rot    Yaw16→u16 (abs) / signed step (delta); SmallestThree32→u32        │
+│     [piece only] pieceType u8, motion u8                                      │
+│   evtCount u8                                                                 │
+│   EVENT × evtCount:                                                          │
+│     timestampMs u32, type u8, alliance u8, actorSlot i8, pieceId varint,      │
+│     intValue i32, hasPosition u8, [posX,posY,posZ i16 mm if hasPosition]     │
+└──────────────────────────────────────────────────────────────────────────────┘
+```
+
+**Quantization (see `ReplayFormat`):**
+- **Position** → fixed-point **millimetres** (`PositionUnitsPerMeter = 1000`). Keyframe absolutes are
+  `i16` (±32.767 m — a full FRC field fits with airborne headroom); delta frames store zig-zag varint mm
+  deltas (usually 1 byte).
+- **Rotation** → robots use **`Yaw16`** (planar drivetrain: one `u16`, ~0.0055°); tumbling pieces use a
+  **smallest-three compressed quaternion** (`u32` = 2-bit largest-index + 3×10-bit signed).
+- **Delta / keyframe:** a **keyframe** every `kfInterval` frames carries the full active entity set with
+  absolute values (a seek/resync point); intervening **delta** frames carry signed deltas and may **omit**
+  entities that did not move. Piece spawn/despawn ride as `PieceSpawn`/`PieceDespawn` events; the next
+  keyframe re-establishes the authoritative active set.
+
+**JSON+gzip fallback:** when `flags.bit1` is set, the payload is UTF-8 JSON of the same
+`ReplayHeader`/`ReplayFrame[]` DTOs, gzip'd. Larger raw but trivially inspectable — for debugging and
+cross-tool interop. Same `schemaVersion`; the viewer picks the decoder from `flags`.
+
+### 11.3 Size budget
+
+2.5-min (150 s) match @ 15 Hz ≈ **2250 frames**. ~6 robots (~5 B/frame delta incl. yaw+mask) +
+~30 moving pieces (~6 B/frame delta) ≈ **~210 B/frame** → ~0.47 MB raw timeline; keyframes every 2 s add
+~30 KB. **Raw ≈ 0.5 MB; gzip on quantized deltas ≈ 150–350 KB.** Comfortably inside the "few hundred KB –
+few MB" target. `ReplayFormat.SoftMaxBlobBytes` (8 MB) is the recorder's warn threshold.
+
+### 11.4 Contracts (namespace `Online.Contracts.Replay`)
+
+- **DTOs** (`ReplayModels.cs`): `ReplayMode{blue,red}`, `ReplayScore{blue,red}`,
+  `ReplayMetadata{ replayId, userId, gameId, mode, sceneName, durationSec, finalScore, sizeBytes,
+  createdAt, schemaVersion }` (backend-facing — matches the replay backend document shape),
+  `ReplayRosterEntry{ slotIndex, robotIndex, alliance, teamNumber, displayName }`,
+  `ReplayHeader`, `ReplaySnapshot` (generic quantized robot/piece transform+state), `ReplayFrame`,
+  `ReplayEvent`.
+- **Enums** (`ReplayEnums.cs`): `ReplayEntityKind`, `ReplayFrameKind`, `ReplayRotationEncoding`,
+  `ReplayEventType`, `ReplayMatchPhase`, `ReplayPieceType`, `ReplayPieceMotion`.
+- **Format constants** (`ReplayFormat.cs`): magic, schema version, flags, tick/keyframe rates,
+  position/rotation quantization scales, size budget.
+- **`IReplayRecorder`** (host-side): `BeginRecording(ReplayHeader)`, `RecordFrame(ReplayFrame)`,
+  `RecordEvent(ReplayEvent)`, `byte[] StopAndSerialize(float durationSec, ReplayScore finalScore)`,
+  `ReplayMetadata BuildMetadata(replayId, userId, sizeBytes)`, `Reset()`, plus `IsRecording`,
+  `Header`, `FrameCount`.
+- **`IReplayService`** (backend client): `Task<ReplayUploadResult> UploadAsync(ReplayMetadata, byte[])`,
+  `Task<IReadOnlyList<ReplayMetadata>> ListAsync(ReplayQuery)`,
+  `Task<ReplayFetchResult> GetAsync(string replayId)`, plus `IsConfigured`. Support types:
+  `ReplayUploadResult`, `ReplayFetchResult`, `ReplayQuery`, and static `ReplayServiceConfig`
+  (`BaseUrl=""`, `ApiKey=""`, `IsConfigured => BaseUrl != ""`). **Blank config ⇒ `IsConfigured=false`
+  ⇒ every call is a graceful no-op** (never throws, never blocks a match) — identical degradation to
+  `MasterServerClient`.
+
+### 11.5 Backend metadata + endpoint shape (aligned to; A5 owns `Server/`)
+
+The blob is opaque; only metadata JSON touches the directory API, gated by `X-Api-Key` (same auth style
+as the master server's `app.js`). Bytes move over **presigned S3 URLs**, so large blobs never transit the
+API host.
+
+```
+POST   /replays                 body = ReplayMetadata (replayId/userId server-set)
+                                -> { ok, replayId, uploadUrl }         # uploadUrl = presigned S3 PUT
+PUT    <uploadUrl>              body = <opaque blob bytes>             -> S3 200 (no auth header; URL-signed)
+POST   /replays/{id}/complete  body = { sizeBytes }                   -> { ok }   # finalize/verify
+GET    /replays?userId&gameId&mode&limit&cursor
+                                -> { replays: [ReplayMetadata, ...], cursor }
+GET    /replays/{id}           -> { ok, metadata, downloadUrl }        # downloadUrl = presigned S3 GET
+GET    <downloadUrl>           -> <opaque blob bytes>
+GET    /healthz                (no auth)                              -> { ok, ... }
+```
+
+Metadata JSON (matches `ReplayMetadata`):
+`{ replayId, userId, gameId, mode:{blue,red}, sceneName, durationSec, finalScore:{blue,red}, sizeBytes,
+createdAt, schemaVersion }`. Enums serialize as ints, matching the master server's convention. Storage:
+metadata in a small table (DynamoDB/SQLite), blobs in S3; recommend a lifecycle/TTL on old blobs — A5 to
+confirm.
+
+### 11.6 End-to-end sequence
+
+```
+ Match (host)      IReplayRecorder        IReplayService        Replay Backend        S3          Viewer (client)
+   │                    │                      │                     │                │               │
+   │ match start        │ BeginRecording(hdr)  │                     │                │               │
+   ├───────────────────►│  (roster, scene,     │                     │                │               │
+   │                    │   mode, tickRate)     │                     │                │               │
+   │ every tick (15Hz)  │                      │                     │                │               │
+   ├─ RecordFrame(...) ─►│  (quantized robots + │                     │                │               │
+   │  RecordEvent(...) ─►│   pieces; kf/delta)  │                     │                │               │
+   │        ...          │                      │                     │                │               │
+   │ MATCH END           │ StopAndSerialize(    │                     │                │               │
+   ├───────────────────►│  dur, finalScore) ─► blob[] (versioned, gzip)                │               │
+   │                    │ BuildMetadata(...) ─► ReplayMetadata        │                │               │
+   │                    │                      │                     │                │               │
+   │                    │   UploadAsync(meta, blob)                   │                │               │
+   │                    ├─────────────────────►│ POST /replays ─────►│ store meta     │               │
+   │                    │                      │◄ { replayId,uploadUrl }               │               │
+   │                    │                      │ PUT uploadUrl (blob) ─────────────────►│ store object  │
+   │                    │                      │ POST /replays/{id}/complete ─────────►│ (verify)      │
+   │                    │                      │◄ { ok }             │                │               │
+   │  (IsConfigured==false ⇒ all of the above is a silent no-op; match unaffected)     │               │
+   │                    │                      │                     │                │               │
+   │  ─────────────── later, from the in-game Replays screen ──────────────────────────────────────── │
+   │                    │                      │ ListAsync(query) ──► GET /replays ──►│                │
+   │                    │                      │◄ [ReplayMetadata]   │                │               │
+   │                    │                      │ GetAsync(replayId) ─► GET /replays/id►│                │
+   │                    │                      │◄ { metadata, downloadUrl }            │               │
+   │                    │                      │ GET downloadUrl ──────────────────────►│ blob[] ──────►│ decode header
+   │                    │                      │                     │                │               │ spawn robots by
+   │                    │                      │                     │                │               │ roster.robotIndex
+   │                    │                      │                     │                │               │ dequantize frames
+   │                    │                      │                     │                │               │ → scrub/play back
+```
+
+### 11.7 How the recorder & viewer agents use these
+
+- **Recorder (host, A4-adjacent):** on match launch, build a `ReplayHeader` from the `NetworkMatchConfig`
+  + roster (`RoomMemberSlot.robotIndex/alliance/displayName` → `ReplayRosterEntry`) and call
+  `BeginRecording`. Each sample tick, read the server-authoritative robot transforms (from the same
+  `_activeRobots` set `LoadMatch` spawns) and active `GamePiece` transforms/state, **quantize** them into
+  `ReplaySnapshot`s, and `RecordFrame` (marking a `Keyframe` every `keyframeInterval`). Push scoring/shot/
+  penalty/human-player/phase moments via `RecordEvent` (map `Field.Scoring` deltas, `Fms` `MatchState`,
+  `GamePiece.launchSource`/`g407` penalties). At `MatchState.Finished`, `StopAndSerialize` + `BuildMetadata`
+  + `IReplayService.UploadAsync`.
+- **Viewer (client):** the in-game Replays screen calls `ListAsync` then `GetAsync`, decodes the header,
+  loads `sceneName`, spawns robots from the catalog by `roster[i].robotIndex`, and drives their transforms
+  from decoded frames (dequantize mm→m, yaw/quat→rotation), replaying events on the timeline for
+  scrub/play/pause. Playback is read-only — no input pairing, no scoring mutation.
+- **Uploader/backend (A5):** implement the `/replays` endpoints above (presigned S3), store `ReplayMetadata`,
+  keep config blank. The blob is never parsed server-side.
+

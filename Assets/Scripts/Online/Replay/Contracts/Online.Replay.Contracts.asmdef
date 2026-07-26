@@ -1,0 +1,16 @@
+{
+    "name": "Online.Replay.Contracts",
+    "rootNamespace": "Online.Contracts.Replay",
+    "references": [
+        "Online.Contracts"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": true
+}
