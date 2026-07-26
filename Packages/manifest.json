@@ -1,6 +1,16 @@
 {
+  "scopedRegistries": [
+    {
+      "name": "OpenUPM",
+      "url": "https://package.openupm.com",
+      "scopes": [
+        "com.mirrornetworking"
+      ]
+    }
+  ],
   "dependencies": {
     "com.domybest.mybox": "https://github.com/Deadcows/MyBox.git",
+    "com.mirrornetworking.mirror": "96.6.4",
     "com.unity.collab-proxy": "2.6.0",
     "com.unity.feature.development": "1.0.2",
     "com.unity.inputsystem": "1.7.0",
