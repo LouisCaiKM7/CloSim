@@ -1,3 +1,4 @@
+using Mirror;
 using TMPro;
 using UnityEngine;
 
@@ -13,8 +14,14 @@ namespace Field.Scoring
         // Start is called before the first frame update
         void Start()
         {
-            BlueScore = 0;
-            RedScore = 0;
+            // ONLINE (additive): score is server-authoritative. Only the host/server (and offline play)
+            // zero the authoritative score; pure clients keep the values replicated by Online.Sync (ScoreSync).
+            // Offline (no client active) this is always true, so behavior is byte-identical to before.
+            if (!NetworkClient.active || NetworkServer.active)
+            {
+                BlueScore = 0;
+                RedScore = 0;
+            }
 
             var displayBlue = GameObject.Find("BlueScoreDisplay");
             if (displayBlue != null)
