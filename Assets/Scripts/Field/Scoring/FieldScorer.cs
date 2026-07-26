@@ -339,7 +339,7 @@ namespace Field.Scoring
 
                 foreach (var box in overlapBox)
                 {
-                    var piece = Utils.FindParentObjectComponent<GamePiece>(box.gameObject);
+                    var piece = Utilities.Utils.FindParentObjectComponent<GamePiece>(box.gameObject);
 
                     if (!piece) continue;
                     if (!_scorePiecesSet.Contains(piece.pieceType)) continue;

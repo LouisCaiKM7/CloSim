@@ -498,7 +498,7 @@ namespace Robot.Builders.Extensions
 
 #if UNITY_EDITOR
     [CustomEditor(typeof(SymmetryTool))]
-    public class SymmetryToolEditor : Editor
+    public class SymmetryToolEditor : UnityEditor.Editor
     {
         public override void OnInspectorGUI()
         {

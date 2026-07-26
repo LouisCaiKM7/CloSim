@@ -26,6 +26,7 @@
 using System;
 using System.Net;
 using Mirror;
+using Mirror.Discovery;
 using Online.Contracts;
 using UnityEngine;
 

@@ -68,15 +68,19 @@ namespace Online.Rooms
         public event Action<NetworkMatchConfig> OnMatchConfigChanged;
         public event Action OnMatchStarting;
 
-        /// <summary>The local player's connectionId (0 for host, the client's id otherwise, -1 if offline).</summary>
+        /// <summary>The local player's connectionId (0 for host, -1 otherwise).
+        /// NOTE: Mirror 96.6.4 does not expose a client's own server-assigned connectionId locally
+        /// (<see cref="NetworkConnectionToServer"/> has no connectionId — it is a server-side concept on
+        /// <see cref="NetworkConnectionToClient"/>). A remote client therefore cannot resolve its own
+        /// connectionId here; the server must push it (e.g. a TargetRpc or per-connection SyncVar) before
+        /// the client can match its own roster slot. TODO(online): propagate the assigned connectionId to
+        /// the client so <see cref="TryGetLocalMember"/> works on remote clients.</summary>
         public int LocalConnectionId
         {
             get
             {
                 if (NetworkServer.active) return HostConnectionId;                 // host
-                if (NetworkClient.active && NetworkClient.connection != null)
-                    return NetworkClient.connection.connectionId;                  // remote client
-                return -1;
+                return -1;                                                         // remote client id not locally known (see note)
             }
         }
 
