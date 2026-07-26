@@ -1,0 +1,145 @@
+# CloSim — Online Multiplayer CI
+# Owned by the Build/QA & Integration Harness (additive tooling only).
+#
+# Runs on every push/PR touching the online-multiplayer branches:
+#   1) EditMode tests  (game-ci/unity-test-runner) — includes the Online.Contracts smoke test.
+#   2) Windows build    (game-ci/unity-builder)     — Standalone Windows x64 player.
+#
+# ── LICENSES / SECRETS THE USER MUST PROVIDE (repo Settings > Secrets and variables > Actions) ──
+#   UNITY_LICENSE   : contents of your Unity .ulf license file (Personal or Pro).   # TODO: user provides
+#   UNITY_EMAIL     : Unity account email (needed for Pro/Plus serial activation).  # TODO: user provides
+#   UNITY_PASSWORD  : Unity account password.                                       # TODO: user provides
+#   (Pro serial only) UNITY_SERIAL.                                                 # TODO: user provides
+# See https://game.ci/docs/github/activation for how to generate UNITY_LICENSE.
+# Without these secrets the Unity jobs cannot activate and will fail — that is expected
+# until the user wires them up. Nothing here invents or hardcodes a credential.
+#
+# Unity editor version is read automatically from ProjectSettings/ProjectVersion.txt
+# (currently 2023.2.22f1) by the game-ci actions.
+
+name: CI
+
+on:
+  push:
+    branches:
+      - "feature/online-multiplayer"
+      - "feat/**"
+  pull_request:
+    branches:
+      - "feature/online-multiplayer"
+      - "main"
+  workflow_dispatch: {}
+
+# Cancel superseded runs on the same ref to save CI minutes.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # 1) EditMode tests (Online.Contracts smoke test + any future EditMode tests)
+  # ---------------------------------------------------------------------------
+  editmode-tests:
+    name: EditMode Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          lfs: true
+
+      # Cache the imported Library to speed up subsequent runs.
+      - name: Cache Library
+        uses: actions/cache@v4
+        with:
+          path: Library
+          key: Library-editmode-${{ hashFiles('Assets/**', 'Packages/**', 'ProjectSettings/**') }}
+          restore-keys: |
+            Library-editmode-
+            Library-
+
+      - name: Run EditMode tests
+        uses: game-ci/unity-test-runner@v4
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}   # TODO: user provides
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}       # TODO: user provides
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }} # TODO: user provides
+        with:
+          testMode: EditMode
+          # unityVersion defaults to "auto" (reads ProjectSettings/ProjectVersion.txt).
+          artifactsPath: test-results
+          githubToken: ${{ secrets.GITHUB_TOKEN }}
+          checkName: EditMode Test Results
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: editmode-test-results
+          path: test-results
+
+  # ---------------------------------------------------------------------------
+  # 2) Windows Standalone build
+  #    Uses game-ci/unity-builder. Alternatively, this can call our own
+  #    Tools/build-windows.sh + CloSimBuild.BuildWindows on a self-hosted
+  #    Windows runner — see the commented placeholder block below.
+  # ---------------------------------------------------------------------------
+  build-windows:
+    name: Build Windows (x64)
+    needs: editmode-tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          lfs: true
+
+      - name: Cache Library
+        uses: actions/cache@v4
+        with:
+          path: Library
+          key: Library-build-${{ hashFiles('Assets/**', 'Packages/**', 'ProjectSettings/**') }}
+          restore-keys: |
+            Library-build-
+            Library-
+
+      - name: Build StandaloneWindows64
+        uses: game-ci/unity-builder@v4
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}   # TODO: user provides
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}       # TODO: user provides
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }} # TODO: user provides
+        with:
+          targetPlatform: StandaloneWindows64
+          # unityVersion defaults to "auto".
+          buildName: CloSim
+          buildsPath: build
+
+      - name: Upload player
+        uses: actions/upload-artifact@v4
+        with:
+          name: CloSim-StandaloneWindows64
+          path: build/StandaloneWindows64
+
+  # ---------------------------------------------------------------------------
+  # PLACEHOLDER — self-hosted Windows runner alternative (no game-ci license flow)
+  # If you prefer to drive our own CloSimBuild.BuildWindows on a machine that
+  # already has Unity 2023.2.22f1 installed, enable a job like this instead of
+  # build-windows above and delete the game-ci job:
+  #
+  # build-windows-selfhosted:
+  #   name: Build Windows (self-hosted)
+  #   runs-on: [self-hosted, windows]           # a runner with Unity installed
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #       with: { lfs: true }
+  #     - name: Build
+  #       shell: pwsh
+  #       env:
+  #         UNITY_PATH: 'C:\Program Files\Unity\Hub\Editor\2023.2.22f1\Editor\Unity.exe' # TODO: user sets
+  #       run: ./Tools/build-windows.ps1
+  #     - uses: actions/upload-artifact@v4
+  #       with:
+  #         name: CloSim-StandaloneWindows64
+  #         path: Build/Windows
+  # ---------------------------------------------------------------------------
