@@ -53,6 +53,7 @@ namespace Online.Net
         private float _t;
         private string _lastSig = "";
         private bool _forcedReady;
+        private bool _dumped;
 
         public void Begin(bool host, string address)
         {
@@ -110,6 +111,25 @@ namespace Online.Net
                 _lastSig = sig;
                 Debug.Log($"[NetcodeAutoTest] t={_t:F0}s room={present} members={members} " +
                           $"cliConnected={cliConnected} cliReady={cliReady} cliSpawnedCount={cliSpawned}");
+            }
+
+            if (_t > 5f && !_dumped)
+            {
+                _dumped = true;
+                if (NetworkServer.active)
+                {
+                    int ready = 0;
+                    foreach (var c in NetworkServer.connections.Values) if (c.isReady) ready++;
+                    Debug.Log($"[NetcodeAutoTest] HOST DUMP conns={NetworkServer.connections.Count} ready={ready} serverSpawned={NetworkServer.spawned.Count}");
+                    foreach (var kv in NetworkServer.spawned)
+                        Debug.Log($"[NetcodeAutoTest]   serverObj netId={kv.Key} name={kv.Value.name} assetId={kv.Value.assetId}");
+                }
+                if (NetworkClient.active)
+                {
+                    Debug.Log($"[NetcodeAutoTest] CLIENT DUMP ready={NetworkClient.ready} clientSpawned={NetworkClient.spawned.Count} prefabsRegistered={NetworkClient.prefabs.Count}");
+                    foreach (var kv in NetworkClient.prefabs)
+                        Debug.Log($"[NetcodeAutoTest]   registeredPrefab assetId={kv.Key} name={kv.Value.name}");
+                }
             }
         }
     }

@@ -152,6 +152,13 @@ namespace Online.Net
         {
             base.OnClientConnect();
 
+            // A client must be "ready" before the server sends it any spawned objects (the room, robots, …).
+            // base.OnClientConnect only readies when !clientLoadedScene, which is not guaranteed for CloSim's
+            // overlay-driven lobby flow, so ensure it explicitly. Without this a joined client connects but
+            // receives zero replicated state (empty room).
+            if (mode == NetworkManagerMode.ClientOnly && !NetworkClient.ready)
+                NetworkClient.Ready();
+
             // Only surface Success for a genuine remote client. The host's local client also runs this.
             if (mode == NetworkManagerMode.ClientOnly)
                 ReportClientConnectResult(ConnectResult.Success);
