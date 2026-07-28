@@ -40,6 +40,12 @@ namespace Online.Rooms
             if (_instance != null) return _instance;
             var go = new GameObject(nameof(LobbyServices));
             _instance = go.AddComponent<LobbyServices>();
+
+            // Wire the room lifecycle: RoomNetworkBootstrap listens for OnHostStarted and spawns the
+            // networked RoomService (and registers its prefab client-side so a joined client sees the room).
+            // Without this, RoomService.Instance is always null and the whole in-room lobby has no data —
+            // the host sees an empty "Disconnected" room and clients never see the room after joining.
+            go.AddComponent<RoomNetworkBootstrap>();
             return _instance;
         }
 

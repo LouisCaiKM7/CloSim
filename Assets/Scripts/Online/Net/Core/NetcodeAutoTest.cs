@@ -1,15 +1,18 @@
-// CloSim Online Multiplayer — dev-only autonomous connection test (CORE). Namespace: Online.Net.
+// CloSim Online Multiplayer — dev-only autonomous connection/room test (CORE). Namespace: Online.Net.
 //
 // Activated ONLY by command-line flags, so it has ZERO effect on a normal launch:
-//   CloSim.exe -closim-autohost              -> starts a host (listen server) on port 7777
-//   CloSim.exe -closim-autoclient [address]  -> connects a client to <address>:7777 (default 127.0.0.1)
+//   CloSim.exe -closim-autohost              -> hosts a room via LobbyServices on port 7777
+//   CloSim.exe -closim-autoclient [address]  -> joins <address>:7777 via LobbyServices (default 127.0.0.1)
 //
-// It drives the same IOnlineConnection facade the in-game lobby uses and logs every connection event with
-// a [NetcodeAutoTest] prefix, so a host + client pair can be validated purely from the player logs without
-// any UI interaction. This is a developer aid (like NetcodeTestBootstrap) — not shipping behaviour.
+// Unlike a raw StartHost/StartClient probe, this drives the SAME LobbyServices path the in-game lobby
+// uses (Create Room / Join), so it exercises RoomNetworkBootstrap spawning the networked RoomService and
+// the room replicating to the client. It logs connection events AND the live RoomService member count with
+// a [NetcodeAutoTest] prefix, so host + client room replication can be validated purely from player logs.
 
 using System;
+using Mirror;
 using Online.Contracts;
+using Online.Rooms;
 using UnityEngine;
 
 namespace Online.Net
@@ -40,36 +43,73 @@ namespace Online.Net
 
             var go = new GameObject("NetcodeAutoTest");
             UnityEngine.Object.DontDestroyOnLoad(go);
-            var conn = go.AddComponent<OnlineConnection>();
+            go.AddComponent<NetcodeAutoTestRunner>().Begin(host, address);
+        }
+    }
 
-            conn.OnHostStarted += () => Debug.Log("[NetcodeAutoTest] HOST STARTED (listening on 7777)");
-            conn.OnHostStopped += () => Debug.Log("[NetcodeAutoTest] HOST STOPPED");
-            conn.OnClientConnected += r => Debug.Log($"[NetcodeAutoTest] CLIENT RESULT: {r}");
-            conn.OnClientDisconnected += () => Debug.Log("[NetcodeAutoTest] CLIENT DISCONNECTED");
+    /// <summary>MonoBehaviour half of NetcodeAutoTest — drives the flow and polls room state over time.</summary>
+    public sealed class NetcodeAutoTestRunner : MonoBehaviour
+    {
+        private float _t;
+        private string _lastSig = "";
+        private bool _forcedReady;
+
+        public void Begin(bool host, string address)
+        {
+            LobbyServices svc = LobbyServices.EnsureExists();
+            svc.Connection.OnHostStarted += () => Debug.Log("[NetcodeAutoTest] HOST STARTED (listening on 7777)");
+            svc.Connection.OnClientConnected += r => Debug.Log($"[NetcodeAutoTest] CLIENT RESULT: {r}");
 
             if (host)
             {
-                Debug.Log("[NetcodeAutoTest] starting HOST on port 7777...");
-                conn.StartHost(new HostStartOptions
+                Debug.Log("[NetcodeAutoTest] hosting a room via LobbyServices...");
+                var info = new RoomInfo
                 {
-                    port = 7777,
-                    joinToken = "",
-                    visibility = RoomVisibility.Public,
-                    roomName = "AutoTest",
+                    name = "AutoTest",
                     gameId = "Rebuilt",
-                    version = NetcodeProtocol.Version
-                });
+                    port = 7777,
+                    capacity = 6,
+                    visibility = RoomVisibility.Public,
+                    state = RoomState.Lobby,
+                    version = ""
+                };
+                var config = new NetworkMatchConfig { blueCount = 1, redCount = 1, allowSpectators = true };
+                svc.HostRoom(info, config, "");
             }
             else
             {
-                Debug.Log($"[NetcodeAutoTest] starting CLIENT to {address}:7777...");
-                conn.StartClient(new ConnectEndpoint
-                {
-                    address = address,
-                    port = 7777,
-                    joinToken = "",
-                    version = NetcodeProtocol.Version
-                });
+                Debug.Log($"[NetcodeAutoTest] joining {address}:7777 via LobbyServices...");
+                svc.JoinDirect(address, 7777, "");
+            }
+        }
+
+        private void Update()
+        {
+            _t += Time.deltaTime;
+
+            RoomService room = RoomService.Instance;
+            bool present = room != null;
+            int members = present ? room.Members.Count : -1;
+
+            bool cliConnected = NetworkClient.active && NetworkClient.isConnected;
+            bool cliReady = NetworkClient.ready;
+            int cliSpawned = NetworkClient.spawned != null ? NetworkClient.spawned.Count : -1;
+
+            // DIAGNOSTIC + fix probe: if the client is connected but not marked ready, it will never be
+            // sent spawned objects (the room). Force-ready it once and see if the room then arrives.
+            if (cliConnected && !cliReady && !NetworkServer.active && !_forcedReady)
+            {
+                _forcedReady = true;
+                Debug.Log("[NetcodeAutoTest] client connected but NOT ready — calling NetworkClient.Ready()");
+                NetworkClient.Ready();
+            }
+
+            string sig = $"{present}|{members}|{cliConnected}|{cliReady}|{cliSpawned}";
+            if (sig != _lastSig)
+            {
+                _lastSig = sig;
+                Debug.Log($"[NetcodeAutoTest] t={_t:F0}s room={present} members={members} " +
+                          $"cliConnected={cliConnected} cliReady={cliReady} cliSpawnedCount={cliSpawned}");
             }
         }
     }

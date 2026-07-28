@@ -34,9 +34,22 @@ namespace Online.Rooms
             _connection.OnHostStarted += HandleHostStarted;
             _connection.OnHostStopped += HandleHostStopped;
 
+            // When created from code (LobbyServices.EnsureExists) there is no Inspector to assign the prefab,
+            // so fall back to the canonical networked-room prefab shipped under Resources. This prefab carries
+            // a NetworkIdentity + RoomService and a stable assetId, which is what lets the room REPLICATE to
+            // remote clients (a runtime-built GameObject cannot).
+            if (roomServicePrefab == null)
+                roomServicePrefab = Resources.Load<GameObject>("Online/RoomServiceNet");
+
             // Register the room prefab client-side so a server-spawned room replicates in.
             if (roomServicePrefab != null && roomServicePrefab.GetComponent<NetworkIdentity>() != null)
                 NetworkClient.RegisterPrefab(roomServicePrefab);
+
+            // Race guard: if hosting already started before this component subscribed (e.g. the host was
+            // opened and started in the same frame), spawn the room now instead of waiting for an event
+            // that already fired.
+            if (NetworkServer.active)
+                HandleHostStarted();
         }
 
         private void OnDestroy()
@@ -73,6 +86,11 @@ namespace Online.Rooms
                 _spawned = false;
                 return;
             }
+
+            // The room must outlive scene transitions — it is created in the menu/lobby but must survive the
+            // change into the match scene (and back). Without this the RoomService is destroyed on the next
+            // scene load, so late-joining clients (and the post-load match flow) find RoomService.Instance null.
+            DontDestroyOnLoad(instance);
 
             NetworkServer.Spawn(instance);
             ApplySeed(room);
