@@ -166,6 +166,25 @@ namespace Online.Net
             ClientConnected?.Invoke();
         }
 
+        public override void OnServerReady(NetworkConnectionToClient conn)
+        {
+            base.OnServerReady(conn); // NetworkServer.SetClientReady(conn) -> conn.isReady = true
+
+            // CloSim lobby/match connections have NO per-connection player object (there is no playerPrefab
+            // and no AddPlayer step — robots and the RoomService are spawned server-side by our own managers).
+            // Mirror's SetClientReady only calls SpawnObserversForConnection when conn.identity != null, so a
+            // player-less client becomes "ready" yet observes ZERO already-spawned objects — the RoomService
+            // (spawned at host start) is therefore never sent to a joining client, and the room stays empty.
+            // Rebuild observers for every spawned identity so this now-ready connection receives them all.
+            // Offline-safe: offline play has no remote ready server connections, so this is a no-op there.
+            // AddObserver dedups on connectionId, so the host's local connection is never double-spawned.
+            foreach (NetworkIdentity identity in NetworkServer.spawned.Values)
+            {
+                if (identity != null)
+                    NetworkServer.RebuildObservers(identity, true);
+            }
+        }
+
         public override void OnClientDisconnect()
         {
             base.OnClientDisconnect();
