@@ -492,6 +492,7 @@ MonoBehaviour:
     inputRequired: 1
     command: 1
   actionMapName: Robot
+  behaviorMode: 0
 --- !u!1 &40806333463569120
 GameObject:
   m_ObjectHideFlags: 0
@@ -2576,6 +2577,7 @@ MonoBehaviour:
     inputRequired: 1
     command: 0
   actionMapName: Robot
+  behaviorMode: 0
 --- !u!114 &838340264322947159
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -4580,6 +4582,7 @@ MonoBehaviour:
     inputRequired: 1
     command: 1
   actionMapName: Robot
+  behaviorMode: 0
 --- !u!1 &558282844350670148
 GameObject:
   m_ObjectHideFlags: 0
@@ -7003,6 +7006,7 @@ MonoBehaviour:
     inputRequired: 1
     command: 0
   actionMapName: Robot
+  behaviorMode: 0
 --- !u!1 &822613495530456850
 GameObject:
   m_ObjectHideFlags: 0
@@ -13988,6 +13992,7 @@ MonoBehaviour:
     inputRequired: 1
     command: 1
   actionMapName: Robot
+  behaviorMode: 0
 --- !u!1 &1665198502519345437
 GameObject:
   m_ObjectHideFlags: 0
@@ -20538,6 +20543,7 @@ MonoBehaviour:
     inputRequired: 1
     command: 0
   actionMapName: Robot
+  behaviorMode: 0
 --- !u!1 &2233506045240078621
 GameObject:
   m_ObjectHideFlags: 0
@@ -24615,6 +24621,7 @@ MonoBehaviour:
     inputRequired: 1
     command: 1
   actionMapName: Robot
+  behaviorMode: 0
 --- !u!1 &2711289161950223041
 GameObject:
   m_ObjectHideFlags: 0
@@ -34783,6 +34790,7 @@ MonoBehaviour:
     inputRequired: 1
     command: 0
   actionMapName: Robot
+  behaviorMode: 0
 --- !u!1 &3829873916913317602
 GameObject:
   m_ObjectHideFlags: 0
@@ -38431,6 +38439,7 @@ MonoBehaviour:
     inputRequired: 1
     command: 1
   actionMapName: Robot
+  behaviorMode: 0
 --- !u!1 &4151554819803478057
 GameObject:
   m_ObjectHideFlags: 0
@@ -40909,6 +40918,7 @@ MonoBehaviour:
     inputRequired: 1
     command: 0
   actionMapName: Robot
+  behaviorMode: 0
 --- !u!1 &4402586757830518539
 GameObject:
   m_ObjectHideFlags: 0
@@ -41573,6 +41583,7 @@ MonoBehaviour:
     inputRequired: 1
     command: 0
   actionMapName: Robot
+  behaviorMode: 0
 --- !u!1 &4467826416892724735
 GameObject:
   m_ObjectHideFlags: 0
@@ -45918,6 +45929,7 @@ MonoBehaviour:
     inputRequired: 1
     command: 0
   actionMapName: Robot
+  behaviorMode: 0
 --- !u!1 &4933781204914598002
 GameObject:
   m_ObjectHideFlags: 0
@@ -57741,6 +57753,7 @@ MonoBehaviour:
     inputRequired: 1
     command: 1
   actionMapName: Robot
+  behaviorMode: 0
 --- !u!1 &6136159786563758240
 GameObject:
   m_ObjectHideFlags: 0
@@ -65688,6 +65701,7 @@ MonoBehaviour:
     inputRequired: 1
     command: 1
   actionMapName: Robot
+  behaviorMode: 0
 --- !u!1 &6982240150955662147
 GameObject:
   m_ObjectHideFlags: 0
@@ -68181,6 +68195,7 @@ MonoBehaviour:
     inputRequired: 1
     command: 1
   actionMapName: Robot
+  behaviorMode: 0
 --- !u!1 &7316975956242681110
 GameObject:
   m_ObjectHideFlags: 0
@@ -78814,6 +78829,9 @@ GameObject:
   - component: {fileID: 1416948913563064868}
   - component: {fileID: 5750229656909270254}
   - component: {fileID: -8190775921715228312}
+  - component: {fileID: 3937033349767708192}
+  - component: {fileID: 7359301691142458957}
+  - component: {fileID: 4053572528771507114}
   m_Layer: 0
   m_Name: MissDaisy
   m_TagString: Untagged
@@ -78896,6 +78914,77 @@ MonoBehaviour:
   displayNameOverride: MissDaisy
   teamIcon: {fileID: 21300000, guid: bb2df32ed8c17034399caa7fde5bc8ad, type: 3}
   robotPreview: {fileID: 21300000, guid: e2b506452228e34478799768eddd5133, type: 3}
+--- !u!114 &3937033349767708192
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8647351365238705607}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9b91ecbcc199f4492b9a91e820070131, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  sceneId: 0
+  _assetId: 2282250339
+  serverOnly: 0
+  visibility: 0
+  hasSpawned: 0
+--- !u!114 &7359301691142458957
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8647351365238705607}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a553cb17010b2403e8523b558bffbc14, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  syncMethod: 0
+  syncDirection: 0
+  syncMode: 0
+  syncInterval: 0.05
+  target: {fileID: 2977496964953234381}
+  updateMethod: 0
+  syncPosition: 1
+  syncRotation: 1
+  syncScale: 0
+  onlySyncOnChange: 1
+  compressRotation: 1
+  interpolatePosition: 1
+  interpolateRotation: 1
+  interpolateScale: 1
+  coordinateSpace: 0
+  timelineOffset: 1
+  showGizmos: 0
+  showOverlay: 0
+  overlayColor: {r: 0, g: 0, b: 0, a: 0.5}
+  bufferResetMultiplier: 3
+  positionSensitivity: 0.01
+  rotationSensitivity: 0.01
+  scaleSensitivity: 0.01
+--- !u!114 &4053572528771507114
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8647351365238705607}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7530fcc4b00a08741bf207a3dc1b0f89, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  syncMethod: 0
+  syncDirection: 0
+  syncMode: 0
+  syncInterval: 0
+  actionMapName: Robot
+  driveActionName: Drive
+  rotateActionName: Rotate
 --- !u!1 &8657491231475451355
 GameObject:
   m_ObjectHideFlags: 0
@@ -82071,6 +82160,7 @@ MonoBehaviour:
     inputRequired: 1
     command: 0
   actionMapName: Robot
+  behaviorMode: 0
 --- !u!1 &8991556227004754971
 GameObject:
   m_ObjectHideFlags: 0
