@@ -178,11 +178,39 @@ namespace Online.Net
             // Rebuild observers for every spawned identity so this now-ready connection receives them all.
             // Offline-safe: offline play has no remote ready server connections, so this is a no-op there.
             // AddObserver dedups on connectionId, so the host's local connection is never double-spawned.
+            //
+            // ROOT CAUSE OF THE SyncList-NOT-REPLICATING BUG (see CLAUDE.md task notes / Mirror 96.6.4):
+            // NetworkClient.isSpawnFinished (Mirror/Assets/Mirror/Core/NetworkClient.cs:121) is a client-side
+            // static flag that starts false and is only ever set true by OnObjectSpawnFinished
+            // (NetworkClient.cs:1324-1355), which is only ever triggered by an ObjectSpawnFinishedMessage —
+            // and the ONLY place Mirror sends that message is NetworkServer.SpawnObserversForConnection
+            // (NetworkServer.cs:1432-1496), which SetClientReady only calls "if (conn.identity != null)"
+            // (NetworkServer.cs:1420-1430). Because CloSim connections never get conn.identity (no
+            // playerPrefab/AddPlayer step), that guard is never satisfied, so the server NEVER sends
+            // ObjectSpawnStartedMessage/ObjectSpawnFinishedMessage to a CloSim client — isSpawnFinished stays
+            // false on that client forever. With isSpawnFinished == false, NetworkClient.OnSpawn
+            // (NetworkClient.cs:1543-1584) does NOT call ApplySpawnPayload (the method that actually
+            // deserializes the SyncList/SyncVar payload and calls OnStartClient — NetworkClient.cs:1123-1180);
+            // instead it deep-copies the message into a `pendingSpawns` dictionary that is only ever flushed
+            // by OnObjectSpawnFinished. Since that message never arrives, the payload — the full
+            // RoomService._members SyncList state included — is received over the wire but permanently
+            // deferred and never applied. RoomService.Instance still becomes non-null because
+            // NetworkIdentity/RoomService.Awake() runs at Instantiate() time, independent of
+            // ApplySpawnPayload — which is why the identity "looked spawned" while Members stayed empty.
+            //
+            // FIX: bracket the manual RebuildObservers burst with the same ObjectSpawnStartedMessage /
+            // ObjectSpawnFinishedMessage pair that SpawnObserversForConnection sends, so this connection's
+            // client runs the normal deferred-apply-then-flush spawn sequence and isSpawnFinished correctly
+            // flips true once. Both message types are public Mirror structs (Messages.cs) so this needs no
+            // Mirror-internal access. Safe in host mode: NetworkClient registers these as no-ops for the
+            // host's own local connection (RegisterMessageHandlers(hostMode: true), NetworkClient.cs:507-517).
+            conn.Send(new ObjectSpawnStartedMessage());
             foreach (NetworkIdentity identity in NetworkServer.spawned.Values)
             {
                 if (identity != null)
                     NetworkServer.RebuildObservers(identity, true);
             }
+            conn.Send(new ObjectSpawnFinishedMessage());
         }
 
         public override void OnClientDisconnect()

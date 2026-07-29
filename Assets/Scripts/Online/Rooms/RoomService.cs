@@ -68,19 +68,27 @@ namespace Online.Rooms
         public event Action<NetworkMatchConfig> OnMatchConfigChanged;
         public event Action OnMatchStarting;
 
-        /// <summary>The local player's connectionId (0 for host, -1 otherwise).
+        /// <summary>
+        /// Client-side cache of this connection's server-assigned Mirror connectionId, learned via
+        /// <see cref="TargetAssignConnectionId"/>. -1 until the server has told us (i.e. before CmdJoin's
+        /// round trip completes). See <see cref="LocalConnectionId"/>.
+        /// </summary>
+        private int _clientAssignedConnectionId = -1;
+
+        /// <summary>The local player's connectionId (0 for host, server-assigned id for a remote client).
         /// NOTE: Mirror 96.6.4 does not expose a client's own server-assigned connectionId locally
         /// (<see cref="NetworkConnectionToServer"/> has no connectionId — it is a server-side concept on
         /// <see cref="NetworkConnectionToClient"/>). A remote client therefore cannot resolve its own
-        /// connectionId here; the server must push it (e.g. a TargetRpc or per-connection SyncVar) before
-        /// the client can match its own roster slot. TODO(online): propagate the assigned connectionId to
-        /// the client so <see cref="TryGetLocalMember"/> works on remote clients.</summary>
+        /// connectionId by itself; the server pushes it via <see cref="TargetAssignConnectionId"/> (a
+        /// [TargetRpc] sent to the joining connection right after CmdJoin seats it), which caches it in
+        /// <see cref="_clientAssignedConnectionId"/>. Until that round trip completes this returns -1, which
+        /// is expected — <see cref="TryGetLocalMember"/> simply won't resolve for a frame or two.</summary>
         public int LocalConnectionId
         {
             get
             {
                 if (NetworkServer.active) return HostConnectionId;                 // host
-                return -1;                                                         // remote client id not locally known (see note)
+                return _clientAssignedConnectionId;                                // remote client (see TargetAssignConnectionId)
             }
         }
 
@@ -397,7 +405,25 @@ namespace Online.Rooms
         private void CmdJoin(string displayName, NetworkConnectionToClient sender = null)
         {
             if (sender == null) return;
-            TryAddMember(sender.connectionId, displayName, out _, out _);
+            // Only tell the caller its own connectionId once it is actually seated (new OR idempotent
+            // re-join both return true from TryAddMember); a rejected join (room full, etc.) leaves the
+            // client's LocalConnectionId at -1, which correctly keeps it unseated in the UI.
+            if (TryAddMember(sender.connectionId, displayName, out _, out _))
+                TargetAssignConnectionId(sender, sender.connectionId);
+        }
+
+        /// <summary>
+        /// Server -> ONE client: tells that connection its own Mirror connectionId. RoomService is a
+        /// server-spawned singleton with no single "owner" connection, so the owner-implicit [TargetRpc]
+        /// overload (which requires identity.connectionToClient) can't be used — we must pass the target
+        /// connection explicitly as the first parameter (Mirror strips it from the wire payload and uses it
+        /// only for routing; see Mirror's own TargetRpcTest.SendIntWithTarget for the same pattern). This is
+        /// the fix for remote clients not being able to resolve <see cref="LocalConnectionId"/>.
+        /// </summary>
+        [TargetRpc]
+        private void TargetAssignConnectionId(NetworkConnectionToClient target, int connectionId)
+        {
+            _clientAssignedConnectionId = connectionId;
         }
 
         [Command(requiresAuthority = false)]
