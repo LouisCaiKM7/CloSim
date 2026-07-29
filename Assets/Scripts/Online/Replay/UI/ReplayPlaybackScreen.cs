@@ -171,12 +171,10 @@ namespace Online.Replay.UI
             SetStatus("Loading replay…");
             SetTransportInteractable(false);
 
-            var service = new ReplayServiceClient();
-            if (!service.IsConfigured)
-            {
-                SetStatus("Replay service not configured.");
-                return;
-            }
+            // ADDITIVE: CompositeReplayService checks the local on-disk store first (LocalReplayService),
+            // so replays recorded offline/single-player play back with zero AWS config, falling back to
+            // the remote AWS-backed store for ids it doesn't own locally.
+            var service = new CompositeReplayService();
 
             ReplayFetchResult fetch;
             try

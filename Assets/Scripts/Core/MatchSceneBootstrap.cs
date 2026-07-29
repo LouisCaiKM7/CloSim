@@ -61,6 +61,12 @@ namespace Core
 
             if (clearLaunchDataAfterApply)
                 session.ClearLaunchData();
+
+            // Offline replay recording (ADDITIVE): makes single-player / local split-screen matches
+            // produce a watchable replay too, saved locally (Application.persistentDataPath) with zero
+            // AWS config — mirrors the online-host recorder above but reads robots straight off LoadMatch
+            // instead of a networked roster. No-op if a LoadMatch wasn't found; never touches game content.
+            Online.Replay.Recorder.OfflineMatchReplayRecorderRunner.RunForScene(loadMatch);
         }
     }
 }

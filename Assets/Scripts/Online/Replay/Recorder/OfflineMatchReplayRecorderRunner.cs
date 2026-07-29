@@ -1,40 +1,47 @@
-// CloSim Online Multiplayer — replay recorder driver (host-only). Namespace: Online.Replay.Recorder.
+// CloSim Online Multiplayer — replay recorder driver for OFFLINE / single-player matches (ADDITIVE).
+// Namespace: Online.Replay.Recorder. Sibling of MatchReplayRecorderRunner (which is HOST-ONLY and only
+// ever runs for online matches); this file is the offline counterpart so "every game gets a replay"
+// holds for local split-screen play too, not just online-hosted matches.
 //
-// Bridges the engine world to the dependency-free Online.Replay.Recorder.ReplayRecorder + the wire codec
-// (Online.Replay.Codec.ReplayWriter) + the backend client (Online.Replay.Service.ReplayServiceClient).
+// Entered via OfflineMatchReplayRecorderRunner.RunForScene(loadMatch), called once from
+// MatchSceneBootstrap right next to the existing offline path (the branch that is NOT
+// Mirror.NetworkServer.active / Mirror.NetworkClient.active). Never runs online — MatchSceneBootstrap's
+// online branch `return`s before reaching the offline code, so the two recorders are mutually exclusive
+// by construction; this file has zero Mirror/Online.Sync/Online.Rooms dependency and reads robots
+// straight off LoadMatch's own slot arrays instead of a networked roster.
 //
-// HOST-ONLY, NEVER runs offline: entered via MatchReplayRecorderRunner.RunForScene(loadMatch), called
-// once from MatchSceneBootstrap right next to the existing online hook (Online.Sync.MatchSpawnManager.
-// RunForScene). RunForScene itself no-ops unless Mirror.NetworkServer.active — a pure client or offline
-// play never even instantiates this component, so there is zero behavioral change for those paths.
+// FIELD-READY DETECTION: unlike online play, LoadMatch has no "field ready" event for offline mode (that
+// event, OnOnlineFieldReady, only fires in online mode). Offline, this runner instead polls
+// LoadMatch.RobotLoaded() each frame until it goes true, then waits two more frames before snapshotting
+// the roster — this rides out MatchSceneBootstrap re-applying the menu-selected MatchSettings shortly
+// after LoadMatch's own Start() has already run a default 1v0 ResetField, so the runner records the
+// ACTUAL match settings rather than a transient default. This is a best-effort heuristic (documented,
+// not a hard guarantee); if it ever races, the worst case is a replay recorded from a still-transient
+// robot set — never a change to gameplay itself, since this runner only reads state, it writes nothing
+// back into LoadMatch/Fms/ScoreHolder.
 //
-// Timeline: waits for NetworkMatchContext.MatchSpawned (all robots server-spawned) before sampling, then
-// snapshots every robot's transform at ReplayFormat.DefaultTickRate, emitting a Keyframe (absolute
-// quantized position/yaw) every ReplayFormat.DefaultKeyframeInterval frames and a Delta (signed
-// quantized difference from the previous frame) otherwise — exactly what ReplayWriter/ReplayReader
-// expect. On Fms reaching MatchState.Finished it finalizes (durationSec + ScoreHolder totals) and
-// uploads via ReplayServiceClient, which is itself a graceful no-op while ReplayServiceConfig.BaseUrl
-// is blank (golden rule 2) — so this never blocks or breaks a match today.
+// Timeline sampling, quantization, keyframe cadence, and finalize/save logic mirror
+// MatchReplayRecorderRunner exactly (same ReplayFormat constants, same ReplayRecorder/ReplayWriter), so
+// online and offline replays play back through the exact same ReplayPlaybackScreen code path.
 //
-// GAME PIECES: not sampled in this pass. Game-piece network identity (Online.Sync.Pieces.*) is being
-// wired up separately; once a piece has a stable network id, its ReplaySnapshot(kind=Piece) can be
-// captured the same way robots are here. Leaving pieces out keeps this recorder decoupled from that
-// parallel work and still delivers a fully watchable robot-only replay.
+// GAME PIECES: not sampled here either, for the same reason as the online recorder (see that file's
+// header) — robots-only v1.
 
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using Core;
 using Field.Core;
 using Field.Scoring;
-using Mirror;
 using Online.Contracts;
 using Online.Contracts.Replay;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 namespace Online.Replay.Recorder
 {
-    [AddComponentMenu("CloSim/Replay/Match Replay Recorder Runner")]
-    public sealed class MatchReplayRecorderRunner : MonoBehaviour
+    [AddComponentMenu("CloSim/Replay/Offline Match Replay Recorder Runner")]
+    public sealed class OfflineMatchReplayRecorderRunner : MonoBehaviour
     {
         private struct PrevEntityState
         {
@@ -42,24 +49,22 @@ namespace Online.Replay.Recorder
         }
 
         /// <summary>
-        /// Online hook entry (host-only). Safe to call unconditionally from MatchSceneBootstrap's online
-        /// branch — no-ops on pure clients and is never reached at all offline.
+        /// Offline hook entry. Safe to call unconditionally from MatchSceneBootstrap's offline branch —
+        /// no-ops if a LoadMatch can't be found or the match is (unexpectedly) in online mode.
         /// </summary>
         public static void RunForScene(LoadMatch loadMatch)
         {
-            if (!NetworkServer.active)
-                return; // recorder is host-only; pure clients never record
-
-            if (loadMatch == null)
-                loadMatch = Online.Sync.MatchSpawnManager.FindLoadMatch();
             if (loadMatch == null)
                 return;
 
-            if (FindFirstObjectByType<MatchReplayRecorderRunner>() != null)
+            if (loadMatch.OnlineMode)
+                return; // defensive: this path is offline-only; MatchSceneBootstrap already guarantees this
+
+            if (FindFirstObjectByType<OfflineMatchReplayRecorderRunner>() != null)
                 return; // already running for this scene load (re-entrant ResetField calls)
 
-            var go = new GameObject(nameof(MatchReplayRecorderRunner));
-            var runner = go.AddComponent<MatchReplayRecorderRunner>();
+            var go = new GameObject(nameof(OfflineMatchReplayRecorderRunner));
+            var runner = go.AddComponent<OfflineMatchReplayRecorderRunner>();
             runner.Begin(loadMatch);
         }
 
@@ -68,7 +73,6 @@ namespace Online.Replay.Recorder
         private readonly Dictionary<int, PrevEntityState> _prev = new();
 
         private LoadMatch _loadMatch;
-        private Online.Sync.NetworkMatchContext _context;
 
         private float _recordStartTime;
         private int _frameIndex;
@@ -79,24 +83,37 @@ namespace Online.Replay.Recorder
         private void Begin(LoadMatch loadMatch)
         {
             _loadMatch = loadMatch;
-            _context = Online.Sync.NetworkMatchContext.Instance;
-
-            if (_context == null || _context.BuiltSettings == null)
-            {
-                Debug.LogWarning("[MatchReplayRecorderRunner] No NetworkMatchContext plan; skipping replay recording for this match.");
-                Destroy(gameObject);
-                return;
-            }
-
-            _context.MatchSpawned += OnMatchSpawned;
-            if (_context.IsSpawned)
-                OnMatchSpawned();
+            StartCoroutine(WaitForFieldReadyAndStart());
         }
 
-        private void OnMatchSpawned()
+        private IEnumerator WaitForFieldReadyAndStart()
         {
-            if (_context != null)
-                _context.MatchSpawned -= OnMatchSpawned;
+            const float timeoutSeconds = 5f;
+            float start = Time.time;
+
+            while (Time.time - start < timeoutSeconds)
+            {
+                if (_loadMatch == null)
+                {
+                    Destroy(gameObject);
+                    yield break;
+                }
+
+                if (_loadMatch.RobotLoaded())
+                    break;
+
+                yield return null;
+            }
+
+            // Ride out any immediately-following re-reset (see file header) before trusting the roster.
+            yield return null;
+            yield return null;
+
+            if (_loadMatch == null || !_loadMatch.RobotLoaded())
+            {
+                Destroy(gameObject); // nothing to record — no-op cleanup, never blocks the match
+                yield break;
+            }
 
             StartRecording();
         }
@@ -104,11 +121,23 @@ namespace Online.Replay.Recorder
         private void StartRecording()
         {
             _robots.Clear();
-            foreach (Online.Sync.RobotNetworkController rnc in FindObjectsByType<Online.Sync.RobotNetworkController>(FindObjectsSortMode.None))
+
+            int playerCount = GetPlayerCount();
+            GameObject[] loaded = _loadMatch.GetLoadedRobots();
+
+            for (int slot = 0; slot < playerCount && slot < loaded.Length; slot++)
             {
-                if (rnc == null || rnc.Slot < 0)
+                GameObject robot = loaded[slot];
+                if (robot == null)
                     continue;
-                _robots.Add((rnc.Slot, rnc.transform));
+
+                _robots.Add((slot, robot.transform));
+            }
+
+            if (_robots.Count == 0)
+            {
+                Destroy(gameObject); // no robots to sample — nothing worth recording
+                return;
             }
 
             ReplayHeader header = BuildHeader();
@@ -126,75 +155,89 @@ namespace Online.Replay.Recorder
 
         // ---------------------------------------------------------------- header / roster
 
+        private int GetPlayerCount()
+        {
+            GameObject[] loaded = _loadMatch.GetLoadedRobots();
+            int count = 0;
+            for (int i = 0; i < loaded.Length; i++)
+            {
+                if (loaded[i] != null)
+                    count = i + 1;
+            }
+            return count;
+        }
+
         private ReplayHeader BuildHeader()
         {
-            MatchSettings built = _context.BuiltSettings;
+            string sceneName = SceneManager.GetActiveScene().name;
+            string gameId = ResolveGameId(sceneName);
+
+            int blueCount = 0, redCount = 0;
+            foreach ((int slot, Transform _) in _robots)
+            {
+                if (_loadMatch.IsPlayerBlue(slot)) blueCount++; else redCount++;
+            }
 
             return new ReplayHeader
             {
                 schemaVersion = ReplayFormat.SchemaVersion,
-                gameId = _context.Config.gameId ?? "",
-                sceneName = _context.Config.sceneName ?? "",
-                mode = new ReplayMode { blue = built.networkBlueCount, red = built.networkRedCount },
+                gameId = gameId,
+                sceneName = sceneName,
+                mode = new ReplayMode { blue = blueCount, red = redCount },
                 tickRate = ReplayFormat.DefaultTickRate,
                 keyframeInterval = ReplayFormat.DefaultKeyframeInterval,
                 durationSec = 0f,
                 finalScore = default,
                 createdAt = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
-                roster = BuildRoster(built),
+                roster = BuildRoster(),
             };
         }
 
-        private ReplayRosterEntry[] BuildRoster(MatchSettings built)
+        /// <summary>Best-effort gameId label matching Online.Rooms.LobbyGameCatalog's ids; falls back to
+        /// the scene name itself for scenes that catalog doesn't (yet) know about.</summary>
+        private static string ResolveGameId(string sceneName)
         {
-            int blueCount = built.networkBlueCount;
-            int redCount = built.networkRedCount;
-            int total = Mathf.Clamp(blueCount + redCount, 1, 6);
+            foreach (Online.Rooms.LobbyGame game in Online.Rooms.LobbyGameCatalog.Default)
+            {
+                if (string.Equals(game.sceneName, sceneName, StringComparison.Ordinal))
+                    return game.gameId;
+            }
+            return sceneName ?? "";
+        }
 
-            IReadOnlyList<RoomMemberSlot> roster = _context.Roster;
-            int[] slotConnectionIds = _context.SlotConnectionIds;
+        private ReplayRosterEntry[] BuildRoster()
+        {
+            MatchSettings settings = _loadMatch.GetSettingsCopy();
             IReadOnlyList<RobotCatalogEntry> catalog = _loadMatch.GetRobotCatalog();
 
-            var entries = new ReplayRosterEntry[total];
-            for (int slot = 0; slot < total; slot++)
+            var entries = new ReplayRosterEntry[_robots.Count];
+            for (int i = 0; i < _robots.Count; i++)
             {
-                PlayerMatchSettings player = built.GetPlayer(slot);
-                RoomAlliance alliance = slot < blueCount ? RoomAlliance.Blue : RoomAlliance.Red;
+                int slot = _robots[i].slot;
+                PlayerMatchSettings player = settings.GetPlayer(slot);
+                RoomAlliance alliance = _loadMatch.IsPlayerBlue(slot) ? RoomAlliance.Blue : RoomAlliance.Red;
 
                 string displayName = "";
-                int connId = (slotConnectionIds != null && slot < slotConnectionIds.Length) ? slotConnectionIds[slot] : -1;
-
-                if (roster != null)
-                {
-                    foreach (RoomMemberSlot member in roster)
-                    {
-                        bool matchesHost = slot == _context.HostOwnedSlot && member.isHost;
-                        if (matchesHost || (connId >= 0 && member.connectionId == connId))
-                        {
-                            displayName = member.displayName;
-                            break;
-                        }
-                    }
-                }
-
                 int teamNumber = 0;
                 foreach (RobotCatalogEntry entry in catalog)
                 {
                     if (entry.Index != player.robotIndex)
                         continue;
                     teamNumber = entry.TeamNumber;
-                    if (string.IsNullOrEmpty(displayName))
-                        displayName = entry.DisplayName;
+                    displayName = entry.DisplayName;
                     break;
                 }
 
-                entries[slot] = new ReplayRosterEntry
+                if (string.IsNullOrEmpty(displayName))
+                    displayName = $"Player {slot + 1}";
+
+                entries[i] = new ReplayRosterEntry
                 {
                     slotIndex = slot,
                     robotIndex = player.robotIndex,
                     alliance = alliance,
                     teamNumber = teamNumber,
-                    displayName = displayName ?? "",
+                    displayName = displayName,
                 };
             }
 
@@ -205,7 +248,7 @@ namespace Online.Replay.Recorder
 
         private void CaptureTick()
         {
-            if (!_capturing || !NetworkServer.active)
+            if (!_capturing)
                 return;
 
             uint timestampMs = (uint)Mathf.Max(0, Mathf.RoundToInt((Time.time - _recordStartTime) * 1000f));
@@ -259,7 +302,7 @@ namespace Online.Replay.Recorder
             _frameIndex++;
 
             if (matchJustFinished)
-                FinalizeAndUpload();
+                FinalizeAndSave();
         }
 
         private ReplaySnapshot BuildRobotSnapshot(int slot, Transform t, bool isKeyframe)
@@ -330,9 +373,9 @@ namespace Online.Replay.Recorder
             return ((raw % ReplayFormat.YawQuantSteps) + ReplayFormat.YawQuantSteps) % ReplayFormat.YawQuantSteps;
         }
 
-        // ---------------------------------------------------------------- finalize / upload
+        // ---------------------------------------------------------------- finalize / save
 
-        private void FinalizeAndUpload()
+        private void FinalizeAndSave()
         {
             if (_finalized)
                 return;
@@ -346,19 +389,17 @@ namespace Online.Replay.Recorder
 
             byte[] blob = _recorder.StopAndSerialize(durationSec, finalScore);
             if (blob.Length > ReplayFormat.SoftMaxBlobBytes)
-                Debug.LogWarning($"[MatchReplayRecorderRunner] Replay blob ({blob.Length} bytes) exceeds the soft cap ({ReplayFormat.SoftMaxBlobBytes}); uploading anyway.");
+                Debug.LogWarning($"[OfflineMatchReplayRecorderRunner] Replay blob ({blob.Length} bytes) exceeds the soft cap ({ReplayFormat.SoftMaxBlobBytes}); saving anyway.");
 
-            UploadAsync(blob);
+            SaveAsync(blob);
         }
 
-        private async void UploadAsync(byte[] blob)
+        private async void SaveAsync(byte[] blob)
         {
-            // ADDITIVE: saves via CompositeReplayService, which ALWAYS writes a local copy under
-            // Application.persistentDataPath (Online.Replay.Service.LocalReplayService) and additionally
-            // mirrors to the AWS-backed ReplayServiceClient when ReplayServiceConfig is configured. This
-            // is what makes host-recorded online matches watchable even before the user supplies an AWS
-            // endpoint (golden rule 2) — previously this path discarded the recording entirely while
-            // BaseUrl was blank.
+            // Always saves locally (Online.Replay.Service.LocalReplayService via CompositeReplayService);
+            // additionally mirrors to the AWS-backed ReplayServiceClient if/when configured. Offline play
+            // never has a network session, so this is purely a local disk write — no network calls unless
+            // the user has supplied ReplayServiceConfig.BaseUrl.
             var service = new Online.Replay.Service.CompositeReplayService();
 
             ReplayMetadata metadata = _recorder.BuildMetadata(replayId: "", userId: "", sizeBytes: blob.Length);
@@ -370,21 +411,18 @@ namespace Online.Replay.Recorder
             }
             catch (Exception e)
             {
-                Debug.LogWarning($"[MatchReplayRecorderRunner] Replay save/upload threw unexpectedly: {e.Message}");
+                Debug.LogWarning($"[OfflineMatchReplayRecorderRunner] Replay save threw unexpectedly: {e.Message}");
                 return;
             }
 
             if (!result.ok)
-                Debug.LogWarning($"[MatchReplayRecorderRunner] Replay save failed: {result.error}");
+                Debug.LogWarning($"[OfflineMatchReplayRecorderRunner] Replay save failed: {result.error}");
             else
-                Debug.Log($"[MatchReplayRecorderRunner] Replay saved: {result.replayId}");
+                Debug.Log($"[OfflineMatchReplayRecorderRunner] Replay saved: {result.replayId}");
         }
 
         private void OnDestroy()
         {
-            if (_context != null)
-                _context.MatchSpawned -= OnMatchSpawned;
-
             CancelInvoke(nameof(CaptureTick));
         }
     }
