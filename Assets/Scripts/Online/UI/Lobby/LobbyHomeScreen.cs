@@ -18,33 +18,32 @@ namespace Online.UI.Lobby
         {
             LobbyUiKit.Panel(transform, "bg", LobbyUiKit.PanelBg);
 
-            GameObject column = LobbyUiKit.Column(transform, "content", 16f, 24, TextAnchor.MiddleCenter);
+            GameObject column = LobbyUiKit.Column(transform, "content", LobbyUiKit.SpaceLg, LobbyUiKit.PadLg, TextAnchor.MiddleCenter);
             LobbyUiKit.Stretch(LobbyUiKit.RectOf(column));
 
-            LobbyUiKit.Label(column.transform, "Online Multiplayer", 44, TextAlignmentOptions.Center, LobbyUiKit.Accent);
+            LobbyUiKit.Label(column.transform, "Online Multiplayer", LobbyUiKit.FontHero, TextAlignmentOptions.Center, LobbyUiKit.Accent);
             LobbyUiKit.Label(column.transform,
                 "Host a listen-server or join another player. Up to 6 players, max 3 per alliance.",
-                20, TextAlignmentOptions.Center, LobbyUiKit.TextMuted);
+                LobbyUiKit.FontLabel, TextAlignmentOptions.Center, LobbyUiKit.TextMuted);
 
-            GameObject card = LobbyUiKit.Card(column.transform, "menu", LobbyUiKit.CardBg, 12f, 24);
+            GameObject card = LobbyUiKit.Card(column.transform, "menu", LobbyUiKit.CardBg, LobbyUiKit.SpaceMd, LobbyUiKit.PadLg);
             LobbyUiKit.SetSize(card, 520, -1);
 
-            LobbyUiKit.Label(card.transform, "Player Name", 18, TextAlignmentOptions.Left, LobbyUiKit.TextMuted);
-            _nameField = LobbyUiKit.InputField(card.transform, "Your name", Services.LocalPlayerName);
+            _nameField = LobbyUiKit.LabeledInputField(card.transform, "Player Name", "Your name", Services.LocalPlayerName);
             _nameField.onEndEdit.AddListener(OnNameChanged);
 
-            Button createBtn = LobbyUiKit.Button(card.transform, "Create Room");
-            LobbyUiKit.TintButton(createBtn, LobbyUiKit.ButtonAccent);
+            LobbyUiKit.Divider(card.transform);
+
+            Button createBtn = LobbyUiKit.PrimaryButton(card.transform, "Create Room");
             createBtn.onClick.AddListener(() => Go(LobbyScreenKeys.Create));
 
-            Button joinBtn = LobbyUiKit.Button(card.transform, "Join by IP");
+            Button joinBtn = LobbyUiKit.SecondaryButton(card.transform, "Join by IP");
             joinBtn.onClick.AddListener(() => Go(LobbyScreenKeys.Join));
 
-            Button listBtn = LobbyUiKit.Button(card.transform, "Server List");
+            Button listBtn = LobbyUiKit.SecondaryButton(card.transform, "Server List");
             listBtn.onClick.AddListener(() => Go(LobbyScreenKeys.ServerList));
 
-            Button backBtn = LobbyUiKit.Button(card.transform, "Back to Menu");
-            LobbyUiKit.TintButton(backBtn, LobbyUiKit.Danger);
+            Button backBtn = LobbyUiKit.DangerButton(card.transform, "Back to Menu");
             backBtn.onClick.AddListener(Back);
 
             FirstSelected = createBtn.gameObject;

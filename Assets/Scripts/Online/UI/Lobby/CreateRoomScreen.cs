@@ -36,7 +36,7 @@ namespace Online.UI.Lobby
             LobbyUiKit.Panel(transform, "Background", LobbyUiKit.PanelBg);
 
             // Centered card, fixed width, auto height to fit its content.
-            GameObject card = LobbyUiKit.Card(transform, "CreateRoomCard", LobbyUiKit.CardBg);
+            GameObject card = LobbyUiKit.Card(transform, "CreateRoomCard", LobbyUiKit.CardBg, LobbyUiKit.SpaceMd, LobbyUiKit.PadLg);
             LobbyUiKit.SetSize(card, 640, -1);
             var cardRect = LobbyUiKit.RectOf(card);
             cardRect.anchorMin = new Vector2(0.5f, 0.5f);
@@ -46,46 +46,42 @@ namespace Online.UI.Lobby
             var fitter = card.AddComponent<ContentSizeFitter>();
             fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
 
-            LobbyUiKit.Label(card.transform, "Create Room", 34);
+            LobbyUiKit.Label(card.transform, "Create Room", LobbyUiKit.FontTitle);
+            LobbyUiKit.Divider(card.transform);
 
             string localName = Services.LocalPlayerName;
 
-            LobbyUiKit.Label(card.transform, "Room Name", 20, TextAlignmentOptions.Left, LobbyUiKit.TextMuted);
-            _roomNameInput = LobbyUiKit.InputField(card.transform, "Room name", localName + "'s Room");
+            _roomNameInput = LobbyUiKit.LabeledInputField(card.transform, "Room Name", "Room name", localName + "'s Room");
+            _yourNameInput = LobbyUiKit.LabeledInputField(card.transform, "Your Name", "Your name", localName);
 
-            LobbyUiKit.Label(card.transform, "Your Name", 20, TextAlignmentOptions.Left, LobbyUiKit.TextMuted);
-            _yourNameInput = LobbyUiKit.InputField(card.transform, "Your name", localName);
+            GameObject gameField = LobbyUiKit.FieldGroup(card.transform, "Game");
+            _gameDropdown = LobbyUiKit.Dropdown(gameField.transform, BuildGameOptions());
 
-            LobbyUiKit.Label(card.transform, "Game", 20, TextAlignmentOptions.Left, LobbyUiKit.TextMuted);
-            _gameDropdown = LobbyUiKit.Dropdown(card.transform, BuildGameOptions());
+            GameObject visibilityField = LobbyUiKit.FieldGroup(card.transform, "Visibility");
+            _visibilityDropdown = LobbyUiKit.Dropdown(visibilityField.transform, new List<string> { "Public", "Private" });
 
-            LobbyUiKit.Label(card.transform, "Visibility", 20, TextAlignmentOptions.Left, LobbyUiKit.TextMuted);
-            _visibilityDropdown = LobbyUiKit.Dropdown(card.transform, new List<string> { "Public", "Private" });
-
-            LobbyUiKit.Label(card.transform, "Join Token", 20, TextAlignmentOptions.Left, LobbyUiKit.TextMuted);
-            _tokenInput = LobbyUiKit.InputField(card.transform, "Join token (optional)");
-            LobbyUiKit.Label(card.transform, "Private rooms are not listed on the Server List.",
-                16, TextAlignmentOptions.Left, LobbyUiKit.TextMuted);
+            GameObject tokenField = LobbyUiKit.FieldGroup(card.transform, "Join Token");
+            _tokenInput = LobbyUiKit.InputField(tokenField.transform, "Join token (optional)");
+            LobbyUiKit.Label(tokenField.transform, "Private rooms are not listed on the Server List.",
+                LobbyUiKit.FontCaption, TextAlignmentOptions.Left, LobbyUiKit.TextMuted);
 
             _spectatorsToggle = LobbyUiKit.Toggle(card.transform, "Allow spectators", true, out _);
 
-            LobbyUiKit.Label(card.transform, "Port", 20, TextAlignmentOptions.Left, LobbyUiKit.TextMuted);
-            _portInput = LobbyUiKit.InputField(card.transform, "Port (0 = default)", "0");
+            _portInput = LobbyUiKit.LabeledInputField(card.transform, "Port", "Port (0 = default)", "0");
 
-            _statusLabel = LobbyUiKit.Label(card.transform, "", 18, TextAlignmentOptions.Center, LobbyUiKit.TextMuted);
+            _statusLabel = LobbyUiKit.Label(card.transform, "", LobbyUiKit.FontLabel, TextAlignmentOptions.Center, LobbyUiKit.TextMuted);
 
-            // Buttons row.
-            GameObject row = LobbyUiKit.Row(card.transform, "Buttons", 10, 0, TextAnchor.MiddleCenter);
-            LobbyUiKit.SetSize(row, -1, 52);
+            // Buttons row — secondary/back on the left, primary/affirmative action on the right.
+            GameObject row = LobbyUiKit.Row(card.transform, "Buttons", LobbyUiKit.SpaceSm, 0, TextAnchor.MiddleCenter);
+            LobbyUiKit.SetSize(row, -1, LobbyUiKit.ButtonHeight);
 
-            Button createButton = LobbyUiKit.Button(row.transform, "Create");
-            LobbyUiKit.FlexibleWidth(createButton.gameObject);
-            LobbyUiKit.TintButton(createButton, LobbyUiKit.ButtonAccent);
-            createButton.onClick.AddListener(OnCreate);
-
-            Button backButton = LobbyUiKit.Button(row.transform, "Back");
+            Button backButton = LobbyUiKit.SecondaryButton(row.transform, "Back");
             LobbyUiKit.FlexibleWidth(backButton.gameObject);
             backButton.onClick.AddListener(Back);
+
+            Button createButton = LobbyUiKit.PrimaryButton(row.transform, "Create");
+            LobbyUiKit.FlexibleWidth(createButton.gameObject);
+            createButton.onClick.AddListener(OnCreate);
 
             FirstSelected = _roomNameInput.gameObject;
         }
