@@ -145,6 +145,7 @@ namespace Online.Replay.UI
         public override void OnHide()
         {
             _isPlaying = false;
+            IsPlaybackActive = false;
 
             // Any way of leaving this screen (Exit button or Back/Escape) unwinds the same way: if we
             // left the menu scene for the field scene, return to it. Offline, additive, no networking.
@@ -156,9 +157,19 @@ namespace Online.Replay.UI
             }
         }
 
-        private void OnDestroy() => _destroyed = true;
+        private void OnDestroy()
+        {
+            _destroyed = true;
+            IsPlaybackActive = false;
+        }
 
         // ---------------------------------------------------------------- fetch + decode
+
+        /// <summary>
+        /// True while a replay is loading/playing back the field scene. Read by the in-field pre-match menu
+        /// (OptionsMenuController) so it keeps the offline robot-selection screen closed during playback.
+        /// </summary>
+        public static bool IsPlaybackActive { get; private set; }
 
         private async void StartLoadAndPlay(string replayId)
         {
@@ -211,6 +222,8 @@ namespace Online.Replay.UI
             }
 
             SetStatus("Loading field…");
+            // Signal the in-field pre-match menu to stay closed for playback (no robot-selection overlay).
+            IsPlaybackActive = true;
             SceneManager.sceneLoaded += OnFieldSceneLoaded;
             SceneTransitionManager.EnsureExists().LoadScene(_header.sceneName);
         }

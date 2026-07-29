@@ -125,8 +125,27 @@ namespace UI.MainMenu
 
             yield return null;
 
-            if (openOnStart)
+            // ONLINE / REPLAY (additive): the offline pre-match menu (mode picker + robot-selection cursors)
+            // must never auto-open in a networked match or during replay playback. The match config comes
+            // from the lobby roster (or the replay header) and the field is driven by Online.Sync / the
+            // replay player; opening this menu would fade to black, zero Time.timeScale (desyncing the
+            // networked sim), and let a player pick robots on any slot/alliance. Offline local play unchanged.
+            if (openOnStart && !OfflineFlowSuppressed())
                 yield return OpenMenuOnStartRoutine();
+        }
+
+        /// <summary>
+        /// True when a networked session or replay playback is active, so the offline in-field pre-match menu
+        /// must stay closed. Mirror's flags are live the instant the field scene loads (the connection
+        /// persists across ServerChangeScene); ReplayPlaybackScreen sets its flag before loading the field;
+        /// LoadMatch.OnlineMode is a late-set backstop.
+        /// </summary>
+        private bool OfflineFlowSuppressed()
+        {
+            return Mirror.NetworkClient.active
+                   || Mirror.NetworkServer.active
+                   || Online.Replay.UI.ReplayPlaybackScreen.IsPlaybackActive
+                   || (loadMatch != null && loadMatch.OnlineMode);
         }
 
         private void Update()
@@ -242,6 +261,10 @@ namespace UI.MainMenu
                 return;
 
             if (_isOpen)
+                return;
+
+            // Never summon the offline robot-selection menu during an online match or replay playback.
+            if (OfflineFlowSuppressed())
                 return;
 
             OpenMenu();
