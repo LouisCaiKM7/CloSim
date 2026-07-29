@@ -173,9 +173,13 @@ namespace Online.Sync
                     continue;
                 }
 
-                rnc.ServerInit(slot, player.robotIndex, player.view, blueCount, redCount);
-
                 NetworkConnectionToClient owner = ResolveOwnerConnection(context, slot);
+
+                // Tell the robot whether it has a player owner BEFORE spawn, so its SyncVar is in the initial
+                // payload: owned robots are owner-authoritative (owner drives locally, ClientToServer), unowned
+                // robots stay server-driven.
+                rnc.ServerInit(slot, player.robotIndex, player.view, blueCount, redCount, owner != null);
+
                 if (owner != null)
                     NetworkServer.Spawn(robot, owner);
                 else

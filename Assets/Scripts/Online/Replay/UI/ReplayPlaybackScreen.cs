@@ -240,6 +240,13 @@ namespace Online.Replay.UI
             LobbyUiKit.EnsureEventSystem();
 
             LoadMatch loadMatch = FindFirstObjectByType<LoadMatch>();
+
+            // Guarantee the field is VISIBLE the instant the scene loads — a camera plus no black fade —
+            // BEFORE and independent of robot reconstruction. Otherwise a spawn timeout or an empty roster
+            // would leave the player staring at a black screen (the previous behaviour).
+            Online.Sync.SpectatorCameraController.EnsureFieldOverviewCamera(loadMatch);
+            RevealField();
+
             if (loadMatch == null)
             {
                 SetStatus("Loaded field scene has no LoadMatch; cannot reconstruct robots.");
@@ -247,6 +254,14 @@ namespace Online.Replay.UI
             }
 
             StartCoroutine(PrepareFieldAndSpawn(loadMatch));
+        }
+
+        /// <summary>Clear any leftover black fade overlay so the field is visible during playback.</summary>
+        private void RevealField()
+        {
+            var fader = FindFirstObjectByType<ScreenFader>();
+            if (fader != null)
+                fader.SetBlackImmediate(false);
         }
 
         /// <summary>
@@ -274,8 +289,11 @@ namespace Online.Replay.UI
 
             if (!fieldReady)
             {
-                SetStatus("Timed out preparing the field for playback.");
-                yield break;
+                // Field-ready never fired, but the overview camera is already guaranteed (OnFieldSceneLoaded),
+                // so the field is visible rather than black. Attempt the spawn anyway — the field is usually
+                // usable — instead of hard-failing to a blank screen.
+                Debug.LogWarning("[ReplayPlaybackScreen] OnOnlineFieldReady timed out; showing the field and " +
+                                 "attempting playback spawn anyway.");
             }
 
             SpawnReplayRobots(loadMatch);
