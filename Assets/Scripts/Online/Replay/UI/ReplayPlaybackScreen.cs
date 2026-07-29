@@ -44,6 +44,7 @@ namespace Online.Replay.UI
 
         private TMP_Text _statusLabel;
         private TMP_Text _progressLabel;
+        private Slider _scrubSlider;
         private Button _playPauseButton;
         private TMP_Text _playPauseLabel;
         private Button _prevKeyframeButton;
@@ -68,7 +69,9 @@ namespace Online.Replay.UI
         /// <inheritdoc/>
         protected override void BuildUi()
         {
-            LobbyUiKit.Panel(transform, "bg", LobbyUiKit.PanelBg);
+            // NO full-screen background: replay playback must show the live field behind the HUD. Only the
+            // header (top) and the transport bar (bottom) are drawn, as slim overlays. Adding a PanelBg here
+            // rendered an opaque dim-gray layer OVER the field — that's why playback looked greyed out.
 
             GameObject col = LobbyUiKit.Column(transform, "root", LobbyUiKit.SpaceMd, LobbyUiKit.PadLg, TextAnchor.UpperCenter);
             LobbyUiKit.Stretch(LobbyUiKit.RectOf(col));
@@ -103,6 +106,9 @@ namespace Online.Replay.UI
             _progressLabel = LobbyUiKit.Label(bar.transform, "00:00 / 00:00", LobbyUiKit.FontBody, TextAlignmentOptions.Center);
             LobbyUiKit.SetSize(_progressLabel.gameObject, -1, 32);
 
+            // Draggable timeline: seek anywhere in [0, duration]. Dragging pauses and jumps the robots there.
+            _scrubSlider = BuildScrubber(bar.transform);
+
             GameObject row = LobbyUiKit.Row(bar.transform, "TransportRow", LobbyUiKit.SpaceMd, 0, TextAnchor.MiddleCenter);
             LobbyUiKit.SetSize(row, -1, LobbyUiKit.ButtonHeight + 4f);
 
@@ -123,6 +129,81 @@ namespace Online.Replay.UI
             _speedDropdown = LobbyUiKit.Dropdown(row.transform, speedLabels, Array.IndexOf(SpeedOptions, 1f));
             LobbyUiKit.SetSize(_speedDropdown.gameObject, 120, LobbyUiKit.ButtonHeight);
             _speedDropdown.onValueChanged.AddListener(OnSpeedChanged);
+        }
+
+        /// <summary>Builds a horizontal timeline slider (0..1 of the replay duration) wired to seek.</summary>
+        private Slider BuildScrubber(Transform parent)
+        {
+            var go = new GameObject("Scrubber", typeof(RectTransform), typeof(Slider));
+            go.transform.SetParent(parent, false);
+            LobbyUiKit.SetSize(go, -1, 26);
+            var slider = go.GetComponent<Slider>();
+            slider.transition = Selectable.Transition.None;
+
+            var bg = NewUiImage("Background", go.transform, LobbyUiKit.CardBgAlt);
+            SetAnchors(bg, new Vector2(0f, 0.3f), new Vector2(1f, 0.7f));
+
+            var fillArea = new GameObject("Fill Area", typeof(RectTransform));
+            fillArea.transform.SetParent(go.transform, false);
+            SetAnchors(fillArea.GetComponent<RectTransform>(), new Vector2(0f, 0.3f), new Vector2(1f, 0.7f));
+            var fill = NewUiImage("Fill", fillArea.transform, LobbyUiKit.Accent);
+            fill.anchorMin = Vector2.zero; fill.anchorMax = new Vector2(0f, 1f);
+            fill.sizeDelta = new Vector2(8f, 0f);
+
+            var handleArea = new GameObject("Handle Slide Area", typeof(RectTransform));
+            handleArea.transform.SetParent(go.transform, false);
+            SetAnchors(handleArea.GetComponent<RectTransform>(), Vector2.zero, Vector2.one);
+            var handle = NewUiImage("Handle", handleArea.transform, LobbyUiKit.TextPrimary);
+            handle.sizeDelta = new Vector2(14f, 26f);
+
+            slider.fillRect = fill;
+            slider.handleRect = handle;
+            slider.targetGraphic = handle.GetComponent<Image>();
+            slider.direction = Slider.Direction.LeftToRight;
+            slider.minValue = 0f;
+            slider.maxValue = 1f;
+            slider.value = 0f;
+            slider.onValueChanged.AddListener(OnScrub);
+            return slider;
+        }
+
+        private static RectTransform NewUiImage(string name, Transform parent, Color color)
+        {
+            var go = new GameObject(name, typeof(RectTransform), typeof(Image));
+            go.transform.SetParent(parent, false);
+            go.GetComponent<Image>().color = color;
+            return go.GetComponent<RectTransform>();
+        }
+
+        private static void SetAnchors(RectTransform rt, Vector2 min, Vector2 max)
+        {
+            rt.anchorMin = min;
+            rt.anchorMax = max;
+            rt.offsetMin = Vector2.zero;
+            rt.offsetMax = Vector2.zero;
+        }
+
+        /// <summary>User dragged the timeline: pause and jump playback to that fraction of the duration.</summary>
+        private void OnScrub(float fraction)
+        {
+            if (!_sceneReady || _settingScrubFromCode) return;
+
+            _isPlaying = false;
+            UpdatePlayPauseLabel();
+            _playbackTime = Mathf.Clamp01(fraction) * Mathf.Max(0f, _header.durationSec);
+            ApplyPlaybackTime();
+            UpdateProgressLabel();
+        }
+
+        private bool _settingScrubFromCode;
+
+        /// <summary>Reflect current playback time on the slider without re-triggering OnScrub.</summary>
+        private void SyncScrubber()
+        {
+            if (_scrubSlider == null || _header.durationSec <= 0f) return;
+            _settingScrubFromCode = true;
+            _scrubSlider.SetValueWithoutNotify(Mathf.Clamp01(_playbackTime / _header.durationSec));
+            _settingScrubFromCode = false;
         }
 
         // ---------------------------------------------------------------- lifecycle
@@ -337,7 +418,13 @@ namespace Online.Replay.UI
             }
 
             if (cameraSlot >= 0)
+            {
                 loadMatch.AddOnlineCamera(cameraSlot, Cameras.ThirdPerson);
+                // A third-person FOLLOW camera now tracks the recorded robot. Turn off the static overview
+                // fallback (added on field load) so the follow cam is the active view — otherwise the static
+                // overview lingers and the camera looks like it isn't following the robot.
+                DeactivateOverviewFallbackIfFollowCameraExists();
+            }
 
             // Guarantee the field is visible even if no robot camera was set up (empty roster, unresolved
             // prefab, etc.) — otherwise playback is a black screen.
@@ -389,6 +476,7 @@ namespace Online.Replay.UI
 
             ApplyPlaybackTime();
             UpdateProgressLabel();
+            SyncScrubber();
         }
 
         private void ApplyPlaybackTime()
@@ -507,6 +595,27 @@ namespace Online.Replay.UI
             _progressLabel.text = FormatTime(_playbackTime) + " / " + FormatTime(_header.durationSec);
         }
 
+        /// <summary>
+        /// If a real follow camera exists (any enabled camera that isn't the static overview fallback),
+        /// deactivate the fallback so the follow cam is the sole/active view. Safe: if no follow camera was
+        /// created (e.g. AddOnlineCamera couldn't resolve the robot), the fallback is left on so the field
+        /// never goes cameraless (black).
+        /// </summary>
+        private static void DeactivateOverviewFallbackIfFollowCameraExists()
+        {
+            GameObject fallback = GameObject.Find(nameof(Online.Sync.SpectatorCameraController) + "_Fallback");
+            if (fallback == null) return;
+
+            foreach (Camera cam in Camera.allCameras) // enabled cameras on active GameObjects only
+            {
+                if (cam.gameObject != fallback)
+                {
+                    fallback.SetActive(false);
+                    return;
+                }
+            }
+        }
+
         private static string FormatTime(float seconds)
         {
             int total = Mathf.Max(0, Mathf.RoundToInt(seconds));
@@ -524,6 +633,7 @@ namespace Online.Replay.UI
             LobbyUiKit.SetButtonInteractable(_playPauseButton, interactable);
             LobbyUiKit.SetButtonInteractable(_prevKeyframeButton, interactable);
             LobbyUiKit.SetButtonInteractable(_nextKeyframeButton, interactable);
+            if (_scrubSlider != null) _scrubSlider.interactable = interactable;
         }
     }
 }
