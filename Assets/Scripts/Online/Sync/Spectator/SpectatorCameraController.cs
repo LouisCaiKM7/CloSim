@@ -191,10 +191,15 @@ namespace Online.Sync
 
             _spectatorCamera.name = "SpectatorOverviewCamera";
 
-            // Static overview for v1: hold the anchor's framing of the whole field rather than chasing a
-            // specific robot (matches the existing offline field-camera behavior in LoadMatch.AddFieldCamera()).
-            foreach (LookAtRobot lookAt in _spectatorCamera.GetComponentsInChildren<LookAtRobot>(true))
-                lookAt.enabled = false;
+            // PASSIVE static overview: disable EVERY controller MonoBehaviour on the camera (robot-follow,
+            // hold-angle, and any free-fly / first-person input controller) so this fallback holds a fixed
+            // field framing and — critically — NEVER consumes WASD / look input. Otherwise this camera's
+            // own controller steals the player's drive input (the robot won't move and the camera free-flies
+            // instead). Camera + AudioListener are built-in components (not MonoBehaviours) and stay active,
+            // so the camera still renders.
+            foreach (MonoBehaviour behaviour in _spectatorCamera.GetComponentsInChildren<MonoBehaviour>(true))
+                if (behaviour != null)
+                    behaviour.enabled = false;
 
             ConfigureFullScreenViewport(_spectatorCamera);
         }
