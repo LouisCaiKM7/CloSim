@@ -52,8 +52,6 @@ namespace Online.Net
     {
         private float _t;
         private string _lastSig = "";
-        private bool _forcedReady;
-        private bool _dumped;
 
         private bool _host2;
         private string _address2;
@@ -116,40 +114,14 @@ namespace Online.Net
             bool cliReady = NetworkClient.ready;
             int cliSpawned = NetworkClient.spawned != null ? NetworkClient.spawned.Count : -1;
 
-            // DIAGNOSTIC + fix probe: if the client is connected but not marked ready, it will never be
-            // sent spawned objects (the room). Force-ready it once and see if the room then arrives.
-            if (cliConnected && !cliReady && !NetworkServer.active && !_forcedReady)
-            {
-                _forcedReady = true;
-                Debug.Log("[NetcodeAutoTest] client connected but NOT ready — calling NetworkClient.Ready()");
-                NetworkClient.Ready();
-            }
-
+            // Log a concise connection/room-state signature whenever it changes, so host + client room
+            // replication can be validated from player logs.
             string sig = $"{present}|{members}|{cliConnected}|{cliReady}|{cliSpawned}";
             if (sig != _lastSig)
             {
                 _lastSig = sig;
                 Debug.Log($"[NetcodeAutoTest] t={_t:F0}s room={present} members={members} " +
                           $"cliConnected={cliConnected} cliReady={cliReady} cliSpawnedCount={cliSpawned}");
-            }
-
-            if (_t > 5f && !_dumped)
-            {
-                _dumped = true;
-                if (NetworkServer.active)
-                {
-                    int ready = 0;
-                    foreach (var c in NetworkServer.connections.Values) if (c.isReady) ready++;
-                    Debug.Log($"[NetcodeAutoTest] HOST DUMP conns={NetworkServer.connections.Count} ready={ready} serverSpawned={NetworkServer.spawned.Count}");
-                    foreach (var kv in NetworkServer.spawned)
-                        Debug.Log($"[NetcodeAutoTest]   serverObj netId={kv.Key} name={kv.Value.name} assetId={kv.Value.assetId}");
-                }
-                if (NetworkClient.active)
-                {
-                    Debug.Log($"[NetcodeAutoTest] CLIENT DUMP ready={NetworkClient.ready} clientSpawned={NetworkClient.spawned.Count} prefabsRegistered={NetworkClient.prefabs.Count}");
-                    foreach (var kv in NetworkClient.prefabs)
-                        Debug.Log($"[NetcodeAutoTest]   registeredPrefab assetId={kv.Key} name={kv.Value.name}");
-                }
             }
         }
     }
