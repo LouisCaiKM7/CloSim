@@ -45,8 +45,13 @@ namespace Online.Sync
         private const float GracePeriodSeconds = 2f;
         private const string OverviewCameraResourcePath = "Cameras/FirstPerson"; // same prefab LoadMatch.AddFieldCamera() uses
 
+        // Fallback overview sits far behind any real single-view camera, so an owned-robot camera (depth 0)
+        // always renders on top of it while a robot-less client still sees the field instead of black.
+        private const float FallbackCameraDepth = -100f;
+
         private LoadMatch _loadMatch;
         private bool _started;
+        private bool _reanchored;
         private GameObject _spectatorCamera;
 
         /// <summary>
@@ -85,46 +90,73 @@ namespace Online.Sync
 
             _started = true;
             _loadMatch = loadMatch;
-            StartCoroutine(WatchForSpectatorState());
+            StartCoroutine(GuaranteeCameraRoutine());
         }
 
-        private IEnumerator WatchForSpectatorState()
+        // Guarantee a rendering camera on EVERY online instance (host AND clients), immediately and for the
+        // life of the match, so the field is never a black, cameraless screen while robots spawn/replicate.
+        // The fallback overview sits at a very low depth (FallbackCameraDepth), so a client that owns a robot
+        // renders its own full-screen single-view camera (AddOnlineCamera, depth 0) ON TOP of this background
+        // — a playing client is visually unaffected, and a robot-less/spectator client still sees the field.
+        private IEnumerator GuaranteeCameraRoutine()
         {
-            float deadline = Time.unscaledTime + GracePeriodSeconds;
+            // Activate straight away so there is never a black frame, even before any robot has spawned.
+            ActivateSpectatorCamera();
 
+            // The field loads asynchronously the same frame the scene opens, so the camera anchor may not
+            // exist yet on the first frame; re-frame onto it once it does.
+            float deadline = Time.unscaledTime + GracePeriodSeconds;
             while (Time.unscaledTime < deadline)
             {
                 if (!NetworkServer.active && !NetworkClient.active)
-                    yield break; // Connection dropped before we decided; nothing to activate.
+                    yield break; // Connection ended; leave whatever camera exists.
 
-                if (LocalClientOwnsAnyRobot())
-                    yield break; // This client owns a robot; its single-view camera is already handled.
-
+                ReanchorSpectatorCamera();
                 yield return null;
             }
-
-            // Grace period elapsed with no locally-owned robot ever observed: this machine is a
-            // spectator (or otherwise robot-less) for this match. Re-check state once more (cheap) before
-            // committing, in case ownership or the connection changed on the final frame.
-            if (!NetworkServer.active && !NetworkClient.active)
-                yield break;
-
-            if (LocalClientOwnsAnyRobot())
-                yield break;
-
-            ActivateSpectatorCamera();
         }
 
-        private bool LocalClientOwnsAnyRobot()
+        private void ReanchorSpectatorCamera()
         {
-            var robotControllers = FindObjectsByType<RobotNetworkController>(FindObjectsSortMode.None);
+            if (_spectatorCamera == null || _reanchored)
+                return;
 
-            foreach (var robotController in robotControllers)
-            {
-                if (robotController != null && robotController.isOwned)
+            Transform anchor = _loadMatch != null ? _loadMatch.GetFieldCameraAnchor() : null;
+            if (anchor == null)
+                return;
+
+            _spectatorCamera.transform.SetParent(anchor, false);
+            _spectatorCamera.transform.localPosition = Vector3.zero;
+            _spectatorCamera.transform.localRotation = Quaternion.identity;
+            _reanchored = true;
+        }
+
+        /// <summary>
+        /// One-shot camera guarantee usable OUTSIDE a networked session (e.g. replay playback): if the scene
+        /// has no enabled camera, spawn the same field-overview camera so the field is visible, not black.
+        /// </summary>
+        public static void EnsureFieldOverviewCamera(LoadMatch loadMatch)
+        {
+            if (AnyEnabledCamera())
+                return;
+
+            if (loadMatch == null)
+                loadMatch = MatchSpawnManager.FindLoadMatch();
+
+            var go = new GameObject(nameof(SpectatorCameraController) + "_Fallback");
+            var controller = go.AddComponent<SpectatorCameraController>();
+            controller._started = true;
+            controller._loadMatch = loadMatch;
+            controller.ActivateSpectatorCamera();
+            controller.ReanchorSpectatorCamera();
+        }
+
+        public static bool AnyEnabledCamera()
+        {
+            var cams = FindObjectsByType<Camera>(FindObjectsSortMode.None);
+            foreach (var cam in cams)
+                if (cam != null && cam.isActiveAndEnabled)
                     return true;
-            }
-
             return false;
         }
 
@@ -181,7 +213,7 @@ namespace Online.Sync
             foreach (Camera cam in cameras)
             {
                 cam.rect = full;
-                cam.depth = 0f;
+                cam.depth = FallbackCameraDepth; // stay behind any owned-robot single-view camera (depth 0)
             }
 
             AudioListener[] listeners = cameraObject.GetComponentsInChildren<AudioListener>(true);

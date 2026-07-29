@@ -321,6 +321,10 @@ namespace Online.Replay.UI
             if (cameraSlot >= 0)
                 loadMatch.AddOnlineCamera(cameraSlot, Cameras.ThirdPerson);
 
+            // Guarantee the field is visible even if no robot camera was set up (empty roster, unresolved
+            // prefab, etc.) — otherwise playback is a black screen.
+            Online.Sync.SpectatorCameraController.EnsureFieldOverviewCamera(loadMatch);
+
             _sceneReady = true;
             _isPlaying = true;
             _playbackTime = 0f;

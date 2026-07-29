@@ -132,6 +132,10 @@ namespace UI.MainMenu
             // networked sim), and let a player pick robots on any slot/alliance. Offline local play unchanged.
             if (openOnStart && !OfflineFlowSuppressed())
                 yield return OpenMenuOnStartRoutine();
+            else if (screenFader != null)
+                // Online / replay: OpenMenuOnStartRoutine (the FadeFromBlack reveal) is skipped, so make
+                // sure the field is not left hidden under a black fade overlay.
+                screenFader.SetBlackImmediate(false);
         }
 
         /// <summary>
@@ -263,11 +267,39 @@ namespace UI.MainMenu
             if (_isOpen)
                 return;
 
-            // Never summon the offline robot-selection menu during an online match or replay playback.
+            // In an online match or replay there is no offline pre-match menu to summon. Instead the menu
+            // key acts as "leave the match": tear down any networked session and return to the main menu so
+            // the player is never trapped on the field with no way out.
             if (OfflineFlowSuppressed())
+            {
+                LeaveToMainMenu();
                 return;
+            }
 
             OpenMenu();
+        }
+
+        /// <summary>
+        /// Online/replay exit: stop any live networked session and load the main menu. Never sets
+        /// Time.timeScale = 0 (that would desync the networked sim); offline never calls this.
+        /// </summary>
+        private void LeaveToMainMenu()
+        {
+            if (_isTransitioning)
+                return;
+
+            Time.timeScale = 1f;
+            Cursor.lockState = CursorLockMode.None;
+            Cursor.visible = true;
+
+            if (Mirror.NetworkServer.active || Mirror.NetworkClient.active)
+                Online.Rooms.LobbyServices.EnsureExists().Disconnect();
+
+            if (GameSessionManager.Instance != null)
+                GameSessionManager.Instance.ClearLaunchData();
+
+            if (!string.IsNullOrWhiteSpace(mainMenuSceneName))
+                SceneTransitionManager.EnsureExists().LoadScene(mainMenuSceneName);
         }
 
         private void OpenMenu()
