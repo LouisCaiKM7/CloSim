@@ -55,7 +55,20 @@ namespace Online.Net
         private bool _forcedReady;
         private bool _dumped;
 
+        private bool _host2;
+        private string _address2;
+        private bool _started;
+
         public void Begin(bool host, string address)
+        {
+            // Defer the host/join until AFTER the Splash scene has advanced to Main_Menu, so the room is
+            // created in the menu (exactly like the real UI) and is not destroyed by the Splash->Main_Menu
+            // scene transition. This makes the test represent how a player actually hosts/joins.
+            _host2 = host;
+            _address2 = address;
+        }
+
+        private void StartFlow(bool host, string address)
         {
             LobbyServices svc = LobbyServices.EnsureExists();
             svc.Connection.OnHostStarted += () => Debug.Log("[NetcodeAutoTest] HOST STARTED (listening on 7777)");
@@ -87,6 +100,13 @@ namespace Online.Net
         private void Update()
         {
             _t += Time.deltaTime;
+
+            // Start the host/join only after the menu has loaded (past the Splash transition).
+            if (!_started && _t > 12f)
+            {
+                _started = true;
+                StartFlow(_host2, _address2);
+            }
 
             RoomService room = RoomService.Instance;
             bool present = room != null;
