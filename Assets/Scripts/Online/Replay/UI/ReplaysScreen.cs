@@ -37,8 +37,11 @@ namespace Online.Replay.UI
         private Button _refreshButton;
         private bool _destroyed;
 
+        // ADDITIVE: CompositeReplayService always includes the local on-disk store (LocalReplayService)
+        // so offline/single-player replays show up with zero AWS config, in addition to the remote
+        // AWS-backed store when configured. Always "configured" (see CompositeReplayService.IsConfigured).
         private IReplayService _service;
-        private IReplayService Service => _service ??= new ReplayServiceClient();
+        private IReplayService Service => _service ??= new CompositeReplayService();
 
         // ---------------------------------------------------------------- build
 
