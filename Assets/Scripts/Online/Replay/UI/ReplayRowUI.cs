@@ -30,7 +30,7 @@ namespace Online.Replay.UI
         /// <summary>Builds the row hierarchy under <paramref name="parent"/> and returns the wired component.</summary>
         public static ReplayRowUI Create(Transform parent)
         {
-            GameObject cardGo = LobbyUiKit.Card(parent, "ReplayRow", LobbyUiKit.CardBg, 6f, 10);
+            GameObject cardGo = LobbyUiKit.Card(parent, "ReplayRow", LobbyUiKit.CardBg, LobbyUiKit.SpaceSm, LobbyUiKit.PadSm);
             LobbyUiKit.SetSize(cardGo, -1, -1);
             var row = cardGo.AddComponent<ReplayRowUI>();
             row.Build(cardGo.transform);
@@ -39,25 +39,25 @@ namespace Online.Replay.UI
 
         private void Build(Transform root)
         {
-            GameObject line = LobbyUiKit.Row(root, "Line", 10f, 0, TextAnchor.MiddleLeft);
+            GameObject line = LobbyUiKit.Row(root, "Line", LobbyUiKit.SpaceSm, 0, TextAnchor.MiddleLeft);
             LobbyUiKit.SetSize(line, -1, 48);
 
-            _titleLabel = LobbyUiKit.Label(line.transform, "", 22, TextAlignmentOptions.Left);
+            _titleLabel = LobbyUiKit.Label(line.transform, "", LobbyUiKit.FontBody, TextAlignmentOptions.Left);
             LobbyUiKit.FlexibleWidth(_titleLabel.gameObject, 2f);
 
-            _modeLabel = LobbyUiKit.Label(line.transform, "", 18, TextAlignmentOptions.Center);
+            _modeLabel = LobbyUiKit.Label(line.transform, "", LobbyUiKit.FontLabel, TextAlignmentOptions.Center);
             LobbyUiKit.SetSize(_modeLabel.gameObject, 90, -1);
 
-            _dateLabel = LobbyUiKit.Label(line.transform, "", 16, TextAlignmentOptions.Center, LobbyUiKit.TextMuted);
+            _dateLabel = LobbyUiKit.Label(line.transform, "", LobbyUiKit.FontCaption, TextAlignmentOptions.Center, LobbyUiKit.TextMuted);
             LobbyUiKit.SetSize(_dateLabel.gameObject, 170, -1);
 
-            _durationLabel = LobbyUiKit.Label(line.transform, "", 16, TextAlignmentOptions.Center, LobbyUiKit.TextMuted);
+            _durationLabel = LobbyUiKit.Label(line.transform, "", LobbyUiKit.FontCaption, TextAlignmentOptions.Center, LobbyUiKit.TextMuted);
             LobbyUiKit.SetSize(_durationLabel.gameObject, 90, -1);
 
-            _scoreLabel = LobbyUiKit.Label(line.transform, "", 20, TextAlignmentOptions.Center);
+            _scoreLabel = LobbyUiKit.Label(line.transform, "", LobbyUiKit.FontLabel, TextAlignmentOptions.Center);
             LobbyUiKit.SetSize(_scoreLabel.gameObject, 110, -1);
 
-            _playButton = LobbyUiKit.Button(line.transform, "Play", out _, 20);
+            _playButton = LobbyUiKit.SecondaryButton(line.transform, "Play", out _, LobbyUiKit.FontLabel);
             LobbyUiKit.SetSize(_playButton.gameObject, 110, 44);
             _playButton.onClick.AddListener(RaisePlay);
         }

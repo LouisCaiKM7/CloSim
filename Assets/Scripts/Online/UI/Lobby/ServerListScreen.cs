@@ -44,12 +44,13 @@ namespace Online.UI.Lobby
         {
             LobbyUiKit.Panel(transform, "bg", LobbyUiKit.PanelBg);
 
-            GameObject col = LobbyUiKit.Column(transform, "root", 12f, 24, TextAnchor.UpperCenter);
+            GameObject col = LobbyUiKit.Column(transform, "root", LobbyUiKit.SpaceMd, LobbyUiKit.PadLg, TextAnchor.UpperCenter);
             LobbyUiKit.Stretch(LobbyUiKit.RectOf(col));
 
             BuildHeader(col.transform);
+            LobbyUiKit.Divider(col.transform);
 
-            _statusLabel = LobbyUiKit.Label(col.transform, "", 20, TextAlignmentOptions.Left, LobbyUiKit.TextMuted);
+            _statusLabel = LobbyUiKit.Label(col.transform, "", LobbyUiKit.FontLabel, TextAlignmentOptions.Left, LobbyUiKit.TextMuted);
             LobbyUiKit.SetSize(_statusLabel.gameObject, -1, 28);
 
             BuildFilters(col.transform);
@@ -61,25 +62,21 @@ namespace Online.UI.Lobby
         /// <summary>Title (left) + Refresh + Back.</summary>
         private void BuildHeader(Transform parent)
         {
-            GameObject header = LobbyUiKit.Row(parent, "header", 12f, 0, TextAnchor.MiddleLeft);
-            LobbyUiKit.SetSize(header, -1, 56);
+            GameObject header = LobbyUiKit.HeaderRow(parent, "Server List", out _);
 
-            TMP_Text title = LobbyUiKit.Label(header.transform, "Server List", 34, TextAlignmentOptions.Left);
-            LobbyUiKit.FlexibleWidth(title.gameObject, 1f);
-
-            _refreshButton = LobbyUiKit.Button(header.transform, "Refresh", out _, 22);
-            LobbyUiKit.SetSize(_refreshButton.gameObject, 160, 52);
+            _refreshButton = LobbyUiKit.SecondaryButton(header.transform, "Refresh", out _, LobbyUiKit.FontBody);
+            LobbyUiKit.SetSize(_refreshButton.gameObject, 160, LobbyUiKit.ButtonHeight);
             _refreshButton.onClick.AddListener(Refresh);
 
-            Button backButton = LobbyUiKit.Button(header.transform, "Back", out _, 22);
-            LobbyUiKit.SetSize(backButton.gameObject, 140, 52);
+            Button backButton = LobbyUiKit.SecondaryButton(header.transform, "Back", out _, LobbyUiKit.FontBody);
+            LobbyUiKit.SetSize(backButton.gameObject, 140, LobbyUiKit.ButtonHeight);
             backButton.onClick.AddListener(Back);
         }
 
         /// <summary>Client-side "Hide full" and "Hide incompatible" toggles (default off).</summary>
         private void BuildFilters(Transform parent)
         {
-            GameObject filters = LobbyUiKit.Row(parent, "filters", 24f, 0, TextAnchor.MiddleLeft);
+            GameObject filters = LobbyUiKit.Row(parent, "filters", LobbyUiKit.SpaceLg, 0, TextAnchor.MiddleLeft);
             LobbyUiKit.SetSize(filters, -1, 44);
 
             _hideFullToggle = LobbyUiKit.Toggle(filters.transform, "Hide full", false, out _);
@@ -95,13 +92,12 @@ namespace Online.UI.Lobby
         private void BuildListArea(Transform parent)
         {
             GameObject viewport = LobbyUiKit.Panel(parent, "ListViewport", LobbyUiKit.CardBgAlt);
-            LayoutElement viewportLe = viewport.GetComponent<LayoutElement>() ?? viewport.AddComponent<LayoutElement>();
-            viewportLe.flexibleHeight = 1f;
+            LobbyUiKit.FlexibleHeight(viewport);
 
             viewport.AddComponent<RectMask2D>();
             var scroll = viewport.AddComponent<ScrollRect>();
 
-            GameObject content = LobbyUiKit.Column(viewport.transform, "ListContent", 8f, 8, TextAnchor.UpperCenter);
+            GameObject content = LobbyUiKit.Column(viewport.transform, "ListContent", LobbyUiKit.SpaceSm, LobbyUiKit.PadSm, TextAnchor.UpperCenter);
             RectTransform contentRect = LobbyUiKit.RectOf(content);
             contentRect.anchorMin = new Vector2(0f, 1f);
             contentRect.anchorMax = new Vector2(1f, 1f);

@@ -27,7 +27,7 @@ namespace Online.UI.Lobby
         {
             LobbyUiKit.Panel(transform, "Background", LobbyUiKit.PanelBg);
 
-            GameObject card = LobbyUiKit.Card(transform, "JoinCard", LobbyUiKit.CardBg);
+            GameObject card = LobbyUiKit.Card(transform, "JoinCard", LobbyUiKit.CardBg, LobbyUiKit.SpaceMd, LobbyUiKit.PadLg);
             LobbyUiKit.SetSize(card, 640, -1);
             var cardRect = LobbyUiKit.RectOf(card);
             cardRect.anchorMin = new Vector2(0.5f, 0.5f);
@@ -37,38 +37,33 @@ namespace Online.UI.Lobby
             var fitter = card.AddComponent<ContentSizeFitter>();
             fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
 
-            LobbyUiKit.Label(card.transform, "Join Room", 34);
+            LobbyUiKit.Label(card.transform, "Join Room", LobbyUiKit.FontTitle);
+            LobbyUiKit.Divider(card.transform);
 
-            LobbyUiKit.Label(card.transform, "Your Name", 20, TextAlignmentOptions.Left, LobbyUiKit.TextMuted);
-            _yourNameInput = LobbyUiKit.InputField(card.transform, "Your name", Services.LocalPlayerName);
+            _yourNameInput = LobbyUiKit.LabeledInputField(card.transform, "Your Name", "Your name", Services.LocalPlayerName);
             _yourNameInput.onValueChanged.AddListener(OnNameChanged);
 
-            LobbyUiKit.Label(card.transform, "Address", 20, TextAlignmentOptions.Left, LobbyUiKit.TextMuted);
-            _addressInput = LobbyUiKit.InputField(card.transform, "Host IP or hostname", "127.0.0.1");
+            _addressInput = LobbyUiKit.LabeledInputField(card.transform, "Address", "Host IP or hostname", "127.0.0.1");
+            _portInput = LobbyUiKit.LabeledInputField(card.transform, "Port", "Port", "7777");
+            _tokenInput = LobbyUiKit.LabeledInputField(card.transform, "Join Token", "Join token (if required)");
 
-            LobbyUiKit.Label(card.transform, "Port", 20, TextAlignmentOptions.Left, LobbyUiKit.TextMuted);
-            _portInput = LobbyUiKit.InputField(card.transform, "Port", "7777");
+            _statusLabel = LobbyUiKit.Label(card.transform, "", LobbyUiKit.FontLabel, TextAlignmentOptions.Center, LobbyUiKit.TextMuted);
 
-            LobbyUiKit.Label(card.transform, "Join Token", 20, TextAlignmentOptions.Left, LobbyUiKit.TextMuted);
-            _tokenInput = LobbyUiKit.InputField(card.transform, "Join token (if required)");
+            // Buttons row — secondary actions on the left, primary/affirmative action on the right.
+            GameObject row = LobbyUiKit.Row(card.transform, "Buttons", LobbyUiKit.SpaceSm, 0, TextAnchor.MiddleCenter);
+            LobbyUiKit.SetSize(row, -1, LobbyUiKit.ButtonHeight);
 
-            _statusLabel = LobbyUiKit.Label(card.transform, "", 18, TextAlignmentOptions.Center, LobbyUiKit.TextMuted);
+            Button backButton = LobbyUiKit.SecondaryButton(row.transform, "Back");
+            LobbyUiKit.FlexibleWidth(backButton.gameObject);
+            backButton.onClick.AddListener(Back);
 
-            GameObject row = LobbyUiKit.Row(card.transform, "Buttons", 10, 0, TextAnchor.MiddleCenter);
-            LobbyUiKit.SetSize(row, -1, 52);
-
-            Button connectButton = LobbyUiKit.Button(row.transform, "Connect");
-            LobbyUiKit.FlexibleWidth(connectButton.gameObject);
-            LobbyUiKit.TintButton(connectButton, LobbyUiKit.ButtonAccent);
-            connectButton.onClick.AddListener(OnConnect);
-
-            Button serverListButton = LobbyUiKit.Button(row.transform, "Server List");
+            Button serverListButton = LobbyUiKit.SecondaryButton(row.transform, "Server List");
             LobbyUiKit.FlexibleWidth(serverListButton.gameObject);
             serverListButton.onClick.AddListener(() => Go(LobbyScreenKeys.ServerList));
 
-            Button backButton = LobbyUiKit.Button(row.transform, "Back");
-            LobbyUiKit.FlexibleWidth(backButton.gameObject);
-            backButton.onClick.AddListener(Back);
+            Button connectButton = LobbyUiKit.PrimaryButton(row.transform, "Connect");
+            LobbyUiKit.FlexibleWidth(connectButton.gameObject);
+            connectButton.onClick.AddListener(OnConnect);
 
             FirstSelected = _addressInput.gameObject;
         }

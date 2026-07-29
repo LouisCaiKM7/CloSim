@@ -25,8 +25,8 @@ namespace Online.UI.Lobby
         /// <summary>Builds a new member row under <paramref name="parent"/> and returns its component.</summary>
         public static RoomMemberRowUI Create(Transform parent)
         {
-            GameObject rowGo = LobbyUiKit.Row(parent, "MemberRow", 10f, 8, TextAnchor.MiddleLeft);
-            LobbyUiKit.SetSize(rowGo, -1, 44);
+            GameObject rowGo = LobbyUiKit.Row(parent, "MemberRow", LobbyUiKit.SpaceSm, LobbyUiKit.PadSm, TextAnchor.MiddleLeft);
+            LobbyUiKit.SetSize(rowGo, -1, 48);
 
             // Row's own background image (Row itself only carries a layout group by default).
             var rowBg = rowGo.AddComponent<Image>();
@@ -41,15 +41,15 @@ namespace Online.UI.Lobby
             row._chip = chipGo.GetComponent<Image>();
 
             // Name (takes the remaining width).
-            row._nameLabel = LobbyUiKit.Label(rowGo.transform, "", 22, TextAlignmentOptions.Left);
+            row._nameLabel = LobbyUiKit.Label(rowGo.transform, "", LobbyUiKit.FontBody, TextAlignmentOptions.Left);
             LobbyUiKit.FlexibleWidth(row._nameLabel.gameObject);
 
             // Host crown.
-            row._crownLabel = LobbyUiKit.Label(rowGo.transform, "", 20, TextAlignmentOptions.Right, LobbyUiKit.Accent);
+            row._crownLabel = LobbyUiKit.Label(rowGo.transform, "", LobbyUiKit.FontLabel, TextAlignmentOptions.Right, LobbyUiKit.Accent);
             LobbyUiKit.SetSize(row._crownLabel.gameObject, 100, -1);
 
             // Role / ready status.
-            row._statusLabel = LobbyUiKit.Label(rowGo.transform, "", 20, TextAlignmentOptions.Right, LobbyUiKit.TextMuted);
+            row._statusLabel = LobbyUiKit.Label(rowGo.transform, "", LobbyUiKit.FontLabel, TextAlignmentOptions.Right, LobbyUiKit.TextMuted);
             LobbyUiKit.SetSize(row._statusLabel.gameObject, 130, -1);
 
             return row;

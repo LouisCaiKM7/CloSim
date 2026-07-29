@@ -40,7 +40,7 @@ namespace Online.UI.Lobby
         /// <summary>Builds the row hierarchy under <paramref name="parent"/> and returns the wired component.</summary>
         public static ServerListRowUI Create(Transform parent)
         {
-            GameObject cardGo = LobbyUiKit.Card(parent, "ServerRow", LobbyUiKit.CardBg, 6f, 10);
+            GameObject cardGo = LobbyUiKit.Card(parent, "ServerRow", LobbyUiKit.CardBg, LobbyUiKit.SpaceSm, LobbyUiKit.PadSm);
             LobbyUiKit.SetSize(cardGo, -1, -1);
             var row = cardGo.AddComponent<ServerListRowUI>();
             row.Build(cardGo.transform);
@@ -50,31 +50,31 @@ namespace Online.UI.Lobby
         /// <summary>Lays out the labels + Join button (top line) and the hidden inline token input.</summary>
         private void Build(Transform root)
         {
-            GameObject line = LobbyUiKit.Row(root, "Line", 10f, 0, TextAnchor.MiddleLeft);
+            GameObject line = LobbyUiKit.Row(root, "Line", LobbyUiKit.SpaceSm, 0, TextAnchor.MiddleLeft);
             LobbyUiKit.SetSize(line, -1, 48);
 
-            _nameLabel = LobbyUiKit.Label(line.transform, "", 24, TextAlignmentOptions.Left);
+            _nameLabel = LobbyUiKit.Label(line.transform, "", LobbyUiKit.FontBody, TextAlignmentOptions.Left);
             LobbyUiKit.FlexibleWidth(_nameLabel.gameObject, 2f);
 
-            _hostLabel = LobbyUiKit.Label(line.transform, "", 18, TextAlignmentOptions.Left);
+            _hostLabel = LobbyUiKit.Label(line.transform, "", LobbyUiKit.FontLabel, TextAlignmentOptions.Left);
             LobbyUiKit.FlexibleWidth(_hostLabel.gameObject, 1.5f);
 
-            _gameLabel = LobbyUiKit.Label(line.transform, "", 18, TextAlignmentOptions.Left);
+            _gameLabel = LobbyUiKit.Label(line.transform, "", LobbyUiKit.FontLabel, TextAlignmentOptions.Left);
             LobbyUiKit.SetSize(_gameLabel.gameObject, 120, -1);
 
-            _playersLabel = LobbyUiKit.Label(line.transform, "", 20, TextAlignmentOptions.Center);
+            _playersLabel = LobbyUiKit.Label(line.transform, "", LobbyUiKit.FontLabel, TextAlignmentOptions.Center);
             LobbyUiKit.SetSize(_playersLabel.gameObject, 70, -1);
 
-            _regionLabel = LobbyUiKit.Label(line.transform, "", 18, TextAlignmentOptions.Center);
+            _regionLabel = LobbyUiKit.Label(line.transform, "", LobbyUiKit.FontLabel, TextAlignmentOptions.Center);
             LobbyUiKit.SetSize(_regionLabel.gameObject, 110, -1);
 
-            _lockLabel = LobbyUiKit.Label(line.transform, "", 18, TextAlignmentOptions.Center, LobbyUiKit.Accent);
+            _lockLabel = LobbyUiKit.Label(line.transform, "", LobbyUiKit.FontLabel, TextAlignmentOptions.Center, LobbyUiKit.Accent);
             LobbyUiKit.SetSize(_lockLabel.gameObject, 70, -1);
 
-            _versionLabel = LobbyUiKit.Label(line.transform, "", 16, TextAlignmentOptions.Center, LobbyUiKit.TextMuted);
+            _versionLabel = LobbyUiKit.Label(line.transform, "", LobbyUiKit.FontCaption, TextAlignmentOptions.Center, LobbyUiKit.TextMuted);
             LobbyUiKit.SetSize(_versionLabel.gameObject, 200, -1);
 
-            _joinButton = LobbyUiKit.Button(line.transform, "Join", out _joinLabel, 20);
+            _joinButton = LobbyUiKit.SecondaryButton(line.transform, "Join", out _joinLabel, LobbyUiKit.FontLabel);
             LobbyUiKit.SetSize(_joinButton.gameObject, 120, 44);
             _joinButton.onClick.AddListener(RaiseJoin);
 

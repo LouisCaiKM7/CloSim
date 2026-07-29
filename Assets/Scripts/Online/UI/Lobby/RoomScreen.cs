@@ -49,21 +49,19 @@ namespace Online.UI.Lobby
         {
             LobbyUiKit.Panel(transform, "bg", LobbyUiKit.PanelBg);
 
-            GameObject root = LobbyUiKit.Column(transform, "root", 14f, 20, TextAnchor.UpperCenter);
+            GameObject root = LobbyUiKit.Column(transform, "root", LobbyUiKit.SpaceMd, LobbyUiKit.PadLg, TextAnchor.UpperCenter);
             LobbyUiKit.Stretch(LobbyUiKit.RectOf(root));
 
-            // Header: room name (left) + Leave (right).
-            GameObject header = LobbyUiKit.Row(root.transform, "header", 10f, 0, TextAnchor.MiddleLeft);
-            LobbyUiKit.SetSize(header, -1, 56);
-            _roomNameLabel = LobbyUiKit.Label(header.transform, "Room", 40, TextAlignmentOptions.Left);
-            LobbyUiKit.FlexibleWidth(_roomNameLabel.gameObject);
-            Button leave = LobbyUiKit.Button(header.transform, "Leave");
+            // Header: room name (left, growing) + Leave (right).
+            GameObject header = LobbyUiKit.HeaderRow(root.transform, "Room", out _roomNameLabel);
+            Button leave = LobbyUiKit.DangerButton(header.transform, "Leave");
             LobbyUiKit.SetSize(leave.gameObject, 160, -1);
-            LobbyUiKit.TintButton(leave, LobbyUiKit.Danger);
             leave.onClick.AddListener(OnLeaveClicked);
 
+            LobbyUiKit.Divider(root.transform);
+
             // Status line (muted).
-            _statusLabel = LobbyUiKit.Label(root.transform, "Connecting…", 22,
+            _statusLabel = LobbyUiKit.Label(root.transform, "Connecting…", LobbyUiKit.FontLabel,
                 TextAlignmentOptions.Left, LobbyUiKit.TextMuted);
             LobbyUiKit.SetSize(_statusLabel.gameObject, -1, 28);
 
@@ -71,14 +69,15 @@ namespace Online.UI.Lobby
             _modeSelector = ModeSelectorUI.Create(root.transform);
             _modeSelector.OnShapeChosen += OnShapeChosen;
 
-            // Members area.
-            GameObject membersCard = LobbyUiKit.Card(root.transform, "Members", LobbyUiKit.CardBg, 6f, 10);
-            LobbyUiKit.FlexibleWidth(membersCard);
+            // Members area — grows to fill remaining vertical space so the roster list has room without
+            // pushing the controls row off-screen or overlapping it.
+            GameObject membersCard = LobbyUiKit.Card(root.transform, "Members", LobbyUiKit.CardBg, LobbyUiKit.SpaceSm, LobbyUiKit.PadSm);
+            LobbyUiKit.FlexibleHeight(membersCard);
             _membersContainer = membersCard.transform;
 
             // Local controls: alliance + ready + (host) start.
-            GameObject controls = LobbyUiKit.Row(root.transform, "controls", 10f, 0, TextAnchor.MiddleCenter);
-            LobbyUiKit.SetSize(controls, -1, 60);
+            GameObject controls = LobbyUiKit.Row(root.transform, "controls", LobbyUiKit.SpaceSm, 0, TextAnchor.MiddleCenter);
+            LobbyUiKit.SetSize(controls, -1, LobbyUiKit.ButtonHeight + 8f);
 
             _blueButton = LobbyUiKit.Button(controls.transform, "Blue");
             LobbyUiKit.SetSize(_blueButton.gameObject, 140, -1);
@@ -90,16 +89,15 @@ namespace Online.UI.Lobby
             LobbyUiKit.TintButton(_redButton, LobbyUiKit.RedAlliance);
             _redButton.onClick.AddListener(OnRedClicked);
 
-            _spectateButton = LobbyUiKit.Button(controls.transform, "Spectate");
+            _spectateButton = LobbyUiKit.SecondaryButton(controls.transform, "Spectate");
             LobbyUiKit.SetSize(_spectateButton.gameObject, 160, -1);
             _spectateButton.onClick.AddListener(OnSpectateClicked);
 
-            _readyButton = LobbyUiKit.Button(controls.transform, "Ready", out _readyLabel);
+            _readyButton = LobbyUiKit.PrimaryButton(controls.transform, "Ready", out _readyLabel);
             LobbyUiKit.SetSize(_readyButton.gameObject, 180, -1);
-            LobbyUiKit.TintButton(_readyButton, LobbyUiKit.ButtonAccent);
             _readyButton.onClick.AddListener(OnReadyClicked);
 
-            _startButton = LobbyUiKit.Button(controls.transform, "Start Match");
+            _startButton = LobbyUiKit.PrimaryButton(controls.transform, "Start Match");
             LobbyUiKit.SetSize(_startButton.gameObject, 200, -1);
             _startButton.onClick.AddListener(OnStartClicked);
             _startButton.gameObject.SetActive(false);

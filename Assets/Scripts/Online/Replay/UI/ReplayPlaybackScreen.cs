@@ -70,18 +70,16 @@ namespace Online.Replay.UI
         {
             LobbyUiKit.Panel(transform, "bg", LobbyUiKit.PanelBg);
 
-            GameObject col = LobbyUiKit.Column(transform, "root", 12f, 24, TextAnchor.UpperCenter);
+            GameObject col = LobbyUiKit.Column(transform, "root", LobbyUiKit.SpaceMd, LobbyUiKit.PadLg, TextAnchor.UpperCenter);
             LobbyUiKit.Stretch(LobbyUiKit.RectOf(col));
 
             BuildHeader(col.transform);
+            LobbyUiKit.Divider(col.transform);
 
-            _statusLabel = LobbyUiKit.Label(col.transform, "", 20, TextAlignmentOptions.Left, LobbyUiKit.TextMuted);
+            _statusLabel = LobbyUiKit.Label(col.transform, "", LobbyUiKit.FontLabel, TextAlignmentOptions.Left, LobbyUiKit.TextMuted);
             LobbyUiKit.SetSize(_statusLabel.gameObject, -1, 28);
 
-            GameObject spacer = LobbyUiKit.Panel(col.transform, "spacer", new Color(0, 0, 0, 0));
-            LobbyUiKit.FlexibleWidth(spacer);
-            var spacerLe = spacer.GetComponent<LayoutElement>() ?? spacer.AddComponent<LayoutElement>();
-            spacerLe.flexibleHeight = 1f;
+            LobbyUiKit.Spacer(col.transform);
 
             BuildControls(col.transform);
 
@@ -90,44 +88,40 @@ namespace Online.Replay.UI
 
         private void BuildHeader(Transform parent)
         {
-            GameObject header = LobbyUiKit.Row(parent, "header", 12f, 0, TextAnchor.MiddleLeft);
-            LobbyUiKit.SetSize(header, -1, 56);
+            GameObject header = LobbyUiKit.HeaderRow(parent, "Replay Playback", out _);
 
-            TMP_Text title = LobbyUiKit.Label(header.transform, "Replay Playback", 34, TextAlignmentOptions.Left);
-            LobbyUiKit.FlexibleWidth(title.gameObject, 1f);
-
-            Button exitButton = LobbyUiKit.Button(header.transform, "Exit", out _, 22);
-            LobbyUiKit.SetSize(exitButton.gameObject, 160, 52);
+            Button exitButton = LobbyUiKit.SecondaryButton(header.transform, "Exit", out _, LobbyUiKit.FontBody);
+            LobbyUiKit.SetSize(exitButton.gameObject, 160, LobbyUiKit.ButtonHeight);
             exitButton.onClick.AddListener(Back);
         }
 
         private void BuildControls(Transform parent)
         {
-            GameObject bar = LobbyUiKit.Card(parent, "ControlsBar", LobbyUiKit.CardBg, 12f, 16);
+            GameObject bar = LobbyUiKit.Card(parent, "ControlsBar", LobbyUiKit.CardBg, LobbyUiKit.SpaceMd, LobbyUiKit.PadMd);
             LobbyUiKit.SetSize(bar, -1, -1);
 
-            _progressLabel = LobbyUiKit.Label(bar.transform, "00:00 / 00:00", 22, TextAlignmentOptions.Center);
+            _progressLabel = LobbyUiKit.Label(bar.transform, "00:00 / 00:00", LobbyUiKit.FontBody, TextAlignmentOptions.Center);
             LobbyUiKit.SetSize(_progressLabel.gameObject, -1, 32);
 
-            GameObject row = LobbyUiKit.Row(bar.transform, "TransportRow", 12f, 0, TextAnchor.MiddleCenter);
-            LobbyUiKit.SetSize(row, -1, 56);
+            GameObject row = LobbyUiKit.Row(bar.transform, "TransportRow", LobbyUiKit.SpaceMd, 0, TextAnchor.MiddleCenter);
+            LobbyUiKit.SetSize(row, -1, LobbyUiKit.ButtonHeight + 4f);
 
-            _prevKeyframeButton = LobbyUiKit.Button(row.transform, "|< Keyframe", out _, 20);
-            LobbyUiKit.SetSize(_prevKeyframeButton.gameObject, 190, 52);
+            _prevKeyframeButton = LobbyUiKit.SecondaryButton(row.transform, "|< Keyframe", out _, LobbyUiKit.FontLabel);
+            LobbyUiKit.SetSize(_prevKeyframeButton.gameObject, 190, LobbyUiKit.ButtonHeight);
             _prevKeyframeButton.onClick.AddListener(StepToPreviousKeyframe);
 
-            _playPauseButton = LobbyUiKit.Button(row.transform, "Pause", out _playPauseLabel, 22);
-            LobbyUiKit.SetSize(_playPauseButton.gameObject, 160, 52);
+            _playPauseButton = LobbyUiKit.PrimaryButton(row.transform, "Pause", out _playPauseLabel, LobbyUiKit.FontBody);
+            LobbyUiKit.SetSize(_playPauseButton.gameObject, 160, LobbyUiKit.ButtonHeight);
             _playPauseButton.onClick.AddListener(TogglePlayPause);
 
-            _nextKeyframeButton = LobbyUiKit.Button(row.transform, "Keyframe >|", out _, 20);
-            LobbyUiKit.SetSize(_nextKeyframeButton.gameObject, 190, 52);
+            _nextKeyframeButton = LobbyUiKit.SecondaryButton(row.transform, "Keyframe >|", out _, LobbyUiKit.FontLabel);
+            LobbyUiKit.SetSize(_nextKeyframeButton.gameObject, 190, LobbyUiKit.ButtonHeight);
             _nextKeyframeButton.onClick.AddListener(StepToNextKeyframe);
 
             var speedLabels = new List<string>();
             foreach (float s in SpeedOptions) speedLabels.Add(s + "x");
             _speedDropdown = LobbyUiKit.Dropdown(row.transform, speedLabels, Array.IndexOf(SpeedOptions, 1f));
-            LobbyUiKit.SetSize(_speedDropdown.gameObject, 120, 52);
+            LobbyUiKit.SetSize(_speedDropdown.gameObject, 120, LobbyUiKit.ButtonHeight);
             _speedDropdown.onValueChanged.AddListener(OnSpeedChanged);
         }
 
