@@ -28,12 +28,12 @@ namespace Online.UI.Lobby
         /// <summary>Builds the mode selector row under <paramref name="parent"/>.</summary>
         public static ModeSelectorUI Create(Transform parent)
         {
-            GameObject row = LobbyUiKit.Row(parent, "ModeSelector", 12f, 0, TextAnchor.MiddleLeft);
-            LobbyUiKit.SetSize(row, -1, 48);
+            GameObject row = LobbyUiKit.Row(parent, "ModeSelector", LobbyUiKit.SpaceMd, 0, TextAnchor.MiddleLeft);
+            LobbyUiKit.SetSize(row, -1, LobbyUiKit.FieldHeight);
 
             var self = row.AddComponent<ModeSelectorUI>();
 
-            TMP_Text caption = LobbyUiKit.Label(row.transform, "Mode", 22, TextAlignmentOptions.Left);
+            TMP_Text caption = LobbyUiKit.Label(row.transform, "Mode", LobbyUiKit.FontBody, TextAlignmentOptions.Left);
             LobbyUiKit.SetSize(caption.gameObject, 90, -1);
 
             var options = new List<string>();
