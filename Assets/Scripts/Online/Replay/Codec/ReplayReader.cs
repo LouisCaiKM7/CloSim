@@ -72,7 +72,8 @@ namespace Online.Replay.Codec
                 ? ReplayGzip.Decompress(remaining)
                 : remaining;
 
-            ReplayFrame[] frames = ReadTimeline(timelineBytes);
+            bool hasJoints = (flags & ReplayFormat.FlagJoints) != 0;
+            ReplayFrame[] frames = ReadTimeline(timelineBytes, hasJoints);
             return new ReplayDocument(header, frames);
         }
 
@@ -152,7 +153,7 @@ namespace Online.Replay.Codec
 
         // ---- TIMELINE --------------------------------------------------------------------------
 
-        private static ReplayFrame[] ReadTimeline(byte[] timelineBytes)
+        private static ReplayFrame[] ReadTimeline(byte[] timelineBytes, bool hasJoints)
         {
             using var ms = new MemoryStream(timelineBytes, writable: false);
             using var br = new BinaryReader(ms, Encoding.UTF8, leaveOpen: true);
@@ -160,12 +161,12 @@ namespace Online.Replay.Codec
             uint frameCount = br.ReadUInt32();
             var frames = new ReplayFrame[frameCount];
             for (uint i = 0; i < frameCount; i++)
-                frames[i] = ReadFrame(br);
+                frames[i] = ReadFrame(br, hasJoints);
 
             return frames;
         }
 
-        private static ReplayFrame ReadFrame(BinaryReader br)
+        private static ReplayFrame ReadFrame(BinaryReader br, bool hasJoints)
         {
             uint timestampMs = br.ReadUInt32();
             var kind = (ReplayFrameKind)br.ReadByte();
@@ -181,13 +182,44 @@ namespace Online.Replay.Codec
             for (int i = 0; i < evtCount; i++)
                 events[i] = ReadEvent(br);
 
+            ReplayRobotJoints[] jointSets = hasJoints ? ReadJointSets(br) : null;
+
             return new ReplayFrame
             {
                 timestampMs = timestampMs,
                 kind = kind,
                 snapshots = snapshots,
                 events = events,
+                jointSets = jointSets,
             };
+        }
+
+        private static ReplayRobotJoints[] ReadJointSets(BinaryReader br)
+        {
+            byte robotCount = br.ReadByte();
+            var sets = new ReplayRobotJoints[robotCount];
+            for (int r = 0; r < robotCount; r++)
+            {
+                int slotIndex = br.ReadByte();
+                int jointCount = (int)ReplayVarint.ReadUVarInt(br);
+                var joints = new ReplayJoint[jointCount];
+                for (int j = 0; j < jointCount; j++)
+                {
+                    joints[j] = new ReplayJoint
+                    {
+                        jointIndex = (int)ReplayVarint.ReadUVarInt(br),
+                        posX = (int)ReplayVarint.ReadZigZagVarInt(br),
+                        posY = (int)ReplayVarint.ReadZigZagVarInt(br),
+                        posZ = (int)ReplayVarint.ReadZigZagVarInt(br),
+                        rotX = br.ReadSingle(),
+                        rotY = br.ReadSingle(),
+                        rotZ = br.ReadSingle(),
+                        rotW = br.ReadSingle(),
+                    };
+                }
+                sets[r] = new ReplayRobotJoints { slotIndex = slotIndex, joints = joints };
+            }
+            return sets;
         }
 
         private static ReplaySnapshot ReadSnapshot(BinaryReader br, bool isKeyframe)

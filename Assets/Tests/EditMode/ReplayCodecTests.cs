@@ -358,5 +358,91 @@ namespace CloSim.Tests.EditMode
                 Assert.AreEqual(expected.posZ, actual.posZ);
             }
         }
+
+        // ---- Articulation (joint) channel, schemaVersion >= 2 -----------------------------
+
+        [Test]
+        public void RoundTrip_JointSets_PreservesPerRobotMovingJoints()
+        {
+            ReplayHeader header = MakeHeader();
+
+            var frame = new ReplayFrame
+            {
+                timestampMs = 200,
+                kind = ReplayFrameKind.Keyframe,
+                snapshots = Array.Empty<ReplaySnapshot>(),
+                events = null,
+                jointSets = new[]
+                {
+                    new ReplayRobotJoints
+                    {
+                        slotIndex = 1,
+                        joints = new[]
+                        {
+                            new ReplayJoint { jointIndex = 3, posX = 120, posY = -45, posZ = 8,
+                                              rotX = 0.1f, rotY = 0.2f, rotZ = 0.3f, rotW = 0.9273618f },
+                            new ReplayJoint { jointIndex = 17, posX = -900, posY = 0, posZ = 1200,
+                                              rotX = 0f, rotY = 0.7071068f, rotZ = 0f, rotW = 0.7071068f },
+                        },
+                    },
+                },
+            };
+
+            byte[] blob = ReplayWriter.Write(header, new[] { frame });
+            ReplayDocument doc = ReplayReader.Read(blob);
+
+            Assert.AreEqual(1, doc.Frames.Length);
+            ReplayRobotJoints[] sets = doc.Frames[0].jointSets;
+            Assert.IsNotNull(sets, "joint channel should round-trip when frames carry joints");
+            Assert.AreEqual(1, sets.Length);
+            Assert.AreEqual(1, sets[0].slotIndex);
+            Assert.AreEqual(2, sets[0].joints.Length);
+
+            ReplayJoint a = sets[0].joints[0];
+            Assert.AreEqual(3, a.jointIndex);
+            Assert.AreEqual(120, a.posX);
+            Assert.AreEqual(-45, a.posY);
+            Assert.AreEqual(8, a.posZ);
+            Assert.AreEqual(0.1f, a.rotX, 1e-6f);
+            Assert.AreEqual(0.9273618f, a.rotW, 1e-6f);
+
+            ReplayJoint b = sets[0].joints[1];
+            Assert.AreEqual(17, b.jointIndex);
+            Assert.AreEqual(1200, b.posZ);
+            Assert.AreEqual(0.7071068f, b.rotY, 1e-6f);
+        }
+
+        [Test]
+        public void RoundTrip_NoJoints_LeavesJointChannelAbsent_BackwardCompatible()
+        {
+            ReplayHeader header = MakeHeader();
+
+            var frame = new ReplayFrame
+            {
+                timestampMs = 0,
+                kind = ReplayFrameKind.Keyframe,
+                snapshots = new[]
+                {
+                    new ReplaySnapshot
+                    {
+                        kind = ReplayEntityKind.Robot,
+                        entityId = 0,
+                        posX = 1, posY = 2, posZ = 3,
+                        rotEncoding = ReplayRotationEncoding.Yaw16,
+                        rot = 12345,
+                    },
+                },
+                events = null,
+                jointSets = null, // old-style, root-only frame
+            };
+
+            byte[] blob = ReplayWriter.Write(header, new[] { frame });
+            ReplayDocument doc = ReplayReader.Read(blob);
+
+            Assert.AreEqual(1, doc.Frames.Length);
+            // No joints anywhere => FlagJoints unset => reader never populates the channel.
+            Assert.IsNull(doc.Frames[0].jointSets);
+            Assert.AreEqual(1, doc.Frames[0].snapshots.Length, "root snapshot still round-trips as before");
+        }
     }
 }
