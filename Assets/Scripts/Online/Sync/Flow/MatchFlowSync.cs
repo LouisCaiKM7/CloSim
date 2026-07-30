@@ -68,12 +68,21 @@ namespace Online.Sync
             Fms.NetworkAuthoritative = false;
         }
 
+        private double _finishedAt = -1d;
+        private bool _returnedToLobby;
+        private const double ReturnToLobbyDelaySeconds = 6d;
+
         private void Update()
         {
-            // Server-only auto-schedule. Driven from Update (not OnStartServer) so the scene Fms has had a
-            // chance to run its own OnEnable/Restart first, avoiding a schedule being wiped by Restart().
+            // Server-only. Driven from Update (not OnStartServer) so the scene Fms has had a chance to run
+            // its own OnEnable/Restart first, avoiding a schedule being wiped by Restart().
             if (!NetworkServer.active)
                 return;
+
+            // Persistent-room lifecycle: once the match reaches Finished, return the whole room to the lobby
+            // after a short results pause so it can be reused for another match.
+            TickReturnToLobbyOnFinish();
+
             if (!_autoScheduleOnServerStart || _serverScheduled)
                 return;
 
@@ -82,6 +91,36 @@ namespace Online.Sync
                 return;
 
             ServerScheduleMatch();
+        }
+
+        [Server]
+        private void TickReturnToLobbyOnFinish()
+        {
+            if (_returnedToLobby)
+                return;
+
+            EnsureFms();
+            if (_fms == null)
+                return;
+
+            if (Fms.MatchState != MatchState.Finished)
+            {
+                _finishedAt = -1d;
+                return;
+            }
+
+            if (_finishedAt < 0d)
+            {
+                _finishedAt = NetworkTime.time;
+                return;
+            }
+
+            if (NetworkTime.time - _finishedAt < ReturnToLobbyDelaySeconds)
+                return;
+
+            _returnedToLobby = true;
+            if (Online.Rooms.RoomService.Instance != null)
+                Online.Rooms.RoomService.Instance.ServerReturnToLobby();
         }
 
         /// <summary>

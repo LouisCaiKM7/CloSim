@@ -267,12 +267,24 @@ namespace UI.MainMenu
             if (_isOpen)
                 return;
 
-            // In an online match or replay there is no offline pre-match menu to summon. Instead the menu
-            // key acts as "leave the match": tear down any networked session and return to the main menu so
-            // the player is never trapped on the field with no way out.
+            // In an online match or replay there is no offline pre-match menu to summon. The menu key acts
+            // as "leave the match". ONLINE: return to the ROOM lobby with the connection kept alive so the
+            // room is reusable (persistent room) — never disconnect here. REPLAY / fallback: leave to the
+            // main menu. Either way the player is never trapped on the field with no way out.
             if (OfflineFlowSuppressed())
             {
-                LeaveToMainMenu();
+                if ((Mirror.NetworkClient.active || Mirror.NetworkServer.active)
+                    && Online.Rooms.RoomService.Instance != null)
+                {
+                    Time.timeScale = 1f;
+                    Cursor.lockState = CursorLockMode.None;
+                    Cursor.visible = true;
+                    Online.Rooms.RoomService.Instance.RequestReturnToLobby();
+                }
+                else
+                {
+                    LeaveToMainMenu();
+                }
                 return;
             }
 
