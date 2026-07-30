@@ -55,9 +55,13 @@ namespace Online.Replay.Codec
         {
             frames ??= Array.Empty<ReplayFrame>();
 
+            bool hasJoints = FramesHaveJoints(frames);
+
             byte flags = 0;
             if (gzip)
                 flags |= ReplayFormat.FlagGzip;
+            if (hasJoints)
+                flags |= ReplayFormat.FlagJoints;
 
             using var output = new MemoryStream();
 
@@ -66,7 +70,7 @@ namespace Online.Replay.Codec
                 WriteHeader(headerWriter, header, flags);
             }
 
-            byte[] timelineBytes = WriteTimeline(frames);
+            byte[] timelineBytes = WriteTimeline(frames, hasJoints);
             byte[] payload = gzip ? ReplayGzip.Compress(timelineBytes) : timelineBytes;
             output.Write(payload, 0, payload.Length);
 
@@ -112,19 +116,33 @@ namespace Online.Replay.Codec
 
         // ---- TIMELINE --------------------------------------------------------------------------
 
-        private static byte[] WriteTimeline(IReadOnlyList<ReplayFrame> frames)
+        private static bool FramesHaveJoints(IReadOnlyList<ReplayFrame> frames)
+        {
+            for (int i = 0; i < frames.Count; i++)
+            {
+                ReplayRobotJoints[] sets = frames[i].jointSets;
+                if (sets == null)
+                    continue;
+                for (int j = 0; j < sets.Length; j++)
+                    if (sets[j].joints != null && sets[j].joints.Length > 0)
+                        return true;
+            }
+            return false;
+        }
+
+        private static byte[] WriteTimeline(IReadOnlyList<ReplayFrame> frames, bool writeJoints)
         {
             using var ms = new MemoryStream();
             using (var bw = new BinaryWriter(ms, Encoding.UTF8, leaveOpen: true))
             {
                 bw.Write((uint)frames.Count);
                 for (int i = 0; i < frames.Count; i++)
-                    WriteFrame(bw, frames[i]);
+                    WriteFrame(bw, frames[i], writeJoints);
             }
             return ms.ToArray();
         }
 
-        private static void WriteFrame(BinaryWriter bw, ReplayFrame frame)
+        private static void WriteFrame(BinaryWriter bw, ReplayFrame frame, bool writeJoints)
         {
             bw.Write(frame.timestampMs);
             bw.Write((byte)frame.kind);
@@ -142,6 +160,40 @@ namespace Online.Replay.Codec
             bw.Write((byte)evtCount);
             for (int i = 0; i < evtCount; i++)
                 WriteEvent(bw, events[i]);
+
+            if (writeJoints)
+                WriteJointSets(bw, frame.jointSets);
+        }
+
+        // Articulation channel: per-robot moving-joint local poses (absolute). Written after events on
+        // every frame when the blob carries joints (FlagJoints); positions are fixed-point mm (varint),
+        // rotation is a full uncompressed quaternion.
+        private static void WriteJointSets(BinaryWriter bw, ReplayRobotJoints[] jointSets)
+        {
+            jointSets ??= Array.Empty<ReplayRobotJoints>();
+            int robotCount = Math.Min(jointSets.Length, byte.MaxValue);
+            bw.Write((byte)robotCount);
+
+            for (int r = 0; r < robotCount; r++)
+            {
+                ReplayRobotJoints set = jointSets[r];
+                bw.Write((byte)Clamp(set.slotIndex, 0, byte.MaxValue));
+
+                ReplayJoint[] joints = set.joints ?? Array.Empty<ReplayJoint>();
+                ReplayVarint.WriteUVarInt(bw, (ulong)joints.Length);
+                for (int j = 0; j < joints.Length; j++)
+                {
+                    ReplayJoint joint = joints[j];
+                    ReplayVarint.WriteUVarInt(bw, (ulong)Math.Max(0, joint.jointIndex));
+                    ReplayVarint.WriteZigZagVarInt(bw, joint.posX);
+                    ReplayVarint.WriteZigZagVarInt(bw, joint.posY);
+                    ReplayVarint.WriteZigZagVarInt(bw, joint.posZ);
+                    bw.Write(joint.rotX);
+                    bw.Write(joint.rotY);
+                    bw.Write(joint.rotZ);
+                    bw.Write(joint.rotW);
+                }
+            }
         }
 
         private static void WriteSnapshot(BinaryWriter bw, ReplaySnapshot snap, bool isKeyframe)

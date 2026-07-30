@@ -20,7 +20,9 @@ namespace Online.Contracts.Replay
         /// Current schema version. Bump on ANY layout/quantization change so old viewers reject new blobs
         /// (and the backend metadata's schemaVersion matches the blob header's schemaVersion).
         /// </summary>
-        public const ushort SchemaVersion = 1;
+        // v2 adds the OPTIONAL per-robot articulation (moving-joint) channel — see FlagJoints below and
+        // ReplayFrame.jointSets. Old (v1) blobs stay readable: they simply carry no joint channel.
+        public const ushort SchemaVersion = 2;
 
         // ---- Blob flags (header.flags byte) -----------------------------------------------------
         /// <summary>Payload after the header is gzip-compressed.</summary>
@@ -28,6 +30,13 @@ namespace Online.Contracts.Replay
 
         /// <summary>Payload is the JSON fallback encoding (UTF-8) instead of the packed binary timeline.</summary>
         public const byte FlagJsonFallback = 1 << 1;
+
+        /// <summary>
+        /// The timeline carries the per-frame articulation channel (ReplayFrame.jointSets): each robot's
+        /// moving mechanism children as absolute local poses. Absent (older replays) => robots animate by
+        /// root transform only, exactly as before.
+        /// </summary>
+        public const byte FlagJoints = 1 << 2;
 
         // ---- Timeline rate ----------------------------------------------------------------------
         /// <summary>Default snapshot rate. 15 Hz keeps a 2.5-min match small while staying smooth on playback.</summary>

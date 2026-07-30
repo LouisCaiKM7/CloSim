@@ -59,6 +59,12 @@ namespace Online.Replay.UI
         private (float timeSec, int blue, int red)[] _scoreTimeline = Array.Empty<(float, int, int)>();
         private readonly Dictionary<int, Transform> _spawnedRobots = new();
 
+        // Articulation playback (schemaVersion >= 2): raw frames carry per-robot moving-joint local poses;
+        // each spawned robot's descendants are enumerated the SAME way the recorder did (depth-first, excl.
+        // root) so a joint's stored index maps back to the right child.
+        private ReplayFrame[] _frames = Array.Empty<ReplayFrame>();
+        private readonly Dictionary<int, Transform[]> _spawnedRobotDescendants = new();
+
         private bool _sceneReady;
         private bool _isPlaying;
         private float _playbackTime;
@@ -237,6 +243,7 @@ namespace Online.Replay.UI
             {
                 _sceneReady = false;
                 _spawnedRobots.Clear(); // stale refs — the scene unload below destroys the GameObjects
+                _spawnedRobotDescendants.Clear();
                 SceneTransitionManager.EnsureExists().LoadScene(mainMenuSceneName);
             }
         }
@@ -297,6 +304,7 @@ namespace Online.Replay.UI
             }
 
             _header = doc.Header;
+            _frames = doc.Frames ?? Array.Empty<ReplayFrame>();
             _resolved = ReplayTimelineResolver.Resolve(doc.Frames);
             _scoreTimeline = BuildScoreTimeline(doc.Frames);
 
@@ -397,6 +405,7 @@ namespace Online.Replay.UI
             loadMatch.ApplySettings(patched);
 
             _spawnedRobots.Clear();
+            _spawnedRobotDescendants.Clear();
 
             ReplayRosterEntry[] roster = _header.roster ?? Array.Empty<ReplayRosterEntry>();
             int cameraSlot = -1;
@@ -417,6 +426,7 @@ namespace Online.Replay.UI
                 loadMatch.RegisterNetworkedRobot(entry.slotIndex, robot);
 
                 _spawnedRobots[entry.slotIndex] = robot.transform;
+                _spawnedRobotDescendants[entry.slotIndex] = EnumerateDescendants(robot.transform);
                 if (cameraSlot < 0)
                     cameraSlot = entry.slotIndex;
             }
@@ -515,7 +525,104 @@ namespace Online.Replay.UI
                 }
             }
 
+            ApplyJoints(i0, i1, t);
             ApplyRecordedScore();
+        }
+
+        // ---------------------------------------------------------------- articulation (mechanisms)
+
+        /// <summary>Enumerate a robot's descendant transforms depth-first (excl. root), matching the recorder.</summary>
+        private static Transform[] EnumerateDescendants(Transform root)
+        {
+            Transform[] all = root.GetComponentsInChildren<Transform>(true);
+            var desc = new List<Transform>(all.Length);
+            foreach (Transform t in all)
+                if (t != root)
+                    desc.Add(t);
+            return desc.ToArray();
+        }
+
+        /// <summary>
+        /// Applies recorded moving-joint LOCAL poses onto each replay robot's children so mechanisms
+        /// (arms/intake/wheels) animate as recorded. Interpolates local pos/rot between frame i0 and i1.
+        /// No-op for older (root-only) replays whose frames carry no jointSets.
+        /// </summary>
+        private void ApplyJoints(int i0, int i1, float t)
+        {
+            if (_frames == null || _frames.Length == 0)
+                return;
+
+            ReplayFrame f0 = _frames[Mathf.Clamp(i0, 0, _frames.Length - 1)];
+            if (f0.jointSets == null || f0.jointSets.Length == 0)
+                return; // this frame (and typically this replay) has no articulation channel
+
+            ReplayFrame f1 = _frames[Mathf.Clamp(i1, 0, _frames.Length - 1)];
+
+            foreach (ReplayRobotJoints set in f0.jointSets)
+            {
+                if (set.joints == null)
+                    continue;
+                if (!_spawnedRobotDescendants.TryGetValue(set.slotIndex, out Transform[] descendants))
+                    continue;
+
+                foreach (ReplayJoint joint in set.joints)
+                {
+                    if (joint.jointIndex < 0 || joint.jointIndex >= descendants.Length)
+                        continue; // hierarchy mismatch — skip rather than mis-apply
+                    Transform child = descendants[joint.jointIndex];
+                    if (child == null)
+                        continue;
+
+                    Vector3 posA = JointPos(joint);
+                    Quaternion rotA = JointRot(joint);
+
+                    if (TryFindJoint(f1, set.slotIndex, joint.jointIndex, out ReplayJoint jb))
+                    {
+                        child.localPosition = Vector3.Lerp(posA, JointPos(jb), t);
+                        child.localRotation = Quaternion.Slerp(rotA, JointRot(jb), t);
+                    }
+                    else
+                    {
+                        child.localPosition = posA;
+                        child.localRotation = rotA;
+                    }
+                }
+            }
+        }
+
+        private static bool TryFindJoint(ReplayFrame frame, int slotIndex, int jointIndex, out ReplayJoint joint)
+        {
+            joint = default;
+            if (frame.jointSets == null)
+                return false;
+            foreach (ReplayRobotJoints set in frame.jointSets)
+            {
+                if (set.slotIndex != slotIndex || set.joints == null)
+                    continue;
+                foreach (ReplayJoint j in set.joints)
+                {
+                    if (j.jointIndex == jointIndex)
+                    {
+                        joint = j;
+                        return true;
+                    }
+                }
+                return false;
+            }
+            return false;
+        }
+
+        private static Vector3 JointPos(ReplayJoint j) => new Vector3(
+            j.posX / (float)ReplayFormat.PositionUnitsPerMeter,
+            j.posY / (float)ReplayFormat.PositionUnitsPerMeter,
+            j.posZ / (float)ReplayFormat.PositionUnitsPerMeter);
+
+        private static Quaternion JointRot(ReplayJoint j)
+        {
+            var q = new Quaternion(j.rotX, j.rotY, j.rotZ, j.rotW);
+            // Guard against an un-normalized/zero quaternion (defensive; recorder writes unit quats).
+            float m = q.x * q.x + q.y * q.y + q.z * q.z + q.w * q.w;
+            return m > 1e-6f ? q : Quaternion.identity;
         }
 
         // Drives the live field score display (ScoreHolder.BlueScore/RedScore, which the scene's score text

@@ -70,6 +70,7 @@ namespace Online.Replay.Recorder
 
         private readonly ReplayRecorder _recorder = new ReplayRecorder();
         private readonly List<(int slot, Transform transform)> _robots = new();
+        private readonly ReplayJointSampler _jointSampler = new ReplayJointSampler();
         private readonly Dictionary<int, PrevEntityState> _prev = new();
 
         private LoadMatch _loadMatch;
@@ -134,6 +135,7 @@ namespace Online.Replay.Recorder
                     continue;
 
                 _robots.Add((slot, robot.transform));
+                _jointSampler.Register(slot, robot.transform); // capture bind poses of mechanism children
             }
 
             if (_robots.Count == 0)
@@ -285,12 +287,17 @@ namespace Online.Replay.Recorder
             }
 
             var snapshots = new List<ReplaySnapshot>(_robots.Count);
+            var jointSets = new List<ReplayRobotJoints>(_robots.Count);
             foreach ((int slot, Transform t) in _robots)
             {
                 if (t == null)
                     continue; // robot destroyed mid-match; skip gracefully
 
                 snapshots.Add(BuildRobotSnapshot(slot, t, isKeyframe));
+
+                ReplayRobotJoints joints = _jointSampler.Sample(slot);
+                if (joints.joints != null && joints.joints.Length > 0)
+                    jointSets.Add(joints);
             }
 
             var frame = new ReplayFrame
@@ -299,6 +306,7 @@ namespace Online.Replay.Recorder
                 kind = isKeyframe ? ReplayFrameKind.Keyframe : ReplayFrameKind.Delta,
                 snapshots = snapshots.ToArray(),
                 events = null,
+                jointSets = jointSets.Count > 0 ? jointSets.ToArray() : null,
             };
 
             _recorder.RecordFrame(frame);

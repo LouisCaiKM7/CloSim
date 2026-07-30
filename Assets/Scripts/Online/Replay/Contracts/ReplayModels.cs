@@ -133,6 +133,40 @@ namespace Online.Contracts.Replay
         public ReplayFrameKind kind;  // Keyframe | Delta
         public ReplaySnapshot[] snapshots;
         public ReplayEvent[] events;  // may be null/empty
+
+        // OPTIONAL articulation channel (schemaVersion >= 2, blob flag ReplayFormat.FlagJoints). Per robot,
+        // the LOCAL pose of each moving mechanism child (arm/intake/wheel/...) so playback shows the robot
+        // FUNCTION, not just slide by its root. Absolute every frame (no delta) so scrubbing lands exactly.
+        // null/empty on older replays (root-only, as before) — fully backward compatible.
+        public ReplayRobotJoints[] jointSets;
+    }
+
+    /// <summary>
+    /// One moving mechanism child of a robot, addressed by its depth-first index among the robot root's
+    /// descendants (record + playback spawn the SAME catalog prefab, so the enumeration matches). Local
+    /// pose is stored ABSOLUTE: fixed-point millimetres (ReplayFormat position units) + a FULL quaternion
+    /// (uncompressed 4 floats — mechanisms rotate in 3D, and this deliberately avoids smallest-three
+    /// compression math, prioritising correctness over a few bytes for these local-only, robots-only files).
+    /// </summary>
+    [Serializable]
+    public struct ReplayJoint
+    {
+        public int jointIndex;   // depth-first index into the robot root's descendant transforms (excl. root)
+        public int posX;         // local position, fixed-point mm
+        public int posY;
+        public int posZ;
+        public float rotX;       // local rotation quaternion (full, uncompressed)
+        public float rotY;
+        public float rotZ;
+        public float rotW;
+    }
+
+    /// <summary>All recorded moving-joint local poses for one robot slot at a single frame.</summary>
+    [Serializable]
+    public struct ReplayRobotJoints
+    {
+        public int slotIndex;            // robot slot (matches ReplaySnapshot.entityId for the root)
+        public ReplayJoint[] joints;     // only joints that have moved from their bind pose so far
     }
 
     /// <summary>
