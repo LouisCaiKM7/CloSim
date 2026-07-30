@@ -515,6 +515,61 @@ namespace Online.Rooms
             else CmdStartMatch();
         }
 
+        // ================================================================ persistent-room lifecycle ===
+        // A room is REUSABLE: after a match ends (or a player leaves the match via Esc), the whole room
+        // returns to the lobby with the connection KEPT ALIVE, so it can be readied-up and started again.
+        // Only an explicit "Leave Room" (RoomScreen) disconnects. ServerStartMatch is already re-runnable
+        // (it only gates on CanStartMatch); returning here resets state to Lobby and clears ready flags.
+
+        /// <summary>Scene the room returns to between matches — where the lobby/room UI lives.</summary>
+        public const string LobbySceneName = "Main_Menu";
+
+        /// <summary>
+        /// Server-authoritative: end the current match and bring the WHOLE room back to the lobby, keeping
+        /// every connection. Resets state to Lobby and clears each player's ready flag so they can re-ready
+        /// and start another match. Does NOT disconnect anyone.
+        /// </summary>
+        [Server]
+        public void ServerReturnToLobby()
+        {
+            _state = RoomState.Lobby;
+            RoomInfo updated = _room;
+            updated.state = RoomState.Lobby;
+            _room = updated;
+
+            for (int i = 0; i < _members.Count; i++)
+            {
+                RoomMemberSlot m = _members[i];
+                if (!m.isReady) continue;
+                m.isReady = false;
+                _members[i] = m;
+            }
+
+            ServerTouch();
+
+            if (NetworkManager.singleton != null)
+                NetworkManager.singleton.ServerChangeScene(LobbySceneName);
+        }
+
+        [Command(requiresAuthority = false)]
+        private void CmdReturnToLobby(NetworkConnectionToClient sender = null)
+        {
+            // Any seated member may bring the room back to the lobby (casual co-op semantics).
+            if (sender != null && RoomValidation.IndexOf(_members, sender.connectionId) < 0) return;
+            ServerReturnToLobby();
+        }
+
+        /// <summary>
+        /// Return the whole room to the lobby, keeping the connection (persistent room). Host applies
+        /// directly; a client routes through a Command. This is what the in-match Esc/leave key calls online
+        /// instead of disconnecting.
+        /// </summary>
+        public void RequestReturnToLobby()
+        {
+            if (isServer) ServerReturnToLobby();
+            else CmdReturnToLobby();
+        }
+
         // ================================================================ helpers ===
 
         [Server]

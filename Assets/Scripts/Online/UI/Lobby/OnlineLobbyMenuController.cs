@@ -47,6 +47,33 @@ namespace Online.UI.Lobby
             _navigator.ShowRoot(LobbyScreenKeys.Home);
         }
 
+        /// <summary>
+        /// Opens the lobby overlay directly on the ROOM screen. Used when we land back on the lobby scene
+        /// while a networked room is still live (persistent room — e.g. returning from a match), so the
+        /// still-active room is shown instead of the main menu.
+        /// </summary>
+        public static void OpenLobbyToRoom(System.Action onClosed = null)
+        {
+            if (_instance == null)
+            {
+                var go = new GameObject(nameof(OnlineLobbyMenuController));
+                _instance = go.AddComponent<OnlineLobbyMenuController>();
+            }
+
+            _instance._onClosed = onClosed;
+            _instance.OpenToRoom();
+        }
+
+        private void OpenToRoom()
+        {
+            Online.Rooms.LobbyServices.EnsureExists();
+            if (!_built)
+                Build();
+
+            _canvas.gameObject.SetActive(true);
+            _navigator.ShowRoot(LobbyScreenKeys.Room);
+        }
+
         private void Build()
         {
             _canvas = LobbyUiKit.CreateOverlayCanvas("OnlineLobbyCanvas");
