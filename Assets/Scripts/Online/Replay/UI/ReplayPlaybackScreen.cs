@@ -54,6 +54,9 @@ namespace Online.Replay.UI
         private string _pendingReplayId;
         private ReplayHeader _header;
         private ReplayTimelineResolver.Result _resolved;
+        // Cumulative recorded score over time (seconds, blue, red), ascending — playback drives the field
+        // score display from this so the replay shows the EXACT score of the recorded match.
+        private (float timeSec, int blue, int red)[] _scoreTimeline = Array.Empty<(float, int, int)>();
         private readonly Dictionary<int, Transform> _spawnedRobots = new();
 
         private bool _sceneReady;
@@ -295,6 +298,7 @@ namespace Online.Replay.UI
 
             _header = doc.Header;
             _resolved = ReplayTimelineResolver.Resolve(doc.Frames);
+            _scoreTimeline = BuildScoreTimeline(doc.Frames);
 
             if (string.IsNullOrEmpty(_header.sceneName))
             {
@@ -510,6 +514,61 @@ namespace Online.Replay.UI
                     robotTransform.rotation = Quaternion.Euler(0f, a.yawDegrees, 0f);
                 }
             }
+
+            ApplyRecordedScore();
+        }
+
+        // Drives the live field score display (ScoreHolder.BlueScore/RedScore, which the scene's score text
+        // reads every frame) from the recorded score timeline, so the replay shows the recorded match's exact
+        // score. The replay field never re-scores (robots are kinematic, no piece interactions), so nothing
+        // overwrites these values.
+        private void ApplyRecordedScore()
+        {
+            if (_scoreTimeline.Length == 0)
+                return;
+
+            int blue = 0, red = 0;
+            for (int i = 0; i < _scoreTimeline.Length; i++)
+            {
+                if (_scoreTimeline[i].timeSec > _playbackTime)
+                    break;
+                blue = _scoreTimeline[i].blue;
+                red = _scoreTimeline[i].red;
+            }
+
+            Field.Scoring.ScoreHolder.BlueScore = blue;
+            Field.Scoring.ScoreHolder.RedScore = red;
+        }
+
+        // Folds the Score events across all frames into a cumulative (time, blue, red) timeline. Each Score
+        // event carries the absolute score for one alliance (intValue) — see the recorders.
+        private static (float, int, int)[] BuildScoreTimeline(ReplayFrame[] frames)
+        {
+            var points = new List<(float, int, int)>();
+            int blue = 0, red = 0;
+            frames ??= Array.Empty<ReplayFrame>();
+
+            foreach (ReplayFrame f in frames)
+            {
+                ReplayEvent[] events = f.events;
+                if (events == null)
+                    continue;
+
+                bool changed = false;
+                foreach (ReplayEvent e in events)
+                {
+                    if (e.type != ReplayEventType.Score)
+                        continue;
+                    if (e.alliance == Online.Contracts.RoomAlliance.Blue) blue = e.intValue;
+                    else if (e.alliance == Online.Contracts.RoomAlliance.Red) red = e.intValue;
+                    changed = true;
+                }
+
+                if (changed)
+                    points.Add((f.timestampMs / 1000f, blue, red));
+            }
+
+            return points.ToArray();
         }
 
         // ---------------------------------------------------------------- transport controls

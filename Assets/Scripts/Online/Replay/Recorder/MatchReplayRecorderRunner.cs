@@ -73,6 +73,8 @@ namespace Online.Replay.Recorder
         private float _recordStartTime;
         private int _frameIndex;
         private ReplayMatchPhase? _lastPhase;
+        private int _lastBlueScore = int.MinValue;
+        private int _lastRedScore = int.MinValue;
         private bool _capturing;
         private bool _finalized;
 
@@ -224,6 +226,7 @@ namespace Online.Replay.Recorder
             }
 
             RecordPhaseChangeIfNeeded(timestampMs);
+            RecordScoreChangeIfNeeded(timestampMs);
 
             bool matchJustFinished = Fms.MatchState == MatchState.Finished && !_finalized;
             if (matchJustFinished)
@@ -319,6 +322,42 @@ namespace Online.Replay.Recorder
                 pieceId = -1,
                 intValue = (int)current,
             });
+        }
+
+        // Records the real match score onto the timeline whenever it changes, so playback DISPLAYS the exact
+        // recorded score (absolute per-alliance in intValue; the viewer tracks the latest per alliance).
+        private void RecordScoreChangeIfNeeded(uint timestampMs)
+        {
+            int blue = ScoreHolder.BlueScore;
+            int red = ScoreHolder.RedScore;
+
+            if (blue != _lastBlueScore)
+            {
+                _lastBlueScore = blue;
+                _recorder.RecordEvent(new ReplayEvent
+                {
+                    timestampMs = timestampMs,
+                    type = ReplayEventType.Score,
+                    alliance = RoomAlliance.Blue,
+                    actorSlot = -1,
+                    pieceId = -1,
+                    intValue = blue,
+                });
+            }
+
+            if (red != _lastRedScore)
+            {
+                _lastRedScore = red;
+                _recorder.RecordEvent(new ReplayEvent
+                {
+                    timestampMs = timestampMs,
+                    type = ReplayEventType.Score,
+                    alliance = RoomAlliance.Red,
+                    actorSlot = -1,
+                    pieceId = -1,
+                    intValue = red,
+                });
+            }
         }
 
         private static int QuantizePos(float meters) => Mathf.RoundToInt(meters * ReplayFormat.PositionUnitsPerMeter);
