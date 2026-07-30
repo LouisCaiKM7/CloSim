@@ -561,27 +561,49 @@ namespace Core
             if (robot == null)
                 return;
 
-            EnsurePlayerInputConfigured(robot);
+            // ONLINE owner input: each machine has exactly ONE local player, who must drive its owned robot
+            // with the primary local device EXACTLY like offline single-player. The offline per-slot
+            // keyboard/gamepad split does NOT apply here — `ownedSlot` is a GLOBAL match slot (e.g. red = 1),
+            // not a local split-screen player index — so the offline BindAutomatically only grants the
+            // keyboard to slot 0/1, leaving a red-alliance client (slot 1+) with NO device and thus no
+            // control. Bind the primary device regardless of slot, using player-0 saved binds for feel.
+            BindOnlineOwnerInput(robot, ownedSlot);
+        }
+
+        /// <summary>
+        /// Binds the local device to an ONLINE owner's robot like single-player: keyboard when explicitly
+        /// preferred or when no gamepad is present, otherwise the first gamepad (Auto stays gamepad-first).
+        /// Unlike the offline split-screen path this never gates the keyboard on a player-0/1 slot, so an
+        /// owner on any global match slot (including the red alliance) gets full control. Online-only —
+        /// reached solely via PairLocalInput from RobotNetworkController; the offline PairInputs path is
+        /// untouched.
+        /// </summary>
+        private void BindOnlineOwnerInput(GameObject robot, int ownedSlot)
+        {
+            if (robot == null || !EnsurePlayerInputConfigured(robot))
+                return;
 
             ReadOnlyArray<Gamepad> pads = Gamepad.all;
-            HashSet<int> usedGamepadIndices = new();
-
             PlayerInputDevicePreference preference = GetPlayerInputDevicePreference(ownedSlot);
-            switch (preference)
+            const int localBindProfile = 0; // player-0 saved binds -> identical feel to single-player
+
+            bool preferKeyboard = preference == PlayerInputDevicePreference.Keyboard;
+            bool haveGamepad = pads.Count > 0;
+
+            if ((preferKeyboard || !haveGamepad) && Keyboard.current != null)
             {
-                case PlayerInputDevicePreference.Keyboard:
-                    BindPreferredKeyboard(robot, ownedSlot);
-                    break;
-
-                case PlayerInputDevicePreference.Gamepad:
-                    BindPreferredGamepad(robot, ownedSlot, pads, usedGamepadIndices);
-                    break;
-
-                case PlayerInputDevicePreference.Auto:
-                default:
-                    BindAutomatically(robot, ownedSlot, pads, usedGamepadIndices, false);
-                    break;
+                BindRobotToKeyboard(robot, keyboardControlScheme, localBindProfile);
+                return;
             }
+
+            if (haveGamepad)
+            {
+                BindRobotToGamepad(robot, pads[0], gamepadControlScheme, localBindProfile);
+                return;
+            }
+
+            DisableRobotInput(robot);
+            Debug.LogWarning("[LoadMatch] Online owner has no keyboard or gamepad to bind; robot is uncontrollable.");
         }
 
         private bool UsesFourWaySplit()
